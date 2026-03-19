@@ -1735,17 +1735,79 @@
 				}
 			]
 		},
-		{
-			"root": "subPackage",
-			"name": "subPackage",
-			"pages": [{
-				"path": "pages/diyPage/index"
-			},
-				{
-					"path": "pages/lineTable/index"
+	{
+		"root": "pages/clinic",
+		"name": "clinic",
+		"pages": [
+			{
+				"path": "home/index",
+				"style": {
+					"navigationBarTitleText": "诊所",
+					"enablePullDownRefresh": true,
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
 				}
-			]
-		}
+			},
+			{
+				"path": "mall/index",
+				"style": {
+					"navigationBarTitleText": "诊所商城",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "therapist/index",
+				"style": {
+					"navigationBarTitleText": "选择理疗师",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "appointment/index",
+				"style": {
+					"navigationBarTitleText": "我的预约",
+					"enablePullDownRefresh": true,
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "store_switch/index",
+				"style": {
+					"navigationBarTitleText": "",
+					"navigationStyle": "custom",
+					"app-plus": {
+						"titleNView": false
+					}
+				}
+			}
+		]
+	},
+	{
+		"root": "subPackage",
+		"name": "subPackage",
+		"pages": [{
+			"path": "pages/diyPage/index"
+		},
+			{
+				"path": "pages/lineTable/index"
+			}
+		]
+	}
 		//		{
 		//			"root": "subPackage",
 		//			"name": "textEditor",
