@@ -44,7 +44,7 @@
 
           <!-- 空状态 -->
           <view v-else-if="!loading" class="empty-content">
-            <empty-page title="暂无数据" mTop="30%"></empty-page>
+            <empty-page title="暂无数据~" mTop="30%" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
           </view>
 
           <!-- 加载中 -->
@@ -70,6 +70,7 @@ export default {
   },
   data() {
     return {
+      urlDomain: this.$Cache.get("imgHost"),
       theme: app.globalData.theme,
       merId: 0,
       winHeight: 0,

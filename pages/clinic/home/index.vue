@@ -63,7 +63,7 @@
     </view>
 
     <!-- 快捷操作区 -->
-    <view class="quick-actions">
+    <view class="quick-actions" :class="{ 'quick-actions--fixed': isActionsSticky }">
       <view class="action-card" @click="goClinicMall">
         <view class="action-icon icon-mall">
           <text class="iconfont icon-ic_mall"></text>
@@ -119,12 +119,14 @@
       </view>
 
       <view class="empty-products" v-else-if="!loading">
-        <empty-page title="暂无商品"></empty-page>
+        <empty-page title="暂无商品~" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
       </view>
     </view>
 
     <!-- 底部安全区 -->
     <view class="safe-bottom"></view>
+    <view v-if="bottomNavigationIsCustom" class="footerBottom"></view>
+    <pageFooter></pageFooter>
   </view>
 </template>
 
@@ -133,6 +135,7 @@ import { mapGetters } from "vuex";
 import { getMerIndexInfoApi, getMerProListApi } from '@/api/merchant.js';
 import { chatConfig } from '@/utils/consumerType.js';
 import emptyPage from '@/components/emptyPage.vue';
+import pageFooter from '@/components/pageFooter/index.vue';
 
 let app = getApp();
 
@@ -150,21 +153,25 @@ const MOCK_PRODUCTS = [
   { id: 1, name: '复合益生元饮品（20g*20袋/盒）', price: '299.00', image: '', deliveryType: 1 },
   { id: 2, name: '枸杞酸枣仁膏', price: '499.00', image: '', deliveryType: 1 },
   { id: 3, name: '黄精益智仁膏', price: '399.00', image: '', deliveryType: 1 },
-  { id: 4, name: '紫苏玫瑰膏', price: '359.00', image: '', deliveryType: 1 }
+  { id: 4, name: '紫苏玫瑰膏', price: '359.00', image: '', deliveryType: 1 },
+  { id: 5, name: '红参阿胶固元膏（300g/罐）', price: '458.00', image: '', deliveryType: 1 },
+  { id: 6, name: '茯苓薏仁祛湿茶（5g*30包）', price: '168.00', image: '', deliveryType: 1 }
 ];
 
 export default {
   components: {
-    emptyPage
+    emptyPage,
+    pageFooter
   },
   computed: {
-    ...mapGetters(['isLogin', 'uid', 'globalData']),
+    ...mapGetters(['isLogin', 'uid', 'globalData', 'bottomNavigationIsCustom']),
     displayProducts() {
       return this.productList.length > 0 ? this.productList : (this.useMock ? MOCK_PRODUCTS : []);
     }
   },
   data() {
     return {
+      urlDomain: this.$Cache.get("imgHost"),
       theme: app.globalData.theme,
       merId: 0,
       serviceOpen: false,
@@ -176,7 +183,8 @@ export default {
       page: 1,
       limit: 10,
       loadend: false,
-      useMock: false
+      useMock: false,
+      isActionsSticky: false
     }
   },
   onLoad(options) {
@@ -192,6 +200,9 @@ export default {
     this.productList = [];
     this.getClinicInfo();
     this.getProductList();
+  },
+  onPageScroll(e) {
+    this.isActionsSticky = e.scrollTop > 350;
   },
   onReachBottom() {
     this.getProductList();
@@ -541,6 +552,15 @@ export default {
   background: #fff;
   padding: 36rpx 20rpx 28rpx;
   margin-top: 20rpx;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1rpx solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.quick-actions--fixed {
+  border-bottom-color: #f0f0f0;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .action-card {

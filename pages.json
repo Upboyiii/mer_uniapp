@@ -77,6 +77,39 @@
 					// #endif
 				}
 			}
+		},
+		{
+			"path": "pages/physio/index",
+			"style": {
+				"navigationBarTitleText": "理疗",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/tongue/index",
+			"style": {
+				"navigationBarTitleText": "舌诊",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/clinic/home/index",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": false
+				}
+			}
 		}
 	],
 	"subPackages": [{
@@ -1740,18 +1773,6 @@
 		"name": "clinic",
 		"pages": [
 			{
-				"path": "home/index",
-				"style": {
-					"navigationBarTitleText": "诊所",
-					"enablePullDownRefresh": true,
-					"app-plus": {
-						"titleNView": {
-							"type": "default"
-						}
-					}
-				}
-			},
-			{
 				"path": "mall/index",
 				"style": {
 					"navigationBarTitleText": "诊所商城",
@@ -1856,22 +1877,22 @@
 				"text": "首页"
 			},
 			{
-				"pagePath": "pages/goods_cate/index",
+				"pagePath": "pages/physio/index",
 				"iconPath": "static/tabBar/fenwei.png",
 				"selectedIconPath": "static/tabBar/fenxuan.png",
-				"text": "分类"
+				"text": "理疗"
 			},
 			{
-				"pagePath": "pages/discover_index/index",
+				"pagePath": "pages/tongue/index",
 				"iconPath": "static/tabBar/tab3wei.png",
 				"selectedIconPath": "static/tabBar/tab3.png",
-				"text": "逛逛"
+				"text": "舌诊"
 			},
 			{
-				"pagePath": "pages/order_addcart/order_addcart",
-				"iconPath": "static/tabBar/gouwei.png",
-				"selectedIconPath": "static/tabBar/gouxuan.png",
-				"text": "购物车"
+				"pagePath": "pages/clinic/home/index",
+				"iconPath": "static/tabBar/merchantwei.png",
+				"selectedIconPath": "static/tabBar/merchantxuan.png",
+				"text": "门店"
 			},
 			{
 				"pagePath": "pages/user/index",

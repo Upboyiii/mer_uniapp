@@ -4,9 +4,16 @@
 		<view v-if="bottomNavigationList.length">
 			<view class="page-footer" id="target" :style="[isSmallPage?boxStyle:'']">
 				<view :style="[bgColor]" class="acea-row row-middle row-around bg-box">
-					<view class="foot-item" v-for="(item,index) in bottomNavigationList" :key="index"
+					<view class="foot-item" :class="{ 'foot-item--raised': isRaisedTab(item) }"
+						v-for="(item,index) in bottomNavigationList" :key="index"
 						@click="goRouter(item)">
-						<block v-if="item.link.split('?')[0] == activeRouter">
+						<block v-if="isRaisedTab(item)">
+							<view class="raised-circle">
+								<image class="raised-icon" src="/static/images/tongue-tab-icon.svg" mode="aspectFit"></image>
+							</view>
+							<view :class="normalizeLink(item.link).split('?')[0] == activeRouter ? 'txt' : 'unchecked'">{{item.name}}</view>
+						</block>
+						<block v-else-if="normalizeLink(item.link).split('?')[0] == activeRouter">
 							<image :src="item.checked"></image>
 							<view v-if="isSmallPage" class="txtchecked" :style="[checkColor]">{{item.name}}</view>
 							<view v-else class="txt">{{item.name}}</view>
@@ -135,7 +142,14 @@
 			}
 		},
 		methods: {
-      // 商户底部导航
+			normalizeLink(link) {
+				if (!link) return '';
+				return link.startsWith('/') ? link : '/' + link;
+			},
+			isRaisedTab(item) {
+				var link = this.normalizeLink(item.link).split('?')[0];
+				return link === '/pages/tongue/index';
+			},
       async getMerNavigation() {
          let data = await this.$store.dispatch("getMerNavigation", this.merId);
         this.bottomNavigationList  = (data || []).map(item => ({
@@ -148,7 +162,7 @@
 			navigationInfo() {
 				getBottomNavigationApi().then(res => {
 					let data = res.data;
-					this.isCustom = data.isCustom; //是否使用自定义导航，1使用，0不使用
+					this.isCustom = data.isCustom;
 					this.$store.commit('BottomNavigationIsCustom', this.isCustom == 1 ? true : false);
 					if (data.isCustom == 1) {
 						uni.hideTabBar()
@@ -162,21 +176,23 @@
 				this.$store.commit('Change_Advertisement', false);
 				var pages = getCurrentPages();
 				var page = (pages[pages.length - 1]).$page.fullPath;
-				if (item.link == page) return
-				if (['/pages/index/index', '/pages/order_addcart/order_addcart',
-						'/pages/user/index', '/pages/discover_index/index', '/pages/goods_cate/index'
-					].indexOf(item.link) > -1) {
+				var link = this.normalizeLink(item.link);
+				if (link == page) return
+				if (['/pages/index/index', '/pages/physio/index', '/pages/tongue/index',
+						'/pages/clinic/home/index', '/pages/user/index',
+						'/pages/order_addcart/order_addcart', '/pages/discover_index/index', '/pages/goods_cate/index'
+					].indexOf(link) > -1) {
 					uni.switchTab({
-						url: item.link,
+						url: link,
 						fail(err) {
 							uni.redirectTo({
-								url: item.link
+								url: link
 							})
 						}
 					})
 				} else {
 					uni.redirectTo({
-						url: item.link
+						url: link
 					})
 				}
 			}
@@ -251,6 +267,26 @@
 			width: 40rpx;
 			text-align: center;
 			margin: 0 auto;
+		}
+
+		.foot-item--raised {
+			margin-top: -50rpx;
+
+			.raised-circle {
+				width: 90rpx;
+				height: 90rpx;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #f0c27f 0%, #d4a24e 100%);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				box-shadow: 0 4rpx 16rpx rgba(212, 162, 78, 0.4);
+
+				.raised-icon {
+					width: 50rpx;
+					height: 50rpx;
+				}
+			}
 		}
 
 		.txtchecked {

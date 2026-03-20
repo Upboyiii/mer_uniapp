@@ -77,7 +77,7 @@
 
       <!-- 空状态 -->
       <view v-else-if="!loading" class="empty-wrap">
-        <empty-page title="无相关结果"></empty-page>
+        <empty-page title="无相关结果~" :imgSrc="urlDomain+'crmebimage/presets/noguanzhu.png'"></empty-page>
       </view>
 
       <!-- 加载状态 -->
@@ -155,6 +155,7 @@ export default {
   },
   data() {
     return {
+      urlDomain: this.$Cache.get("imgHost"),
       theme: app.globalData.theme,
       statusBarHeight: uni.getSystemInfoSync().statusBarHeight,
       merId: 0,

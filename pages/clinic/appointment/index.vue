@@ -68,7 +68,7 @@
 
     <!-- 空状态 -->
     <view v-else-if="!loading" class="empty-wrap">
-      <empty-page title="暂无数据"></empty-page>
+      <empty-page title="暂无预约记录~" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
     </view>
 
     <!-- 加载更多 -->
@@ -111,6 +111,7 @@ export default {
   },
   data() {
     return {
+      urlDomain: this.$Cache.get("imgHost"),
       theme: app.globalData.theme,
       merId: 0,
       currentStoreName: '',
