@@ -1806,17 +1806,53 @@
 					}
 				}
 			},
-			{
-				"path": "store_switch/index",
-				"style": {
-					"navigationBarTitleText": "",
-					"navigationStyle": "custom",
-					"app-plus": {
-						"titleNView": false
+		{
+			"path": "store_switch/index",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom",
+				"app-plus": {
+					"titleNView": false
+				}
+			}
+		},
+		{
+			"path": "doctor/index",
+			"style": {
+				"navigationBarTitleText": "名医专家",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
 					}
 				}
 			}
-		]
+		},
+		{
+			"path": "my_doctor/index",
+			"style": {
+				"navigationBarTitleText": "我的医生",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "my_therapist/index",
+			"style": {
+				"navigationBarTitleText": "我的理疗师",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		}
+	]
 	},
 	{
 		"root": "subPackage",

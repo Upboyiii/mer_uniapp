@@ -59,7 +59,7 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { getTherapistCategoryApi, getTherapistListApi } from '@/api/clinic.js';
+import { getTherapistCategoryApi, getTherapistListApi, getTherapistByMchApi } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
 
 let app = getApp();
@@ -130,12 +130,20 @@ export default {
       if (this.loadend) return;
       this.loading = true;
       let currentCate = this.categoryList[this.currentCateIndex];
-      getTherapistListApi({
-        merId: this.merId,
-        categoryId: currentCate ? currentCate.id : '',
+      let params = {
         page: this.page,
         limit: this.limit
-      }).then(res => {
+      };
+      let apiFn;
+      if (this.merId) {
+        params.mchId = this.merId;
+        apiFn = getTherapistByMchApi;
+      } else {
+        params.merId = this.merId;
+        params.categoryId = currentCate ? currentCate.id : '';
+        apiFn = getTherapistListApi;
+      }
+      apiFn(params).then(res => {
         let list = res.data.list || res.data || [];
         if (list.length < this.limit) this.loadend = true;
         this.therapistList = this.therapistList.concat(list);

@@ -88,6 +88,18 @@
         </view>
         <text class="action-label">我的钱包</text>
       </view>
+      <view class="action-card" @click="goDoctorList">
+        <view class="action-icon icon-doctor">
+          <text class="iconfont icon-ic_me"></text>
+        </view>
+        <text class="action-label">名医专家</text>
+      </view>
+      <view class="action-card" @click="goTherapistList">
+        <view class="action-icon icon-therapist">
+          <text class="iconfont icon-ic_time"></text>
+        </view>
+        <text class="action-label">理疗师</text>
+      </view>
     </view>
 
     <!-- 精选商品 -->
@@ -365,6 +377,14 @@ export default {
       if (item.id) {
         this.$util.navigateTo(`/pages/goods/goods_details/index?id=${item.id}`);
       }
+    },
+
+    goDoctorList() {
+      this.$util.navigateTo(`/pages/clinic/doctor/index?mchId=${this.merId}`);
+    },
+
+    goTherapistList() {
+      this.$util.navigateTo(`/pages/clinic/therapist/index?merId=${this.merId}`);
     }
   }
 }
@@ -548,6 +568,7 @@ export default {
 /* 快捷操作区 */
 .quick-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-around;
   background: #fff;
   padding: 36rpx 20rpx 28rpx;
@@ -557,6 +578,7 @@ export default {
   z-index: 10;
   border-bottom: 1rpx solid transparent;
   transition: border-color 0.2s, box-shadow 0.2s;
+  gap: 20rpx 0;
 }
 .quick-actions--fixed {
   border-bottom-color: #f0f0f0;
@@ -597,6 +619,14 @@ export default {
   &.icon-wallet {
     background: #fde8e8;
     .iconfont { color: #e74c3c; }
+  }
+  &.icon-doctor {
+    background: #e8f4fd;
+    .iconfont { color: #2980b9; }
+  }
+  &.icon-therapist {
+    background: #f0e8fd;
+    .iconfont { color: #8e44ad; }
   }
 }
 

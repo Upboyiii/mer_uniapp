@@ -69,3 +69,45 @@ export function switchClinicApi(id) {
 export function getClinicFeaturedProductApi(merId, data) {
   return request.get(`product/merchant/pro/list`, { merId, ...data }, {noAuth:true});
 }
+
+/**
+ * 获取医生列表（全平台）
+ */
+export function getDoctorListApi(data) {
+  return request.get('doctor/page/list', data, { noAuth: true });
+}
+
+/**
+ * 根据商户获取医生列表
+ */
+export function getDoctorByMchApi(data) {
+  return request.get('doctor/page/mch/list', data, { noAuth: true });
+}
+
+/**
+ * 我的医生列表
+ */
+export function getMyDoctorListApi(data) {
+  return request.get('doctor/page/user/list', data);
+}
+
+/**
+ * 获取理疗师列表（全平台，新接口）
+ */
+export function getTherapistPageListApi(data) {
+  return request.get('therapist/page/list', data, { noAuth: true });
+}
+
+/**
+ * 根据商户获取理疗师列表（新接口）
+ */
+export function getTherapistByMchApi(data) {
+  return request.get('therapist/page/mch/list', data, { noAuth: true });
+}
+
+/**
+ * 我的理疗师列表
+ */
+export function getMyTherapistListApi(data) {
+  return request.get('therapist/page/user/list', data);
+}
