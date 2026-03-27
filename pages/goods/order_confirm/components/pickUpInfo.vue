@@ -221,7 +221,7 @@
 					margin-top: 4rpx;
 					width: 6rpx;
 					height: 6rpx;
-					// background: #E93323;
+					// background: var(--view-theme);
 					@include main_bg_color(theme);
 					border-radius: 50%;
 				}

@@ -112,7 +112,7 @@
 				if (!this.isMarketingGoods) {
 					return setThemeColor()
 				}else{
-          return '#e93323'
+          return 'var(--view-theme)'
         }
 			}
 		},

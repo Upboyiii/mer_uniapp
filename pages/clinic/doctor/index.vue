@@ -44,24 +44,28 @@
               <text class="doctor-name">{{ item.name }}</text>
               <text class="doctor-title" v-if="item.hospitalTitle">{{ item.hospitalTitle }}</text>
             </view>
-            <view class="doctor-hospital" v-if="item.hospitalName">
-              <text>{{ item.hospitalName }}</text>
-              <text v-if="item.hospitalSub"> · {{ item.hospitalSub }}</text>
-              <text v-if="item.hospitalLevel" class="level-tag">{{ item.hospitalLevel }}</text>
+            <view class="doctor-hospital-wrap">
+              <view class="doctor-hospital" v-if="item.hospitalName">
+                <text>{{ item.hospitalName }}</text>
+                <text v-if="item.hospitalSub"> · {{ item.hospitalSub }}</text>
+                <text v-if="item.hospitalLevel" class="level-tag">{{ item.hospitalLevel }}</text>
+              </view>
             </view>
-            <view class="doctor-domain line2" v-if="item.hospitalDomain">
-              擅长：{{ item.hospitalDomain }}
+            <view class="doctor-domain-wrap">
+              <view class="doctor-domain line2" v-if="item.hospitalDomain">
+                擅长：{{ item.hospitalDomain }}
+              </view>
             </view>
             <view class="doctor-stats">
-              <view class="stat-item" v-if="item.score">
+              <view class="stat-item" v-if="hasStat(item.score)">
                 <text class="stat-val">{{ item.score }}</text>
                 <text class="stat-label">评分</text>
               </view>
-              <view class="stat-item" v-if="item.treatNum">
+              <view class="stat-item" v-if="hasStat(item.treatNum)">
                 <text class="stat-val">{{ item.treatNum }}</text>
                 <text class="stat-label">已治疗</text>
               </view>
-              <view class="stat-item" v-if="item.responseTime">
+              <view class="stat-item" v-if="hasStat(item.responseTime)">
                 <text class="stat-val">{{ item.responseTime }}min</text>
                 <text class="stat-label">响应</text>
               </view>
@@ -80,7 +84,7 @@
       </view>
 
       <view v-if="doctorList.length === 0 && !loading" class="empty-wrap">
-        <emptyPage title="暂无名医数据~" mTop="30%" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
+        <emptyPage title="暂无名医数据~" mTop="0" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
       </view>
 
       <view v-if="loading" class="loading-wrap">
@@ -182,6 +186,13 @@ export default {
         return this.$util.Tips({ title: "医生当前离线" });
       }
       this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
+    },
+
+    /** 接口有有效值才展示统计项（null/undefined/空串不展示；数字 0 视为无数据不展示） */
+    hasStat(val) {
+      if (val === null || val === undefined || val === "") return false;
+      if (typeof val === "number") return val > 0;
+      return String(val).trim() !== "";
     }
   }
 };
@@ -228,11 +239,14 @@ export default {
 
 .doctor-card {
   display: flex;
+  align-items: flex-start;
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx 24rpx;
   margin-bottom: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  min-height: 248rpx;
+  box-sizing: border-box;
 }
 
 .card-left {
@@ -261,6 +275,10 @@ export default {
 .card-center {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 120rpx;
 }
 
 .doctor-name-row {
@@ -284,10 +302,15 @@ export default {
   border-radius: 6rpx;
 }
 
+.doctor-hospital-wrap {
+  min-height: 40rpx;
+  margin-bottom: 8rpx;
+  box-sizing: border-box;
+}
+
 .doctor-hospital {
   font-size: 24rpx;
   color: #666;
-  margin-bottom: 8rpx;
 
   .level-tag {
     margin-left: 8rpx;
@@ -299,16 +322,25 @@ export default {
   }
 }
 
+.doctor-domain-wrap {
+  min-height: 72rpx;
+  margin-bottom: 12rpx;
+  box-sizing: border-box;
+}
+
 .doctor-domain {
   font-size: 24rpx;
   color: #999;
-  margin-bottom: 12rpx;
   line-height: 1.5;
 }
 
 .doctor-stats {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 24rpx;
+  min-height: 44rpx;
+  margin-top: auto;
 }
 
 .stat-item {
@@ -348,7 +380,13 @@ export default {
 }
 
 .empty-wrap {
-  padding-top: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400rpx;
+  padding: 60rpx 24rpx;
+  box-sizing: border-box;
 }
 
 .loading-wrap {

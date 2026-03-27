@@ -92,11 +92,10 @@
 		{
 			"path": "pages/tongue/index",
 			"style": {
-				"navigationBarTitleText": "舌诊",
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom",
 				"app-plus": {
-					"titleNView": {
-						"type": "default"
-					}
+					"titleNView": false
 				}
 			}
 		},
@@ -255,7 +254,7 @@
 					"path": "user_phone/index",
 					"style": {
 						"navigationBarTitleText": "修改手机号",
-						"navigationBarBackgroundColor": "#e93323"
+						"navigationBarBackgroundColor": "#3A9D8F"
 							// #ifdef MP || APP-PLUS
 							,
 						"navigationBarTextStyle": "black"
@@ -1903,7 +1902,7 @@
 	"tabBar": {
 		"custom": false,
 		"color": "#282828",
-		"selectedColor": "#fc4141",
+		"selectedColor": "#3A9D8F",
 		"borderStyle": "white",
 		"backgroundColor": "#ffffff",
 		"list": [{

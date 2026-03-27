@@ -120,7 +120,7 @@
 				extractCount: 0,
 				theme: app.globalData.theme,
 				commissionCount: 0,
-				bgColor: '#e93323'
+				bgColor: 'var(--view-theme)'
 			};
 		},
 		computed: mapGetters(['isLogin']),
@@ -244,6 +244,6 @@
 	}
 
 	.font_color {
-		color: #E93323 !important;
+		color: var(--view-theme) !important;
 	}
 </style>

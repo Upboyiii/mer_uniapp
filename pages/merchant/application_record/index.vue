@@ -165,7 +165,7 @@
 				}
 
 				.reason {
-					color: #E93323;
+					color: var(--view-theme);
 					font-weight: bold;
 					font-size: 24rpx;
 				}

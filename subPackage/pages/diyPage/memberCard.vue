@@ -358,7 +358,7 @@
 	}
 
 	.level-dot.current::before {
-		background-color: #ff4d4f;
+		background-color: var(--view-priceColor);
 		box-shadow: 0 0 0 6rpx rgba(255, 77, 79, 0.2);
 		width: 32rpx;
 		height: 32rpx;
@@ -371,7 +371,7 @@
 		top: -50rpx;
 		left: 50%;
 		transform: translateX(-50%);
-		background-color: #ff4d4f;
+		background-color: var(--view-priceColor);
 		color: #ffffff;
 		padding: 8rpx 20rpx;
 		border-radius: 30rpx;
@@ -381,7 +381,7 @@
 	}
 
 	.level-dot.current {
-		color: #ff4d4f;
+		color: var(--view-priceColor);
 		font-weight: bold;
 	}
 
@@ -415,7 +415,7 @@
 
 	.benefit-icon-content {
 		font-size: 56rpx;
-		color: #ff4d4f;
+		color: var(--view-priceColor);
 	}
 
 	.benefit-name {

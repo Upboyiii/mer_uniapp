@@ -17,7 +17,7 @@
 				</view>
 				<view class="card-info">
 					<view class="info-name">{{ item.name }}</view>
-					<view class="info-domain line2" v-if="item.hospitalDomain">
+					<view class="info-domain line1" v-if="item.hospitalDomain">
 						擅长：{{ item.hospitalDomain }}
 					</view>
 					<view class="info-stats">
@@ -28,10 +28,6 @@
 						<view class="stat" v-if="item.treatNum">
 							<text class="stat-val">{{ item.treatNum }}</text>
 							<text class="stat-label">已服务</text>
-						</view>
-						<view class="stat" v-if="item.responseTime">
-							<text class="stat-val">{{ item.responseTime }}min</text>
-							<text class="stat-label">响应</text>
 						</view>
 					</view>
 				</view>
@@ -115,14 +111,20 @@ export default {
 		},
 
 		goTherapistDetail(item) {
-			this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&merId=${item.mchId || 0}`);
+			if (item.mchId) {
+				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
+			}
 		},
 
 		goBookTherapist(item) {
 			if (!this.isLogin) {
 				return this.$util.navigateTo('/pages/users/login/index');
 			}
-			this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&merId=${item.mchId || 0}`);
+			if (item.mchId) {
+				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
+			} else {
+				this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
 		}
 	}
 };
@@ -146,6 +148,8 @@ export default {
 	padding: 28rpx 24rpx;
 	margin-bottom: 16rpx;
 	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+	min-height: 160rpx;
+	box-sizing: border-box;
 }
 
 .card-avatar {
@@ -162,6 +166,10 @@ export default {
 .card-info {
 	flex: 1;
 	overflow: hidden;
+	min-height: 110rpx;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 }
 
 .info-name {
@@ -174,13 +182,14 @@ export default {
 .info-domain {
 	font-size: 24rpx;
 	color: #999;
-	margin-bottom: 12rpx;
-	line-height: 1.5;
+	margin-bottom: 8rpx;
+	line-height: 1.4;
 }
 
 .info-stats {
 	display: flex;
 	gap: 24rpx;
+	min-height: 36rpx;
 }
 
 .stat {

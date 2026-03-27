@@ -3,7 +3,7 @@
 	<view class="content relative z-999">
 		<swiper class="swiper" :class="advData.adList.length==1?'on':''" :autoplay="autoplay" :duration="duration"
 			@change="stopChange" v-if="advData.adList.length" :indicator-dots="advData.adList.length>1?true:false"
-			indicator-active-color="#e93323" circular="true" :interval="3000">
+			indicator-active-color="var(--view-theme)" circular="true" :interval="3000">
 			<swiper-item v-for="(item,index) in advData.adList" :key="index" @click="jump(item.linkUrl)">
 				<view class="swiper-item">
 					<view class="swiper-item-img">

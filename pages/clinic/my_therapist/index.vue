@@ -120,14 +120,14 @@ export default {
     },
 
     goTherapistDetail(item) {
-      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&merId=${item.mchId || 0}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&mchId=${item.mchId || 0}`);
     },
 
     goBook(item) {
       if (!this.isLogin) {
         return this.$util.navigateTo("/pages/users/login/index");
       }
-      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&merId=${item.mchId || 0}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&mchId=${item.mchId || 0}`);
     }
   }
 };

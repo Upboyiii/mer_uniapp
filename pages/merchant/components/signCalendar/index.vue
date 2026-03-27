@@ -451,7 +451,7 @@
 	}
 
 	.redColor {
-		color: #ff0000;
+		color: var(--view-theme);
 	}
 
 	.redDot {

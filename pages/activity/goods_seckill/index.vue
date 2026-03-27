@@ -3,7 +3,7 @@
 		<view class='cart_nav'>
 			<view v-if="styleValue=='1'">
 				<nav-bar ref="navBarRef" @getNavH='getNavH' iconColor='#fff' :navTitle="pageScrollStatus ? '限时秒杀' : ''"
-					:backgroundColor="pageScrollStatus?'#e93323':''" :isBackgroundColor="false" :isHeight="false">
+					:backgroundColor="pageScrollStatus?'var(--view-theme)':''" :isBackgroundColor="false" :isHeight="false">
 				</nav-bar>
 			</view>
 			<view v-else>

@@ -184,6 +184,6 @@
 	}
 
 	.font_color {
-		color: #E93323 !important;
+		color: var(--view-theme) !important;
 	}
 </style>

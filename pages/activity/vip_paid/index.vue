@@ -337,7 +337,7 @@
 		.btn {
 			width: 520rpx;
 			height: 72rpx;
-			background: #E93323;
+			background: var(--view-theme);
 			border-radius: 43rpx 43rpx 43rpx 43rpx;
 			font-family: PingFang SC, PingFang SC;
 			font-weight: 400;
@@ -379,7 +379,7 @@
 		}
 
 		.icon-a-ic_CompleteSelect {
-			color: #E93323;
+			color: var(--view-theme);
 			font-style: normal;
 		}
 
@@ -691,7 +691,7 @@
 				padding: 0 12rpx;
 				border-radius: 22rpx 22rpx 22rpx 0;
 				margin-top: -18rpx;
-				background: linear-gradient(90deg, #FF7931 0%, #E93323 100%);
+				background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
 				font-size: 24rpx;
 				line-height: 44rpx;
 				color: #FFFFFF;

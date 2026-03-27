@@ -61,7 +61,7 @@
 				theme: this.$Cache.get("theme"),
 				bgColor: {
 					'bgColor': '#fff',
-					'Color': '#E93323',
+					'Color': 'var(--view-theme)',
 					'width': '36rpx',
 					'timeTxtwidth': '16rpx',
 					'isDay': true

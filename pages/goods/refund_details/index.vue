@@ -885,7 +885,7 @@
 
 		.price {
 			font-size: 26rpx;
-			color: #E93323;
+			color: var(--view-theme);
 		}
 	}
 

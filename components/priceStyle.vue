@@ -29,7 +29,7 @@
 
 <style lang="scss" scoped>
 	.price-box{
-		// color: #E93323;
+		// color: var(--view-theme);
 		// @include main_color(theme);
 		font-weight: 600;
 		.icon{
@@ -46,6 +46,6 @@
 		@include main_color(theme);
 	}
 	.activity-font-color {
-		color: #E93323 !important;
+		color: var(--view-theme) !important;
 	}
 </style>

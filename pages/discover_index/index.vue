@@ -910,7 +910,7 @@
 		text-align: center;
 		border-radius: 43rpx 43rpx 43rpx 43rpx;
 		opacity: 1;
-		border: 1px solid #E93323;
+		border: 1px solid var(--view-theme);
 		font-size: 32rpx;
 		margin: auto;
 		font-family: PingFang SC-Medium, PingFang SC;
@@ -1071,7 +1071,7 @@
 				opacity: 0;
 				width: 60rpx;
 				height: 4rpx;
-				background-color: #e93323;
+				background-color: var(--view-theme);
 			}
 		}
 	}

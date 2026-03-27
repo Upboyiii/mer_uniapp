@@ -190,7 +190,7 @@
 			//领取按钮
 			btnColorStyle() {
 				return [{
-					'background': `linear-gradient(90deg,${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[0].item:'#FF7931'}, ${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[1].item:this.themeColor})`,
+					'background': `linear-gradient(90deg,${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[0].item:'var(--view-theme)'}, ${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[1].item:this.themeColor})`,
 				}];
 			},
 		},
@@ -314,13 +314,13 @@
 		//background: url('../../static/images/couponBg2.png') !important;
 		.right {
 			width: 13%;
-			color: #e93323;
+			color: var(--view-theme);
 			font-weight: 400;
 			font-size: 13px;
 		}
 
 		.title {
-			color: #e93323;
+			color: var(--view-theme);
 		}
 
 		.sizePrice {
@@ -357,7 +357,7 @@
 					font-size: 40rpx;
 					font-family: D-DIN-PRO, D-DIN-PRO;
 					font-weight: 600;
-					color: #e93323;
+					color: var(--view-theme);
 					padding-top: 6px;
 					border-radius: 12rpx 12rpx 0 0;
 
@@ -382,7 +382,7 @@
 					left: 0;
 					width: 100%;
 					height: 78rpx;
-					// background: linear-gradient(90deg, #e93323 0%, #ff7931 100%);
+					// background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
 					color: #fff;
 					line-height: 92rpx;
 					border-radius: 0 0 30rpx 30rpx;
@@ -447,7 +447,7 @@
 					background: linear-gradient(0deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
 					border-radius: 12rpx;
 					text-align: center;
-					color: #e93323;
+					color: var(--view-theme);
 					display: flex;
 					flex-direction: column;
 					justify-content: center;

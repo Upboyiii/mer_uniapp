@@ -362,7 +362,7 @@
 				secondType: 0, //订单二级类型:0-普通订单，1-积分订单，2-虚拟订单，4-视频号订单，5-云盘订单，6-卡密订单
 				isShow: true,
 				theme: app.globalData.theme,
-				bgColor: '#e93323',
+				bgColor: 'var(--view-theme)',
 				userAddress: [],
 				shippingType: 1,
 				statusPic: '',

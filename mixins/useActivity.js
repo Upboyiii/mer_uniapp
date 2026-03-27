@@ -23,7 +23,7 @@ export default {
     },
     onPageScroll(e) {
         if(e.scrollTop > 20){
-            this.backgroundColor = '#E93323';
+            this.backgroundColor = 'var(--view-theme)';
         }else{
             this.backgroundColor = 'transparent';
         }

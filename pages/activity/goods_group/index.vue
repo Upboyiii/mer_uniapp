@@ -71,7 +71,7 @@
 		computed: {
 			...mapGetters(['isLogin', 'uid', 'globalData']),
 			gorupBtnBgColor() {
-				return `background: linear-gradient(90deg, #FF7931 0%, ${this.themeColor} 100%);`
+				return `background: linear-gradient(90deg, var(--view-theme) 0%, ${this.themeColor} 100%);`
 			}
 		},
 		components: {
@@ -203,7 +203,7 @@
 
 	.group-btn {
 		// @include coupons-gradient(theme);
-		// background: linear-gradient(90deg, #FF7931 0%, #40D1F4 100%);
+		// background: linear-gradient(90deg, var(--view-theme) 0%, #40D1F4 100%);
 		padding: 12rpx 20rpx;
 		border-radius: 50rpx;
 		border-radius: 25px 25px 25px 25px;

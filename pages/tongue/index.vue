@@ -119,6 +119,10 @@ export default {
 .tongue-page {
 	min-height: 100vh;
 	background: #fff;
+	/* 自定义导航后预留状态栏 / 刘海安全区 */
+	padding-top: constant(safe-area-inset-top);
+	padding-top: env(safe-area-inset-top);
+	box-sizing: border-box;
 }
 
 /* 顶部区域 */
@@ -133,14 +137,14 @@ export default {
 	left: 0;
 	right: 0;
 	height: 100%;
-	background: linear-gradient(180deg, var(--view-theme, #e93323) 0%, rgba(255,255,255,0) 100%);
+	background: linear-gradient(180deg, var(--view-theme, var(--view-theme)) 0%, rgba(255,255,255,0) 100%);
 	opacity: 0.1;
 }
 .bg-circle {
 	position: absolute;
 	border-radius: 50%;
 	opacity: 0.15;
-	background: var(--view-theme, #e93323);
+	background: var(--view-theme, var(--view-theme));
 }
 .bg-circle-1 {
 	width: 400rpx;
@@ -204,7 +208,7 @@ export default {
 	width: 380rpx;
 	height: 380rpx;
 	border-radius: 50%;
-	background: var(--view-theme, #e93323);
+	background: var(--view-theme, var(--view-theme));
 	opacity: 0.85;
 	display: flex;
 	justify-content: center;
@@ -251,7 +255,7 @@ export default {
 .label-left-bottom {
 	bottom: 60rpx;
 	left: -30rpx;
-	.label-text { color: var(--view-theme, #e93323); }
+	.label-text { color: var(--view-theme, var(--view-theme)); }
 }
 
 /* 注意事项 */
@@ -285,7 +289,7 @@ export default {
 }
 .tips-warn {
 	font-size: 24rpx;
-	color: var(--view-theme, #e93323);
+	color: var(--view-theme, var(--view-theme));
 	margin-top: 16rpx;
 	font-weight: 500;
 }
@@ -307,7 +311,7 @@ export default {
 .btn-primary {
 	width: 100%;
 	height: 90rpx;
-	background: var(--view-theme, #e93323);
+	background: var(--view-theme, var(--view-theme));
 	border-radius: 45rpx;
 	display: flex;
 	justify-content: center;

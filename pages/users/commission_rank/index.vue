@@ -57,7 +57,7 @@
 				ranking: 0,
 				isShow: false,
 				theme:app.globalData.theme,
-				bgColor:'#e93323'
+				bgColor:'var(--view-theme)'
 			};
 		},
 		computed: mapGetters(['isLogin', 'uid']),

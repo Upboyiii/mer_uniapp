@@ -131,7 +131,7 @@
 			},
 			onPageScroll(e) {
 				if (e.scrollTop > 130) {
-					this.backgroundColor = '#E93323';
+					this.backgroundColor = 'var(--view-theme)';
 					this.listZindex = 9
 					this.headerZindex = 99
 				} else {

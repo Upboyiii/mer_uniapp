@@ -96,6 +96,7 @@
 			</view>
 		</view>
 	</view>
+	</view>
 </template>
 
 <script>
@@ -767,7 +768,7 @@
 	}
 
 	.pos-order-goods .goods .picTxt .text .info .label {
-		color: #ff4c3c;
+		color: var(--view-priceColor);
 	}
 
 	.pos-order-goods .goods .picTxt .text .attr {
@@ -819,7 +820,7 @@
 	}
 
 	.public-total .money {
-		color: #ff4c3c;
+		color: var(--view-priceColor);
 	}
 
 	.mask {

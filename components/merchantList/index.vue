@@ -229,7 +229,7 @@
 
 		&-price {
 			font-size: 28rpx;
-			color: #FD502F;
+			color: var(--view-priceColor);
 			margin-top: 14rpx;
 		}
 

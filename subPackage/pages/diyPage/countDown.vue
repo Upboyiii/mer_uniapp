@@ -155,7 +155,7 @@
 	}
 
 	.red {
-		color: #fc4141;
+		color: var(--view-theme);
 		margin: 0 4rpx;
 	}
 
@@ -167,6 +167,6 @@
 		border-radius: 6px;
 		background: #fff;
 		font-size: 24rpx; */
-		color: #E93323;
+		color: var(--view-theme);
 	}
 </style>

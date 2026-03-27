@@ -300,7 +300,7 @@
 		align-items: center;
 		.self {
 			padding: 2rpx 6rpx;
-			// background: #E93323;
+			// background: var(--view-theme);
 			color: #fff;
 			border-radius: 3rpx;
 			margin-right: 10rpx;

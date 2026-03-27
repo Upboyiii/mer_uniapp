@@ -184,7 +184,7 @@
 				bg: '#fff',
 				endBg: 'linear-gradient(#666666, #999999)',
 				notBg: 'rgb(26, 163, 246)',
-				playBg: 'linear-gradient(#FF0000, #FF5400)',
+				playBg: 'linear-gradient(var(--view-theme), var(--view-theme))',
 			};
 		},
 		computed: {
@@ -574,7 +574,7 @@
 	.bgred {
 		width: 132rpx;
 		height: 38rpx;
-		background: linear-gradient(270deg, #F5742F 0%, #FF1717 100%)
+		background: linear-gradient(270deg, var(--view-theme) 0%, var(--view-theme) 100%)
 	}
 
 	.bggary {

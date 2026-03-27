@@ -99,7 +99,7 @@ export default {
           content: '';
           width: 56rpx;
           height: 4rpx;
-          background: #E93323;
+          background: var(--view-theme);
           border-radius: 2rpx;
           left:50%;
           margin-left: -28rpx;

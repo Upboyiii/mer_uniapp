@@ -69,7 +69,7 @@
 				background: #FFFFFF;
 				opacity: 0.9;
 				font-size: 26rpx;
-				color: #E93323;
+				color: var(--view-theme);
 				text-align: center;
 				padding: 6rpx 16rpx;
 				border-radius: 50rpx 40rpx 40rpx 0;

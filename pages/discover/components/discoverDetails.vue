@@ -25,7 +25,7 @@
         <view class="imageBox">
           <!--逛逛类型为图片，并且多张的时候  -->
           <swiper v-if="noteDetails.type ===1 && groupOfPictures"
-                  :indicator-dots="indicatorDots" indicator-active-color="#e93323" :circular="circular"
+                  :indicator-dots="indicatorDots" indicator-active-color="var(--view-theme)" :circular="circular"
                   :interval="interval" :duration="duration" :style="{height:imageH + 'px'}">
             <block v-for="(item,index) in noteDetails.image.split(',')" :key='index'>
               <swiper-item class="cover">
@@ -672,7 +672,7 @@ export default {
       background: #FDF3F2;
 
       .title {
-        color: #E93323;
+        color: var(--view-theme);
       }
     }
 
@@ -693,7 +693,7 @@ export default {
     }
 
     .icon-tishi {
-      color: #E93323;
+      color: var(--view-theme);
     }
 
     .status_info {

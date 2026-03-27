@@ -90,13 +90,13 @@
       </view>
       <view class="action-card" @click="goDoctorList">
         <view class="action-icon icon-doctor">
-          <text class="iconfont icon-ic_me"></text>
+          <text class="iconfont icon-ic_crown"></text>
         </view>
         <text class="action-label">名医专家</text>
       </view>
       <view class="action-card" @click="goTherapistList">
         <view class="action-icon icon-therapist">
-          <text class="iconfont icon-ic_time"></text>
+          <text class="iconfont icon-ic_leaf"></text>
         </view>
         <text class="action-label">理疗师</text>
       </view>
@@ -131,7 +131,7 @@
       </view>
 
       <view class="empty-products" v-else-if="!loading">
-        <empty-page title="暂无商品~" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
+        <empty-page title="暂无商品~" mTop="0" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
       </view>
     </view>
 
@@ -144,31 +144,12 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { getMerIndexInfoApi, getMerProListApi } from '@/api/merchant.js';
+import { getMerIndexInfoApi, getMerProListApi, getMerStreetApi } from '@/api/merchant.js';
 import { chatConfig } from '@/utils/consumerType.js';
 import emptyPage from '@/components/emptyPage.vue';
 import pageFooter from '@/components/pageFooter/index.vue';
 
 let app = getApp();
-
-const MOCK_CLINIC = {
-  name: '长沙县湘龙保利中医诊所',
-  openTime: '08:30 - 21:00',
-  addressDetail: '湖南省长沙市长沙县湘龙街道湘龙路42号保利香槟国际C18b栋102',
-  latitude: 28.228,
-  longitude: 112.939,
-  phone: '0731-88888888',
-  backImage: ''
-};
-
-const MOCK_PRODUCTS = [
-  { id: 1, name: '复合益生元饮品（20g*20袋/盒）', price: '299.00', image: '', deliveryType: 1 },
-  { id: 2, name: '枸杞酸枣仁膏', price: '499.00', image: '', deliveryType: 1 },
-  { id: 3, name: '黄精益智仁膏', price: '399.00', image: '', deliveryType: 1 },
-  { id: 4, name: '紫苏玫瑰膏', price: '359.00', image: '', deliveryType: 1 },
-  { id: 5, name: '红参阿胶固元膏（300g/罐）', price: '458.00', image: '', deliveryType: 1 },
-  { id: 6, name: '茯苓薏仁祛湿茶（5g*30包）', price: '168.00', image: '', deliveryType: 1 }
-];
 
 export default {
   components: {
@@ -178,7 +159,7 @@ export default {
   computed: {
     ...mapGetters(['isLogin', 'uid', 'globalData', 'bottomNavigationIsCustom']),
     displayProducts() {
-      return this.productList.length > 0 ? this.productList : (this.useMock ? MOCK_PRODUCTS : []);
+      return this.productList;
     }
   },
   data() {
@@ -195,23 +176,28 @@ export default {
       page: 1,
       limit: 10,
       loadend: false,
-      useMock: false,
       isActionsSticky: false
     }
   },
   onLoad(options) {
     if (options.merId) {
-      this.merId = parseInt(options.merId);
+      this.merId = parseInt(options.merId, 10);
+      this.getClinicInfo();
+      this.getProductList();
+    } else {
+      this.bootstrapDefaultStore();
     }
-    this.getClinicInfo();
-    this.getProductList();
   },
   onPullDownRefresh() {
     this.page = 1;
     this.loadend = false;
     this.productList = [];
-    this.getClinicInfo();
-    this.getProductList();
+    if (this.merId) {
+      this.getClinicInfo();
+      this.getProductList();
+    } else {
+      this.bootstrapDefaultStore();
+    }
   },
   onPageScroll(e) {
     this.isActionsSticky = e.scrollTop > 350;
@@ -220,26 +206,69 @@ export default {
     this.getProductList();
   },
   methods: {
+    /** 未带 merId 进入时：店铺街接口取第一个门店作为当前门店（与门店切换页同一套 merchant/street） */
+    bootstrapDefaultStore() {
+      this.loading = true;
+      uni.getLocation({
+        type: 'gcj02',
+        success: (res) => {
+          this.fetchFirstMerchantAsDefault(res.latitude, res.longitude);
+        },
+        fail: () => {
+          this.fetchFirstMerchantAsDefault(28.228, 112.939);
+        }
+      });
+    },
+
+    fetchFirstMerchantAsDefault(latitude, longitude) {
+      getMerStreetApi({
+        page: 1,
+        limit: 20,
+        latitude,
+        longitude
+      })
+        .then(res => {
+          let list = (res.data && res.data.list) || res.data || [];
+          if (!Array.isArray(list)) list = [];
+          const first = list[0];
+          if (first && first.id != null) {
+            this.merId = first.id;
+          }
+          this.getClinicInfo();
+          this.page = 1;
+          this.loadend = false;
+          this.productList = [];
+          this.getProductList();
+        })
+        .catch(() => {
+          this.getClinicInfo();
+          this.page = 1;
+          this.loadend = false;
+          this.productList = [];
+          this.getProductList();
+        });
+    },
+
     getClinicInfo() {
       if (!this.merId) {
-        this.clinicInfo = { ...MOCK_CLINIC };
-        this.useMock = true;
+        this.clinicInfo = {};
+        uni.setNavigationBarTitle({ title: '诊所' });
         return;
       }
       getMerIndexInfoApi(this.merId).then(res => {
         this.clinicInfo = res.data;
         uni.setNavigationBarTitle({ title: res.data.name || '诊所' });
       }).catch(() => {
-        this.clinicInfo = { ...MOCK_CLINIC };
-        this.useMock = true;
+        this.clinicInfo = {};
+        uni.setNavigationBarTitle({ title: '诊所' });
       });
     },
 
     getProductList() {
       if (this.loadend) return;
       if (!this.merId) {
-        this.useMock = true;
         this.loading = false;
+        uni.stopPullDownRefresh();
         return;
       }
       this.loading = true;
@@ -256,7 +285,6 @@ export default {
         uni.stopPullDownRefresh();
       }).catch(() => {
         this.loading = false;
-        this.useMock = true;
         uni.stopPullDownRefresh();
       });
     },
@@ -362,7 +390,7 @@ export default {
     },
 
     goAppointmentService() {
-      this.$util.navigateTo(`/pages/clinic/therapist/index?merId=${this.merId}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
     },
 
     goMyAppointment() {
@@ -384,7 +412,7 @@ export default {
     },
 
     goTherapistList() {
-      this.$util.navigateTo(`/pages/clinic/therapist/index?merId=${this.merId}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
     }
   }
 }
@@ -711,13 +739,13 @@ export default {
 .price-symbol {
   font-size: 24rpx;
   font-weight: 600;
-  color: #e93323;
+  color: var(--view-priceColor);
 }
 
 .price-num {
   font-size: 36rpx;
   font-weight: 600;
-  color: #e93323;
+  color: var(--view-priceColor);
 }
 
 .product-tag {
@@ -730,8 +758,13 @@ export default {
 }
 
 .empty-products {
-  padding-top: 60rpx;
-  padding-bottom: 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320rpx;
+  padding: 24rpx 0 80rpx;
+  box-sizing: border-box;
 }
 
 .safe-bottom {

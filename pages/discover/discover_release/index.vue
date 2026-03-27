@@ -209,7 +209,7 @@
 				sexindex: 0, //分类索引
 				categoryName: '', //分类名称
 				categoryList: [], //逛逛分类
-				indicatorBg: '#e93323',
+				indicatorBg: 'var(--view-theme)',
 				discoverTopicList: [], //选中的话题列表
 				replyStatus: false, //开关
 				showVideo: false, //预览视频弹窗
@@ -568,14 +568,14 @@
 				cursor: pointer;
 
 				&.on {
-					color: #E93323;
+					color: var(--view-theme);
 
 					&::after {
 						content: "";
 						display: inline-block;
 						width: 100%;
 						height: 3rpx;
-						background: #E93323;
+						background: var(--view-theme);
 						position: absolute;
 						bottom: 2rpx;
 						left: 0;
@@ -642,7 +642,7 @@
 			display: flex;
 			width: 58rpx;
 			height: 29rpx;
-			background: #E93323;
+			background: var(--view-theme);
 			border-radius: 0px 12rpx 0px 12rpx;
 			position: absolute;
 			left: 0;

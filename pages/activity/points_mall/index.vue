@@ -2,7 +2,7 @@
 	<view>
 		<!-- #ifdef MP || APP-->
 		<nav-bar ref="navBarRef" navTitle="积分商城" iconColor="#ffffff" :isBackgroundColor="false"
-			backgroundColor="linear-gradient( 90deg, #E93323 0%, #FF7931 100%)"></nav-bar>
+			backgroundColor="linear-gradient( 90deg, var(--view-theme) 0%, var(--view-theme) 100%)"></nav-bar>
 		<!-- #endif -->
     <view @touchstart="touchStart">
       <view class="header">
@@ -306,7 +306,7 @@
 	.header {
 		width: 100%;
 		height: 400rpx;
-		background: linear-gradient(90deg, #E93323 0%, #FF7931 100%);
+		background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
 		position: relative;
 
 		.record {
@@ -476,7 +476,7 @@
 
 					&.on {
 						font-weight: 500;
-						color: #E93323;
+						color: var(--view-theme);
 						position: relative;
 						font-size: 30rpx;
 
@@ -485,7 +485,7 @@
 							content: '';
 							width: 36rpx;
 							height: 30rpx;
-							border: 2px solid #E93323;
+							border: 2px solid var(--view-theme);
 							border-left: 2px solid transparent !important;
 							border-top: 2px solid transparent !important;
 							border-right: 2px solid transparent !important;

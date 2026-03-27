@@ -106,7 +106,7 @@
 			return {
 				promotionInfo: {},
 				theme: app.globalData.theme,
-				bgColor: '#e93323'
+				bgColor: 'var(--view-theme)'
 			};
 		},
 		computed: mapGetters(['isLogin']),
@@ -284,7 +284,7 @@
 
 	.my-promotion .list .item .iconfont {
 		font-size: 70rpx;
-		// background: linear-gradient(to right, #fc4d3d 0%, #e93323 100%);
+		// background: linear-gradient(to right, #fc4d3d 0%, var(--view-theme) 100%);
 		@include main_bg_color(theme);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;

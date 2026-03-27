@@ -217,7 +217,7 @@ export function couponTypeFilter(status) {
  */
 export function filterTheme(status) {
 	const statusMap = {
-		'theme1': '#e93323',
+		'theme1': '#3A9D8F',
 		'theme2': '#fe5c2d',
 		'theme3': '#42ca4d',
 		'theme4': '#1ca5e9',

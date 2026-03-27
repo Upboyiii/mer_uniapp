@@ -44,7 +44,7 @@
 		@include coupons_light_color(theme);
 	}
 	.text-color{
-		// color: #e93323;
+		// color: var(--view-theme);
 		@include main_color(theme);
 	}
 	.dot-line{

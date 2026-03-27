@@ -204,7 +204,7 @@ export default {
           justify-content: center;
           color: #fff;
           border-radius: 26rpx;
-          background: #E93323;
+          background: var(--view-theme);
           font-size: 20rpx;
         }
       }

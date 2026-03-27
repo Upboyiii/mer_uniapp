@@ -96,7 +96,7 @@
 			</view>
 		</view>
 		<view class="loadingicon acea-row row-center-wrapper">
-			<text class="loading iconfont icon-jiazai" :hidden="loading == false" style="color:#33;"></text>
+			<text class="loading iconfont icon-jiazai" :hidden="loading == false" style="color:#333333;"></text>
 		</view>
 		<view class="empty-boxs noContent" v-if="!list.length && loaded">
 			<emptyPage title="暂无优惠券可领取哦~" mTop="13%" :imgSrc="urlDomain + 'crmebimage/presets/noCoupon.png'">
@@ -468,9 +468,9 @@
 					}
 
 					.shiyong {
-						border: 2rpx solid #E93323;
+						border: 2rpx solid var(--view-theme);
 						background: none;
-						color: #E93323;
+						color: var(--view-theme);
 						border-radius: 26rpx;
 
 						&.disabled {
@@ -489,7 +489,7 @@
 		.list:nth-child(1) {
 			.right {
 				&::after {
-					background-color: #E93323;
+					background-color: var(--view-theme);
 				}
 			}
 		}

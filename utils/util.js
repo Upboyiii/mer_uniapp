@@ -1505,9 +1505,16 @@ export default {
 			})
 			// #endif
 		} else {
-			if (['/pages/goods_cate/index', '/pages/order_addcart/order_addcart', '/pages/user/index',
-					'/pages/discover_index/index', '/pages/index/index'
-				].indexOf(url) == -1) {
+			// 仅 pages.json 里 tabBar 配置的页面可 switchTab；购物车/分类/发现等已非 tab 时须 navigateTo
+			const pathOnly = url.split('?')[0];
+			const tabBarPaths = [
+				'/pages/index/index',
+				'/pages/physio/index',
+				'/pages/tongue/index',
+				'/pages/clinic/home/index',
+				'/pages/user/index'
+			];
+			if (tabBarPaths.indexOf(pathOnly) === -1) {
 				uni.navigateTo({
 					animationType: animationType.type,
 					animationDuration: animationType.duration,
@@ -1518,7 +1525,7 @@ export default {
 				uni.switchTab({
 					animationType: animationType.type,
 					animationDuration: animationType.duration,
-					url: url
+					url: pathOnly
 				})
 			}
 		}

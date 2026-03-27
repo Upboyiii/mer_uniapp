@@ -546,7 +546,7 @@
 			height: 86rpx;
 			margin-top: 100rpx;
 			border: 1px solid #d74432;
-			color: #e93323;
+			color: var(--view-theme);
 			font-size: 30rpx;
 			border-radius: 120rpx;
 		}
@@ -595,7 +595,7 @@
 		position: fixed;
 		left: 0;
 		top: 0;
-		background: linear-gradient(90deg, red 50%, #ff5400 100%);
+		background: linear-gradient(90deg, var(--view-theme) 50%, var(--view-theme) 100%);
 
 	}
 

@@ -28,7 +28,7 @@
 		<!-- 当前定位 -->
 		<view class="current-location">
 			<view class="location-item">
-				<view class="iconfont icon-ic_location1" style="color: #e93323; margin-right: 4rpx"></view>
+				<view class="iconfont icon-ic_location1" style="color: var(--view-theme); margin-right: 4rpx"></view>
 				<view class="location-info">
 					<text class="location-label">当前选择：</text>
 					<text class="location-name">{{ currentSelectedLocation }}</text>

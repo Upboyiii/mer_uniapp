@@ -195,7 +195,7 @@
 				font-size: 22rpx;
 				&.focusBtn{
 					color: #fff;
-					background: #E93323;
+					background: var(--view-theme);
 					border: none;
 					.iconfont{
 						font-size: 20rpx;

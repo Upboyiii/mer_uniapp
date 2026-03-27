@@ -350,7 +350,7 @@
     height: 100vh;
   }
 	.bg-color-red {
-		background-color: #E93323;
+		background-color: var(--view-theme);
 	}
 
 	.syspadding {

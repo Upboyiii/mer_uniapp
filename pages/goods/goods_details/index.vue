@@ -1009,15 +1009,21 @@
  				});
  				return;
  			}
- 			if (options.id) this.id = options.id;
- 			//订单中跳入商品详情，点击进入商品详情获取商品类型
- 			//marketingType商品类型:0-普通，1-秒杀seckill，2-拼团
- 			this.marketingType = Number(options.mt);
- 			// 仅仅小程序扫码进入获取商品id，商品类型
- 			if (options.scene) {
- 				let value = this.$util.getUrlParams(decodeURIComponent(options.scene));
- 				this.id = value.id ? value.id : "";
- 				this.marketingType = Number(value.mt);
+			if (options.id) this.id = options.id;
+			//订单中跳入商品详情，点击进入商品详情获取商品类型
+			//marketingType商品类型:0-普通，1-秒杀seckill，2-拼团（未传 mt 时 Number(undefined) 为 NaN，接口会报错）
+			{
+				const mtNum = Number(options.mt);
+				this.marketingType = Number.isFinite(mtNum) ? mtNum : 0;
+			}
+			// 仅仅小程序扫码进入获取商品id，商品类型
+			if (options.scene) {
+				let value = this.$util.getUrlParams(decodeURIComponent(options.scene));
+				this.id = value.id ? value.id : "";
+				{
+					const mtScene = Number(value.mt);
+					this.marketingType = Number.isFinite(mtScene) ? mtScene : 0;
+				}
  				if (value.sd) this.$store.commit('Change_Spread', value.sd);
  				if (value.gd) this.groupActivityId = value.gd; //拼团活动id
  				if (value.rd) this.groupRecordId = value.rd; //是否为参团
@@ -2786,7 +2792,7 @@
  	}
 
  	.color-normal {
- 		color: #e93323 !important;
+ 		color: var(--view-theme) !important;
  	}
 
  	.product-con .footer .item .iconfont.icon-ic_ShoppingCart {
@@ -3209,7 +3215,7 @@
  	}
 
  	.activityIcon {
- 		color: #e93323;
+ 		color: var(--view-theme);
  	}
 
  	.detailText {
@@ -3220,7 +3226,7 @@
  		width: 450rpx;
  		height: 76rpx;
  		line-height: 76rpx;
- 		background: #e93323;
+ 		background: var(--view-theme);
  		border-radius: 40rpx;
  		font-weight: 400;
  		font-size: 28rpx;
@@ -3228,13 +3234,13 @@
  	}
 
  	.group-buy {
- 		// background: #e93323;
+ 		// background: var(--view-theme);
  		@include main_bg_color(theme) border-radius: 0px 76rpx 76rpx 0px;
  	}
 
  	.group-buy2 {
  		width: 450rpx !important;
- 		// background: #e93323;
+ 		// background: var(--view-theme);
  		@include main_bg_color(theme) border-radius: 76rpx;
  	}
 
@@ -3244,14 +3250,14 @@
  		height: 5rpx;
  		background-repeat: no-repeat;
  		content: "";
- 		background: #e93323;
+ 		background: var(--view-theme);
  		bottom: -10rpx;
  		left: 50%;
  		margin-left: -28rpx;
  	}
 
  	.groupColor {
- 		color: #e93323;
+ 		color: var(--view-theme);
  	}
 
  	.theme-bg-color {

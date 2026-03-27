@@ -251,7 +251,7 @@
 				right: -15rpx;
 				color: #fff;
 				font-size: 20rpx;
-				background-color: #FD502F;
+				background-color: var(--view-priceColor);
 				border-radius: 50%;
 				padding: 4rpx;
 			}

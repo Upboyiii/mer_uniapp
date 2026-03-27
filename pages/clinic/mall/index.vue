@@ -314,13 +314,13 @@ export default {
 .price-symbol {
   font-size: 24rpx;
   font-weight: 600;
-  color: #e93323;
+  color: var(--view-priceColor);
 }
 
 .price-num {
   font-size: 36rpx;
   font-weight: 600;
-  color: #e93323;
+  color: var(--view-priceColor);
 }
 
 .product-tag {

@@ -103,7 +103,7 @@
 	}
 
 	.text-red {
-		color: #e93323;
+		color: var(--view-theme);
 	}
 
 	.pink-cell~.pink-cell {

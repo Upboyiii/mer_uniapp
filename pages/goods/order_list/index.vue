@@ -280,7 +280,7 @@
 				totalPrice: '0',
 				isShow: false,
 				theme: app.globalData.theme,
-				bgColor: '#e93323',
+				bgColor: 'var(--view-theme)',
 				keywords: '',
 				secondType: 0, //订单二级类型:0-普通订单，1-积分订单，2-虚拟订单，4-视频号订单，5-云盘订单，6-卡密订单
 				publicLoginType: app.globalData.publicLoginType, //公众号登录方式(单选),1微信授权，2手机号登录

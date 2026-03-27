@@ -78,7 +78,7 @@
 				number: this.dataConfig.number.tabVal,
 				isMany: this.dataConfig.tabConfig.tabVal,
 				docConfig: 0,
-				dotColor: '#E93323',
+				dotColor: 'var(--view-theme)',
 				menuList: [],
 				active: 0,
 				navHigh: 0

@@ -155,7 +155,7 @@
 				</view>
 				<view class="actualPay acea-row row-right">
 					实付款：
-					<BaseMoney :money="info.payPrice" symbolSize="24" integerSize="40" decimalSize="24" color="#E93323">
+					<BaseMoney :money="info.payPrice" symbolSize="24" integerSize="40" decimalSize="24" color="var(--view-theme)">
 					</BaseMoney>
 				</view>
 			</view>
@@ -727,7 +727,7 @@
 
 	.order-detail .nav .navCon .on {
 		font-weight: bold;
-		color: #e93323;
+		color: var(--view-theme);
 	}
 
 	.order-detail .nav .progress {
@@ -853,7 +853,7 @@
 	.order-detail .wrapper .actualPay .money {
 		font-weight: bold;
 		font-size: 30upx;
-		color: #e93323;
+		color: var(--view-theme);
 	}
 
 	.order-detail .footer {
@@ -969,7 +969,7 @@
 	}
 
 	.pos-order-goods .goods .picTxt .text .info .label {
-		color: #ff4c3c;
+		color: var(--view-priceColor);
 	}
 
 	.pos-order-goods .goods .picTxt .text .attr {
@@ -1022,7 +1022,7 @@
 	}
 
 	.public-total .money {
-		color: #ff4c3c;
+		color: var(--view-priceColor);
 	}
 
 	.copy-data {

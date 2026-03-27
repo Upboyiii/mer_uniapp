@@ -122,7 +122,7 @@
 
 					._price {
 						font-size: 34rpx;
-						color: #E93323;
+						color: var(--view-theme);
 						font-weight: 600;
 					}
 

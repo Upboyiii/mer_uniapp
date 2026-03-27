@@ -327,7 +327,7 @@
 			//按钮颜色
 			btnColor() {
 				return [{
-						background: `linear-gradient(to right,${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[0].item:'#FF7931'}, ${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[1].item:this.themeColor})`,
+						background: `linear-gradient(to right,${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[0].item:'var(--view-theme)'}, ${this.dataConfig.themeStyleConfig.tabVal?this.dataConfig.btnColor.color[1].item:this.themeColor})`,
 					},
 					{
 						color: this.dataConfig.btnFontColor.color[0].item,

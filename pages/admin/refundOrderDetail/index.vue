@@ -569,7 +569,7 @@ import {refundOrderList,refundOrderMark,refundStatusNum,refundOrderAudit,refundR
 
 	.order-details .nav .navCon .on {
 		font-weight: bold;
-		color: #e93323;
+		color: var(--view-theme);
 	}
 
 	.order-details .nav .progress {
@@ -652,7 +652,7 @@ import {refundOrderList,refundOrderMark,refundStatusNum,refundOrderAudit,refundR
 	.order-details .wrapper .actualPay .money {
 		font-weight: bold;
 		font-size: 30upx;
-		color: #e93323;
+		color: var(--view-theme);
 	}
 
 	.order-details .footer {

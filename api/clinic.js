@@ -29,11 +29,11 @@ export function getTherapistCategoryApi(merId) {
 }
 
 /**
- * 获取理疗师列表
+ * 获取理疗师列表（旧接口，已停用；统一走 therapist/page/mch/list + mchId）
  */
-export function getTherapistListApi(data) {
-  return request.get(`clinic/therapist/list`, data, {noAuth:true});
-}
+// export function getTherapistListApi(data) {
+//   return request.get(`clinic/therapist/list`, data, {noAuth:true});
+// }
 
 /**
  * 获取我的预约列表

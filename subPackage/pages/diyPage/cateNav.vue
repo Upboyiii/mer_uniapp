@@ -184,7 +184,7 @@
 						width: 40rpx;
 						height: 4rpx;
 						background: var(--color);
-						// background-color: #E93323;
+						// background-color: var(--view-theme);
 						position: absolute;
 						bottom: 0;
 						left: 50%;

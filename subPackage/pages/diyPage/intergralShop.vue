@@ -379,7 +379,7 @@
 							}
 
 							.groupNum {
-								color: #E93323;
+								color: var(--view-theme);
 								background: rgba(211, 56, 42, 0.1);
 								padding: 4rpx 12rpx;
 								border-radius: 0 8rpx 8rpx 0;

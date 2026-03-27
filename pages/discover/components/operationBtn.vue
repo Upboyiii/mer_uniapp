@@ -581,7 +581,7 @@
 				align-items: center;
 				justify-content: center;
 				color: #fff;
-				background: #E93323;
+				background: var(--view-theme);
 				border-radius: 100%;
 				position: relative;
 				top: -20rpx;
@@ -619,7 +619,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				color: #E93323;
+				color: var(--view-theme);
 				position: absolute;
 				right: 8rpx;
 				top: -12rpx;
@@ -631,7 +631,7 @@
 			color: #ffffff;
 
 			&.likeNumActive {
-				color: #E93323;
+				color: var(--view-theme);
 			}
 		}
 	}
@@ -769,7 +769,7 @@
 						justify-content: center;
 						color: #fff;
 						border-radius: 26rpx;
-						background: #E93323;
+						background: var(--view-theme);
 						font-size: 20rpx;
 					}
 				}

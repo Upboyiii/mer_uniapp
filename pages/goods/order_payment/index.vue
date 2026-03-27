@@ -325,7 +325,7 @@
 			}
 			
 			.iconfont.icon-ic_gouwujin {
-				background-color: #FF4619;
+				background-color: var(--view-theme);
 			}
 
 			.tip {

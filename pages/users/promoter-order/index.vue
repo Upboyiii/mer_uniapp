@@ -89,7 +89,7 @@
 				recordCount: 0,
 				time: 0,
 				theme: app.globalData.theme,
-				bgColor: '#e93323',
+				bgColor: 'var(--view-theme)',
 				loading: true
 			};
 		},

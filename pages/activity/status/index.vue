@@ -289,7 +289,7 @@
 				canvasStatus: false, //是否显示海报
 				bgColor: {
 					'bgColor': 'rgba(233,51,35,0.2)',
-					'Color': '#E93323',
+					'Color': 'var(--view-theme)',
 					'width': '36rpx',
 					'timeTxtwidth': '16rpx',
 					'isDay': true
@@ -328,7 +328,7 @@
 			// #ifdef MP
 			uni.setNavigationBarColor({
 				frontColor: '#ffffff',
-				backgroundColor: '#E93323',
+				backgroundColor: 'var(--view-theme)',
 			})
 			// #endif
 			//绑定分销关系
@@ -767,13 +767,13 @@
 </script>
 <style lang="scss" scoped>
 	.header-gradient {
-		background: linear-gradient(180deg, #E93323 0%, #E93323 52%, #F5F5F5 100%);
+		background: linear-gradient(180deg, var(--view-theme) 0%, var(--view-theme) 52%, #F5F5F5 100%);
 	}
 
 	.tuan-num {
 		width: 70rpx;
 		height: 32rpx;
-		background: #E93323;
+		background: var(--view-theme);
 		border-radius: 8rpx 0 0 8rpx;
 	}
 
@@ -785,7 +785,7 @@
 	}
 
 	.bg-red {
-		background: linear-gradient(90deg, #FF7931 0%, #E93323 100%) !important;
+		background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%) !important;
 	}
 
 	.notice-box {
@@ -886,7 +886,7 @@
 	}
 
 	.group-con .wrapper .title .name .timeTxt {
-		color: #fc4141;
+		color: var(--view-theme);
 	}
 
 	.group-con .wrapper .title .name /deep/.time .styleAll {
@@ -926,7 +926,7 @@
 			position: absolute;
 			width: 72rpx;
 			height: 30rpx;
-			background: #E93323;
+			background: var(--view-theme);
 			border-radius: 16rpx;
 			font-size: 20rpx;
 			color: #FFFFFF;
@@ -995,7 +995,7 @@
 		line-height: 88rpx;
 		color: #fff;
 		margin: 32rpx auto 0;
-		background-color: #e93323;
+		background-color: var(--view-theme);
 	}
 
 	.group-con .wrapper .cancel,
@@ -1112,7 +1112,7 @@
 		width: 70%;
 		height: 12rpx;
 		border-radius: 6rpx;
-		background: linear-gradient(90deg, #E93323 0%, #FF7931 100%);
+		background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
 	}
 
 	.play-wrapper .wrapper-main .progress .inner.inner1 {
@@ -1128,7 +1128,7 @@
 	}
 
 	.font-num-sucess {
-		color: #E93323 !important;
+		color: var(--view-theme) !important;
 	}
 
 	.font-num-err {
@@ -1268,7 +1268,7 @@
 	.groupBtn {
 		width: 144rpx;
 		height: 56rpx;
-		background: linear-gradient(90deg, #FF7931 0%, #E93323 100%);
+		background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
 		border-radius: 50rpx;
 		text-align: center;
 		line-height: 56rpx;
@@ -1320,13 +1320,13 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 50%;
-		border: 4rpx solid #E93323;
+		border: 4rpx solid var(--view-theme);
 	}
 
 	.sucess-tips {
-		color: #e93323 !important;
+		color: var(--view-theme) !important;
 	}
 	.color-e93323 {
-		color: #e93323 !important;
+		color: var(--view-theme) !important;
 	}
 </style>

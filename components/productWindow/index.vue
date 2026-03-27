@@ -267,7 +267,7 @@
       //价格颜色
       priceColor() {
         return {
-          'color': this.isMarketingGoods ? '#e93323' : '',
+          'color': this.isMarketingGoods ? 'var(--view-theme)' : '',
         }
       },
 			buyLimitNum() {
@@ -373,9 +373,9 @@
   }
 }
  .red-active{
-   border: 1px solid #e93323;
+   border: 1px solid var(--view-theme);
    .tname{
-     color: #e93323;
+     color: var(--view-theme);
      background-color: #FFF6F6;
    }
  }
@@ -446,7 +446,7 @@
 
 	.product-window .textpic .text .money {
 		font-size: 28rpx;
-    color: #e93323;
+    color: var(--view-theme);
 	}
 
 	.product-window .textpic .text .money .num {
@@ -627,7 +627,7 @@
 
 	.groupOn {
 		background: #FCEAE9 !important;
-		border: 1px solid #E93323 !important;
-		color: #E93323 !important;
+		border: 1px solid var(--view-theme) !important;
+		color: var(--view-theme) !important;
 	}
 </style>

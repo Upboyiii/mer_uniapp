@@ -780,13 +780,13 @@
 
 		.swiperTxt .text .label {
 			font-size: 20rpx;
-			color: #ff4c48;
+			color: var(--view-priceColor);
 			width: 64rpx;
 			height: 30rpx;
 			border-radius: 40rpx;
 			text-align: center;
 			line-height: 28rpx;
-			border: 2rpx solid #ff4947;
+			border: 2rpx solid var(--view-second-theme);
 		}
 
 		.swiperTxt .text .newsTitle {

@@ -32,12 +32,12 @@
 											<view class="vip" v-if="userInfo.vipIcon" @click="goEdit()">
 												<image :src="userInfo.vipIcon" alt=""></image>
 											</view>
-											<view class="vip" v-if="userInfo.isPaidMember"
-												@click="menusTap('/pages/activity/vip_paid/index')">
-												<image
-													:style="{'background-image': `url(${urlDomain}crmebimage/presets/viptu.png)`}">
-												</image>
-											</view>
+										<view class="vip" v-if="userInfo.isPaidMember"
+											@click="menusTap('/pages/activity/vip_paid/index')">
+											<image
+												:style="{'background-image': `url(${urlDomain}crmebimage/presets/viptu.png)`}">
+											</image>
+										</view>
 										</view>
 										<view class="num mt10" v-if="userInfo && userInfo.phone && uid"
 											@click="goEdit()">
@@ -48,47 +48,47 @@
 										<text class="iconfont icon-a-ic_setup1"></text>
 									</view>
 								</view>
-								<view class="num-wrapper tui-skeleton-rect">
-									<view class="num-item" @click="goMenuPage('/pages/merchant/user_integral/index')">
-										<text
-											class="num semiBold">{{userInfo.integral && uid ? userInfo.integral: 0}}</text>
-										<view class="txt">积分</view>
-									</view>
-									<view class="num-item" @click="goMenuPage('/pages/users/user_coupon/index')">
-										<text
-											class="num semiBold">{{userInfo.couponCount && uid ? userInfo.couponCount : 0}}</text>
-										<view class="txt">优惠券</view>
-									</view>
-									<view class="num-item"
-										@click="goMenuPage('/pages/goods/user_goods_collection/index')">
-										<text
-											class="num semiBold">{{userInfo.collectCount && uid ? userInfo.collectCount : 0}}</text>
-										<view class="txt">收藏</view>
-									</view>
-									<view class="num-item" @click="goMenuPage('/pages/goods/browsing_history/index')">
-										<text
-											class="num semiBold">{{userInfo.browseNum && uid ? userInfo.browseNum:0}}</text>
-										<view class="txt">浏览记录</view>
-									</view>
+							<view class="num-wrapper tui-skeleton-rect">
+								<view class="num-item" @click="goMenuPage('/pages/merchant/user_integral/index')">
+									<text
+										class="num semiBold">{{userInfo.integral && uid ? userInfo.integral: 0}}</text>
+									<view class="txt">积分</view>
+								</view>
+								<view class="num-item" @click="goMenuPage('/pages/users/user_coupon/index')">
+									<text
+										class="num semiBold">{{userInfo.couponCount && uid ? userInfo.couponCount : 0}}</text>
+									<view class="txt">优惠券</view>
+								</view>
+								<view class="num-item"
+									@click="goMenuPage('/pages/goods/user_goods_collection/index')">
+									<text
+										class="num semiBold">{{userInfo.collectCount && uid ? userInfo.collectCount : 0}}</text>
+									<view class="txt">收藏</view>
+								</view>
+								<view class="num-item" @click="goMenuPage('/pages/goods/browsing_history/index')">
+									<text
+										class="num semiBold">{{userInfo.browseNum && uid ? userInfo.browseNum:0}}</text>
+									<view class="txt">浏览记录</view>
 								</view>
 							</view>
-						</view>
-						<view v-show="userInfo.paidMemberPaidEntrance===1"
-							@click="menusTap('/pages/activity/vip_paid/index')" class="h-128 svip-box px-30 relative"
-							:style="{'background-image': `url(${urlDomain}crmebimage/presets/cardbj.png)`}">
-							<view class="acea-row row-middle row-between h-94">
-								<view class="acea-row">
-									<view class="w-34 h-28 no-repeat vipicon"
-										:style="{'background-image': `url(${urlDomain}crmebimage/presets/huangguan.png)`}">
-									</view>
-									<view class="f-s-24 text ml-12">加入SVIP畅享精彩</view>
-								</view>
-								<view class="acea-row row-middle">
-									<view class="f-s-24 text mr10">{{userInfo.isPaidMember?'去查看':'去开通'}}</view>
-									<text class="iconfont icon-ic_rightarrow text f-s-20"></text>
-								</view>
 							</view>
 						</view>
+					<view v-show="userInfo.paidMemberPaidEntrance===1"
+						@click="menusTap('/pages/activity/vip_paid/index')" class="h-128 svip-box px-30 relative"
+						:style="{'background-image': `url(${urlDomain}crmebimage/presets/cardbj.png)`}">
+						<view class="acea-row row-middle row-between h-94">
+							<view class="acea-row">
+								<view class="w-34 h-28 no-repeat vipicon"
+									:style="{'background-image': `url(${urlDomain}crmebimage/presets/huangguan.png)`}">
+								</view>
+								<view class="f-s-24 text ml-12">加入SVIP畅享精彩</view>
+							</view>
+							<view class="acea-row row-middle">
+								<view class="f-s-24 text mr10">{{userInfo.isPaidMember?'去查看':'去开通'}}</view>
+								<text class="iconfont icon-ic_rightarrow text f-s-20"></text>
+							</view>
+						</view>
+					</view>
 						<view class="order-wrapper tui-skeleton-rect 3cfea756"
 							:class="userInfo.paidMemberPaidEntrance===1?'mt34rpx':''">
 							<view class="order-hd flex">
@@ -111,7 +111,6 @@
 						</view>
 					</view>
 					<view class="contenBox borderPad" id="pageIndex">
-						<!-- 轮播 -->
 						<view class="slider-wrapper tui-skeleton-rect" @click.native="bindEdit('userBanner')"
 							v-if="centerBanner != null && centerBanner.length > 0">
 							<swiper v-if="centerBanner.length>0" indicator-dots="true" :autoplay="autoplay"
@@ -128,10 +127,11 @@
 						<view class="user-menus mt20 borRadius14" @click.native="bindEdit('userMenus')">
 							<view class="menu-title">我的服务</view>
 							<view class="list-box">
-								<block v-for="(item,index) in centerMenu" :key="index">
-									<view class="item tui-skeleton-rect" @click="menusTap(item.url)"
-										v-if="!(item.url =='/pages/service/index' || (item.url =='/pages/users/user_spread_user/index' && !isPromoter)||(!isEmployee&&item.url=='/pages/admin/work/index'))">
-										<image :src="item.pic"></image>
+								<block v-for="(item,index) in filteredCenterMenu" :key="index">
+									<view class="item tui-skeleton-rect" @click="onMyServiceItemClick(item)" v-if="item.url">
+										<view class="menu-icon-wrap icon-service-wrap">
+											<text class="iconfont" :class="item.icon"></text>
+										</view>
 										<text>{{item.name}}</text>
 									</view>
 								</block>
@@ -154,7 +154,24 @@
 								<!-- #endif -->
 							</view>
 						</view>
-						<!-- 商家管理 -->
+						<!-- 健康服务 -->
+						<view class="user-menus mt20 borRadius14">
+							<view class="menu-title">健康服务</view>
+							<view class="list-box">
+								<view class="item tui-skeleton-rect" @click="menusTap('/pages/clinic/my_doctor/index')">
+									<view class="menu-icon-wrap icon-doctor-wrap">
+										<text class="iconfont icon-ic_crown"></text>
+									</view>
+									<text>我的医生</text>
+								</view>
+								<view class="item tui-skeleton-rect" @click="menusTap('/pages/clinic/my_therapist/index')">
+									<view class="menu-icon-wrap icon-therapist-wrap">
+										<text class="iconfont icon-ic_leaf"></text>
+									</view>
+									<text>我的理疗师</text>
+								</view>
+							</view>
+						</view>
 						<view class="user-menus mt20 borRadius14" v-if="isEmployee">
 							<view class="menu-title">店铺管理</view>
 							<view class="list-box">
@@ -242,9 +259,22 @@
 	import pageFooter from "@/components/pageFooter/index.vue";
 	const app = getApp();
 	export default {
-		computed: mapGetters(['isLogin', 'chatUrl', 'uid', 'globalData', 'bottomNavigationIsCustom',
-			'merchantEmployeeList', 'isEmployee', 'selectMerId'
-		]),
+		computed: {
+			...mapGetters(['isLogin', 'chatUrl', 'uid', 'globalData', 'bottomNavigationIsCustom',
+				'merchantEmployeeList', 'isEmployee', 'selectMerId'
+			]),
+			filteredCenterMenu() {
+				return [
+					{ name: '购物车', url: '/pages/order_addcart/order_addcart', icon: 'icon-ic_ShoppingCart', navigate: true },
+					{ name: '门店入驻', url: '/pages/users/settled/index', icon: 'icon-ic_store3' },
+					{ name: '我的团队', url: '/pages/users/user_spread_user/index', icon: 'icon-ic_friends' },
+					{ name: '我的评价', url: '/pages/goods/evaluation_list/index', icon: 'icon-ic_pencil' },
+					{ name: '我的预约', url: '/pages/clinic/appointment/index', icon: 'icon-riqi' },
+					{ name: '地址管理', url: '/pages/address/user_address_list/index', icon: 'icon-ic_location' },
+					{ name: '申诉', url: '', icon: 'icon-ic_edit' },
+				];
+			}
+		},
 		data() {
 			return {
 				scrollHeight: 0,
@@ -313,7 +343,7 @@
 				//#endif
 				configApi: {}, //分享类容配置
 				theme: app.globalData.theme,
-				bgColor: '#e93323',
+				bgColor: '',
 				userInfo: {},
 				copyImage: '',
 				navH: '',
@@ -498,6 +528,17 @@
 					if (url === '/pages/activity/vip_paid/index' && this.userInfo.paidMemberPaidEntrance === 0) return
 					this.$util.navigateTo(url);
 				}
+			},
+			/** 「我的服务」：仅购物车跳转（原 tabBar 入口），其余暂为「正在开发中」 */
+			onMyServiceItemClick(item) {
+				if (item.navigate) {
+					this.menusTap(item.url);
+				} else {
+					this.myServiceDeveloping();
+				}
+			},
+			myServiceDeveloping() {
+				this.$util.Tips({ title: '正在开发中' });
 			},
 			//轮播图跳转
 			navito(url) {
@@ -961,6 +1002,33 @@
 
 			button {
 				font-size: 28rpx;
+			}
+
+			.menu-icon-wrap {
+				width: 52rpx;
+				height: 52rpx;
+				border-radius: 14rpx;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-bottom: 18rpx;
+
+				.iconfont {
+					font-size: 32rpx;
+					color: #fff;
+				}
+			}
+
+			.icon-doctor-wrap {
+				background: var(--view-theme);
+			}
+
+			.icon-therapist-wrap {
+				background: var(--view-second-theme);
+			}
+
+			.icon-service-wrap {
+				background: var(--view-theme);
 			}
 		}
 

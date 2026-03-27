@@ -450,7 +450,7 @@ export default {
       secondType: 0, //二级订单类型
       isShow: true,
       theme: app.globalData.theme,
-      bgColor: "#e93323",
+      bgColor: "var(--view-theme)",
       shippingType: 1,
       statusPic: "",
       isUserAddress: false, //是否只显示一次收货地址

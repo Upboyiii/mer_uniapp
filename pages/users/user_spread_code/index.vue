@@ -86,7 +86,7 @@
 				PromotionCode: '',
 				base64List: [],
 				canvasStatus: true, //海报绘图标签
-				bgColor: '#e93323'
+				bgColor: 'var(--view-theme)'
 			};
 		},
 		computed: mapGetters(['isLogin', 'uid', 'userInfo', 'globalData']),

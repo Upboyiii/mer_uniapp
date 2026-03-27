@@ -193,7 +193,7 @@
 				merId: 0,
 				goodScroll: true,
 				isShow: false,
-				bgColor: '#e93323',
+				bgColor: 'var(--view-theme)',
         marTop: 0,
 			};
 		},

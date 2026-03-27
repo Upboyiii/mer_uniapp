@@ -29,7 +29,7 @@
 						</view>
 					</scroll-view>
 					<view class="abs-lb w-full"
-						:style="{'background': pageScrollStatus ? '#e93323' : 'rgba(245,245,245,0.2)','height': pageScrollStatus ? '130rpx' : '96rpx'}">
+						:style="{'background': pageScrollStatus ? 'var(--view-theme)' : 'rgba(245,245,245,0.2)','height': pageScrollStatus ? '130rpx' : '96rpx'}">
 					</view>
 				</view>
 				<view class="bg--w111-f5f5f5 pt-32 pl-24 pr-24 relative">
@@ -79,6 +79,7 @@
 				</view>
 			</view>
 		</view>
+	</view>
 </template>
 
 <script>
@@ -187,7 +188,7 @@
           content:'';
           width:100%;
           height: 20px;
-          background-color: #E93323;
+          background-color: var(--view-theme);
           position: absolute;
           left: 0;
           bottom: -20rpx;
@@ -210,11 +211,11 @@
       max-width: 96rpx;
   }
   .fq{
-      background-color: #E93323;
+      background-color: var(--view-theme);
       color: #fff;
   }
   .text-primary{
-      color: #E93323;;
+      color: var(--view-theme);;
   }
   .text-line{
       text-decoration: line-through;
@@ -232,7 +233,7 @@
       .active{
           height: 18rpx;
           border-radius: 10rpx;
-          background: linear-gradient(90deg, #FF7931 0%, #E93323 100%);
+          background: linear-gradient(90deg, var(--view-theme) 0%, var(--view-theme) 100%);
       }
   }
   .qiang{
@@ -312,7 +313,7 @@
       border-radius: 18rpx;
       text-align: center;
       line-height: 36rpx;
-      background-color: #E93323;
+      background-color: var(--view-theme);
       font-size: 22rpx;
       color: #fff;
   }
@@ -332,6 +333,6 @@
 	  }
   }
   .brand-tag{
-  	background-color: #e93323 !important;
+  	background-color: var(--view-theme) !important;
   }
 </style>

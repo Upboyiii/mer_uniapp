@@ -16,10 +16,17 @@ import request from "@/utils/request.js";
  * @param int id
  * 
  */
-export function getProductDetail(id, marketingType, type,groupActivityId) {
-	return request.get(`product/detail?id=${id}&marketingType=${marketingType}&type=${type}&groupActivityId=${groupActivityId}`, {}, {
-		noAuth: true
-	});
+export function getProductDetail(id, marketingType, type, groupActivityId) {
+	const mt = Number(marketingType);
+	const safeMt = Number.isFinite(mt) ? mt : 0;
+	const gid = groupActivityId != null && groupActivityId !== "" ? groupActivityId : "";
+	return request.get(
+		`product/detail?id=${id}&marketingType=${safeMt}&type=${type}&groupActivityId=${gid}`,
+		{},
+		{
+			noAuth: true
+		}
+	);
 }
 
 /**

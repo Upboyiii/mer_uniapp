@@ -329,7 +329,7 @@
 			//价格颜色
 			priceColor() {
 				return {
-					'color': this.isMarketingGoods ? '#e93323' : '',
+					'color': this.isMarketingGoods ? 'var(--view-theme)' : '',
 				}
 			},
 			confirmShow() {

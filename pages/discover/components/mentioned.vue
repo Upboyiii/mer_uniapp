@@ -187,13 +187,13 @@
 
 						.sm {
 							font-weight: bold;
-							color: #E93323;
+							color: var(--view-theme);
 							font-size: 26rpx;
 						}
 
 						.text {
 							font-weight: bold;
-							color: #E93323;
+							color: var(--view-theme);
 							font-size: 34rpx;
 						}
 					}
@@ -206,7 +206,7 @@
 						justify-content: center;
 						font-size: 24rpx;
 						color: #fff;
-						background: #E93323;
+						background: var(--view-theme);
 					}
 				}
 			}

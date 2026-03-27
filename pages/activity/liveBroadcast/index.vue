@@ -94,7 +94,7 @@
 				pageloading: false,
 				endBg: 'linear-gradient(#666666, #999999)',
 				notBg: 'rgb(26, 163, 246)',
-				playBg: 'linear-gradient(#FF0000, #FF5400)',
+				playBg: 'linear-gradient(var(--view-theme), var(--view-theme))',
 			}
 		},
 		onLoad() {
