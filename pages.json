@@ -16,14 +16,12 @@
 			"style": {
 				"navigationBarTitleText": "首页",
 				"navigationStyle": "custom",
-				"usingComponents": {
-					"diy-page": "/subPackage/pages/diyPage/index",
-					"coupon-dialog":"/subPackage/pages/diyPage/couponDialog"
-				},
-				"componentPlaceholder": {
-					"diy-page": "view",
-					"coupon-dialog": "view"
-				},
+			"usingComponents": {
+				"coupon-dialog":"/subPackage/pages/diyPage/couponDialog"
+			},
+			"componentPlaceholder": {
+				"coupon-dialog": "view"
+			},
 				"navigationBarTextStyle": "black"
 					// #ifdef APP-PLUS
 					,
@@ -1785,7 +1783,18 @@
 			{
 				"path": "therapist/index",
 				"style": {
-					"navigationBarTitleText": "选择理疗师",
+					"navigationBarTitleText": "门店理疗预约",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "physio_book/index",
+				"style": {
+					"navigationBarTitleText": "理疗预约",
 					"app-plus": {
 						"titleNView": {
 							"type": "default"

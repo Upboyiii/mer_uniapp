@@ -96,8 +96,8 @@ export function productList(data) {
 }
 
 /**
- * 获取推荐产品
- * 
+ * 首页/推荐商品列表 GET /api/front/index/product/list
+ * @param {Object} params cid 一级分类 id，全部传 "0"；page；limit
  */
 export function getProductHot(params) {
 	return request.get("index/product/list", params, {

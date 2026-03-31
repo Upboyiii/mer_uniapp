@@ -36,7 +36,8 @@ export function getTherapistCategoryApi(merId) {
 // }
 
 /**
- * 获取我的预约列表
+ * 我的预约列表（旧路径 clinic/appointment/list，预约商品体系）
+ * 「我的预约」页已改用 getPhysiotherapyAppointmentListApi（interface.md 用户理疗预约）
  */
 export function getMyAppointmentListApi(data) {
   return request.get(`clinic/appointment/list`, data);
@@ -92,7 +93,9 @@ export function getMyDoctorListApi(data) {
 }
 
 /**
- * 获取理疗师列表（全平台，新接口）
+ * 理疗师分页（全平台可浏览）
+ * 完整路径：GET /api/front/therapist/page/list
+ * 与「用户理疗预约列表」无关：那是 therapist/physiotherapy-appointment/list（预约单，需登录）
  */
 export function getTherapistPageListApi(data) {
   return request.get('therapist/page/list', data, { noAuth: true });
@@ -100,6 +103,7 @@ export function getTherapistPageListApi(data) {
 
 /**
  * 根据商户获取理疗师列表（新接口）
+ * 用于「选理疗师去下单」；本店预约记录列表请用 getPhysiotherapyAppointmentListApi + mchId
  */
 export function getTherapistByMchApi(data) {
   return request.get('therapist/page/mch/list', data, { noAuth: true });
@@ -110,4 +114,57 @@ export function getTherapistByMchApi(data) {
  */
 export function getMyTherapistListApi(data) {
   return request.get('therapist/page/user/list', data);
+}
+
+/** GET /api/front/therapist/physiotherapy-category/list 理疗类目列表（含 code、名称、价格、时长） */
+export function getPhysiotherapyCategoryListApi(data) {
+  return request.get('therapist/physiotherapy-category/list', data, { noAuth: true });
+}
+
+// ========== interface.md：理疗预约 / 问诊 / 取消预约（与 /api/front 文档对应） ==========
+// 注意：以下为「理疗预约单」资源；therapist/page/list 是「理疗师人员」列表，路径与语义均不同。
+
+/** GET /api/front/therapist/physiotherapy-appointment/list — 当前用户的理疗预约分页（需登录；query: page,limit,mchId,status） */
+export function getPhysiotherapyAppointmentListApi(data) {
+  return request.get('therapist/physiotherapy-appointment/list', data);
+}
+
+/** GET /api/front/therapist/physiotherapy-appointment/info 理疗预约详情 */
+export function getPhysiotherapyAppointmentInfoApi(id) {
+  return request.get('therapist/physiotherapy-appointment/info', { id });
+}
+
+/** POST /api/front/therapist/physiotherapy-appointment/pay 理疗预约支付 */
+export function physiotherapyAppointmentPayApi(data) {
+  return request.post('therapist/physiotherapy-appointment/pay', data);
+}
+
+/** POST /api/front/therapist/physiotherapy-appointment/save 新增理疗预约 */
+export function physiotherapyAppointmentSaveApi(data) {
+  return request.post('therapist/physiotherapy-appointment/save', data);
+}
+
+/** GET /api/front/doctor/consultation/info 问诊详情 */
+export function getDoctorConsultationInfoApi(id) {
+  return request.get('doctor/consultation/info', { id });
+}
+
+/** GET /api/front/doctor/consultation/list 问诊分页列表 */
+export function getDoctorConsultationListApi(data) {
+  return request.get('doctor/consultation/list', data);
+}
+
+/** POST /api/front/doctor/consultation/pay 问诊支付 */
+export function doctorConsultationPayApi(data) {
+  return request.post('doctor/consultation/pay', data);
+}
+
+/** POST /api/front/doctor/consultation/save 新增问诊 */
+export function doctorConsultationSaveApi(data) {
+  return request.post('doctor/consultation/save', data);
+}
+
+/** POST /api/front/order/cancel/reservation/{orderNo} 取消预约服务订单 */
+export function cancelReservationOrderApi(orderNo) {
+  return request.post(`order/cancel/reservation/${orderNo}`, {});
 }

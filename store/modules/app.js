@@ -247,6 +247,8 @@ const mutations = {
 		state.globalData.routinePhoneVerification = data.routinePhoneVerification;
 		//登录页logo
 		state.globalData.mobileLoginLogo = data.mobileLoginLogo;
+		// 全局站点 logo（login/config，首页导航等）
+		state.globalData.logo = data.logo || '';
 		Cache.set(GLOBAL_DATA, state.globalData);
 		uni.setStorageSync('mobileLoginLogo', data.mobileLoginLogo);
 	},

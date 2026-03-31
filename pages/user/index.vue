@@ -265,7 +265,7 @@
 			]),
 			filteredCenterMenu() {
 				return [
-					{ name: '购物车', url: '/pages/order_addcart/order_addcart', icon: 'icon-ic_ShoppingCart', navigate: true },
+					{ name: '购物车', url: '/pages/order_addcart/order_addcart', icon: 'icon-ic_ShoppingCart' },
 					{ name: '门店入驻', url: '/pages/users/settled/index', icon: 'icon-ic_store3' },
 					{ name: '我的团队', url: '/pages/users/user_spread_user/index', icon: 'icon-ic_friends' },
 					{ name: '我的评价', url: '/pages/goods/evaluation_list/index', icon: 'icon-ic_pencil' },
@@ -529,13 +529,13 @@
 					this.$util.navigateTo(url);
 				}
 			},
-			/** 「我的服务」：仅购物车跳转（原 tabBar 入口），其余暂为「正在开发中」 */
+			/** 「我的服务」：有 url 则正常跳转；无 url 时提示开发中 */
 			onMyServiceItemClick(item) {
-				if (item.navigate) {
-					this.menusTap(item.url);
-				} else {
+				if (!item.url) {
 					this.myServiceDeveloping();
+					return;
 				}
+				this.menusTap(item.url);
 			},
 			myServiceDeveloping() {
 				this.$util.Tips({ title: '正在开发中' });

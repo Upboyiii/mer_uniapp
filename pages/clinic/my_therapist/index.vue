@@ -127,7 +127,19 @@ export default {
       if (!this.isLogin) {
         return this.$util.navigateTo("/pages/users/login/index");
       }
-      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&mchId=${item.mchId || 0}`);
+      const tid = item.id;
+      const mchId = item.mchId;
+      if (!tid || !mchId) {
+        return this.$util.Tips({ title: "缺少门店或理疗师信息" });
+      }
+      const q = [
+        `therapistId=${tid}`,
+        `mchId=${mchId}`,
+        `name=${encodeURIComponent(item.name || "")}`,
+        `domain=${encodeURIComponent(item.hospitalDomain || "")}`,
+        `picture=${encodeURIComponent(item.picture || "")}`
+      ].join("&");
+      this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
     }
   }
 };

@@ -61,11 +61,14 @@ import { getTherapistPageListApi } from '@/api/clinic.js';
 import pageFooter from '@/components/pageFooter/index.vue';
 import emptyPage from '@/components/emptyPage.vue';
 
+let app = getApp();
 export default {
 	components: { pageFooter, emptyPage },
 	data() {
 		return {
 			urlDomain: this.$Cache.get("imgHost"),
+			/** 与 getTheme 接口、pageFooter、clinic/therapist 一致，保证 --view-theme 随后台主题色 */
+			theme: this.$Cache.get('theme') || app.globalData.theme,
 			therapistList: [],
 			loading: false,
 			loadend: false,
@@ -74,10 +77,7 @@ export default {
 		};
 	},
 	computed: {
-		...mapGetters(['viewColor', 'keyColor', 'bottomNavigationIsCustom', 'isLogin']),
-		theme() {
-			return this.viewColor || '';
-		}
+		...mapGetters(['bottomNavigationIsCustom', 'isLogin'])
 	},
 	onLoad(options) {
 		this.getList();
@@ -120,11 +120,22 @@ export default {
 			if (!this.isLogin) {
 				return this.$util.navigateTo('/pages/users/login/index');
 			}
-			if (item.mchId) {
-				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
-			} else {
-				this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			const tid = item.id;
+			const mchId = item.mchId;
+			if (!tid) {
+				return this.$util.Tips({ title: '数据异常' });
 			}
+			if (!mchId) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			const q = [
+				`therapistId=${tid}`,
+				`mchId=${mchId}`,
+				`name=${encodeURIComponent(item.name || '')}`,
+				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
+				`picture=${encodeURIComponent(item.picture || '')}`
+			].join('&');
+			this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
 		}
 	}
 };
