@@ -1803,6 +1803,17 @@
 				}
 			},
 			{
+				"path": "physio_appointment_detail/index",
+				"style": {
+					"navigationBarTitleText": "预约详情",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
 				"path": "appointment/index",
 				"style": {
 					"navigationBarTitleText": "我的预约",

@@ -55,7 +55,7 @@
             <image :src="therapistAvatar(item)" mode="aspectFill"></image>
           </view>
           <view class="card-info">
-            <view class="card-name line1">{{ item.physiotherapyCategory || item.physiotherapyType || '理疗预约' }}</view>
+            <view class="card-name line1">{{ categoryName(item) }}</view>
             <view class="card-meta-line">
               <text class="meta-label">状态</text>
               <text class="meta-status" :class="statusBadgeClass(item.status)">{{ item.status | physioRowStatusFilter }}</text>
@@ -65,7 +65,10 @@
               {{ item.appointTime || '--' }}
             </view>
             <view class="card-time line1" v-if="item.address">地点：{{ item.address }}</view>
-            <view class="card-therapist">¥{{ item.fee != null ? item.fee : 0 }} · {{ item.payStatus | payStatusFilter }}</view>
+            <view class="card-bottom-pay">
+              <text class="fee-text">¥{{ formatFee(item.fee) }}</text>
+              <text class="pay-tag" :class="payTagClass(item.payStatus)">{{ item.payStatus | payStatusFilter }}</text>
+            </view>
           </view>
         </view>
         <view class="card-footer" v-if="canCancel(item)">
@@ -182,10 +185,38 @@ export default {
       if (t && t.name) return t.name;
       return '理疗预约';
     },
+    resolveImgUrl(path) {
+      if (!path || !String(path).trim()) return '';
+      const p = String(path).trim();
+      if (/^https?:\/\//i.test(p)) return p;
+      const base = (this.$Cache.get('imgHost') || '').replace(/\/?$/, '');
+      if (!base) return p;
+      return p.startsWith('/') ? base + p : `${base}/${p}`;
+    },
     therapistAvatar(item) {
       const p = item.therapistInfo && item.therapistInfo.picture;
-      if (p && String(p).trim()) return String(p).trim();
+      if (p && String(p).trim()) {
+        const u = this.resolveImgUrl(String(p).trim());
+        if (u) return u;
+      }
       return `${this.urlDomain}crmebimage/presets/morenT.png`;
+    },
+    categoryName(item) {
+      const c = item.physiotherapyCategoryInfo;
+      if (c && c.name) return c.name;
+      return item.physiotherapyCategory || item.physiotherapyType || '理疗项目';
+    },
+    payTagClass(ps) {
+      const n = Number(ps);
+      if (n === 0) return 'pay-unpaid';
+      if (n === 1) return 'pay-paid';
+      if (n === 2) return 'pay-refund';
+      return '';
+    },
+    formatFee(f) {
+      if (f == null || f === '') return '0';
+      const n = Number(f);
+      return isNaN(n) ? f : n;
     },
     /** 仅待服务且有关联订单号时可取消（与 status 0/1/2 筛选一致） */
     canCancel(item) {
@@ -269,11 +300,14 @@ export default {
       });
     },
     goDetail(item) {
-      if (item.payOrderNo) {
-        this.$util.navigateTo(`/pages/goods/order_details/index?orderNo=${item.payOrderNo}`);
-      } else {
-        this.$util.Tips({ title: '暂无关联订单' });
+      if (!item.id) {
+        return this.$util.Tips({ title: '缺少预约信息' });
       }
+      const q = [`id=${item.id}`];
+      if (this.currentStoreId > 0) q.push(`mchId=${this.currentStoreId}`);
+      const t = item.therapistInfo;
+      if (t && t.name) q.push(`therapistName=${encodeURIComponent(t.name)}`);
+      this.$util.navigateTo(`/pages/clinic/physio_appointment_detail/index?${q.join('&')}`);
     }
   }
 };
@@ -494,9 +528,40 @@ export default {
   margin-bottom: 6rpx;
 }
 
-.card-therapist {
-  font-size: 24rpx;
-  color: #666;
+.card-bottom-pay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1px solid #f0f0f0;
+}
+
+.fee-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #282828;
+}
+
+.pay-tag {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.pay-tag.pay-unpaid {
+  color: #ff6b35;
+  background: rgba(255, 107, 53, 0.12);
+}
+
+.pay-tag.pay-paid {
+  color: #19be6b;
+  background: rgba(25, 190, 107, 0.12);
+}
+
+.pay-tag.pay-refund {
+  color: #999;
+  background: #f5f5f5;
 }
 
 .card-footer {
@@ -533,4 +598,5 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 </style>

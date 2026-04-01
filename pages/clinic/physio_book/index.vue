@@ -189,26 +189,57 @@ export default {
 			// #endif
 			return { payChannel, payType };
 		},
-		markPhysioBookSuccessForPrevPage() {
-			const app = getApp();
-			if (app.globalData) {
-				app.globalData.physioBookJustCreated = true;
-			}
-		},
 		markAppointmentListNeedRefresh() {
 			const app = getApp();
 			if (app.globalData) {
 				app.globalData.physioAppointmentNeedRefresh = true;
 			}
 		},
+		/** 全局标记 + 直接让上一页重拉列表（不依赖 onShow 时序） */
+		notifyPrevPageRefresh() {
+			const app = getApp();
+			if (app.globalData) {
+				app.globalData.physioBookJustCreated = true;
+				app.globalData.physioAppointmentNeedRefresh = true;
+			}
+			try {
+				const pages = getCurrentPages();
+				if (pages.length < 2) return;
+				const prev = pages[pages.length - 2];
+				const vm = prev.$vm;
+				if (!vm) return;
+				if (typeof vm.resetList === 'function') vm.resetList();
+				vm.loading = false;
+				if (typeof vm.getAppointmentList === 'function' && vm.mchId) {
+					vm.getAppointmentList();
+				} else if (typeof vm.getList === 'function') {
+					vm.getList();
+				}
+			} catch (e) {}
+		},
+		goBackAfterSubmit() {
+			setTimeout(() => {
+				const pages = getCurrentPages();
+				if (pages.length > 1) {
+					uni.navigateBack({ delta: 1 });
+				} else {
+					uni.redirectTo({ url: '/pages/clinic/appointment/index' });
+				}
+			}, 400);
+		},
 		parseAppointmentId(inner) {
 			if (inner == null || inner === '') return null;
 			if (typeof inner === 'number' && !isNaN(inner)) return inner;
 			if (typeof inner === 'string') {
-				const n = parseInt(inner, 10);
-				return isNaN(n) ? inner : n;
+				const t = inner.trim();
+				if (!t) return null;
+				if (/^\d+$/.test(t)) return parseInt(t, 10);
+				return t;
 			}
-			if (typeof inner === 'object' && inner.id != null) return inner.id;
+			if (typeof inner === 'object') {
+				if (inner.id != null) return inner.id;
+				if (inner.data != null) return this.parseAppointmentId(inner.data);
+			}
 			return null;
 		},
 		submit() {
@@ -227,26 +258,27 @@ export default {
 				appointTime: this.appointTimeStr,
 				fee: this.fee
 			};
+			const feeNum = this.fee === '' || this.fee == null ? 0 : Number(this.fee);
 			this.submitting = true;
 			uni.showLoading({ title: '提交中…' });
 			physiotherapyAppointmentSaveApi(body)
 				.then((res) => {
 					const appointmentId = this.parseAppointmentId(res.data);
-					if (appointmentId == null || appointmentId === '') {
-						uni.hideLoading();
-						this.submitting = false;
-						return this.$util.Tips({ title: '创建成功' });
-					}
-					if (this.fee > 0) {
-						return this.doPay(appointmentId, this.fee);
+					const needPay = !isNaN(feeNum) && feeNum > 0;
+					if (needPay && appointmentId != null && appointmentId !== '') {
+						return this.doPay(appointmentId, feeNum);
 					}
 					uni.hideLoading();
 					this.submitting = false;
-					this.$util.Tips({ title: '预约已提交' });
-					this.markPhysioBookSuccessForPrevPage();
-					setTimeout(() => {
-						uni.navigateBack();
-					}, 400);
+					if (needPay && (appointmentId == null || appointmentId === '')) {
+						this.$util.Tips({
+							title: '创建成功，未返回预约编号，请到「我的预约」中完成支付'
+						});
+					} else {
+						this.$util.Tips({ title: '预约已提交' });
+					}
+					this.notifyPrevPageRefresh();
+					this.goBackAfterSubmit();
 				})
 				.catch((err) => {
 					uni.hideLoading();
