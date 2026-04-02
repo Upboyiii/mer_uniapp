@@ -1814,6 +1814,29 @@
 				}
 			},
 			{
+				"path": "therapist/detail",
+				"style": {
+					"navigationBarTitleText": "理疗师详情",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "therapist/mch_list",
+				"style": {
+					"navigationBarTitleText": "理疗师列表",
+					"enablePullDownRefresh": true,
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
 				"path": "physio_book/index",
 				"style": {
 					"navigationBarTitleText": "理疗预约",
@@ -1869,7 +1892,7 @@
 		{
 			"path": "doctor/index",
 			"style": {
-				"navigationBarTitleText": "名医专家",
+				"navigationBarTitleText": "名医列表",
 				"enablePullDownRefresh": true,
 				"app-plus": {
 					"titleNView": {

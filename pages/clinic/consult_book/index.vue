@@ -55,8 +55,6 @@
 					</view>
 				</view>
 
-				<!--
-				选择就诊患者（列表与手动选择已去掉；仍会在脚本中 loadPatients 并默认选中关联就诊人）
 				<view class="section-title">选择就诊患者</view>
 				<view class="add-patient" @click="onAddPatientHint">
 					<text class="iconfont icon-ic_add add-ico"></text>
@@ -88,7 +86,6 @@
 						</view>
 					</view>
 				</view>
-				-->
 				</view>
 			</scroll-view>
 
@@ -217,6 +214,8 @@ export default {
 			consultationId: null,
 			/** 与 loadPatients 并发去重，避免重复请求 */
 			_patientLoadPromise: null,
+			/** 跳过 onShow 首次触发，避免与 onLoad 重复拉取就诊人 */
+			_consultBookSkipFirstShow: true,
 			submitting: false,
 			safeBottom: 0,
 			statusBarHeight: 20,
@@ -266,6 +265,15 @@ export default {
 		this.safeBottom = (sys.safeAreaInsets && sys.safeAreaInsets.bottom) || 0;
 		this.statusBarHeight = sys.statusBarHeight || 20;
 		this.readPrefill();
+		this.loadPatients();
+	},
+	onShow() {
+		if (this.step !== 1) return;
+		if (this._consultBookSkipFirstShow) {
+			this._consultBookSkipFirstShow = false;
+			return;
+		}
+		this._patientLoadPromise = null;
 		this.loadPatients();
 	},
 	onBackPress() {
@@ -352,6 +360,9 @@ export default {
 			if (sex === 1) return '男';
 			if (sex === 2) return '女';
 			return '—';
+		},
+		onAddPatientHint() {
+			this.$util.navigateTo('/pages/users/patient_identity/form');
 		},
 		buildSaveBody() {
 			const feeNum = Number(this.consultFee);
@@ -592,8 +603,9 @@ export default {
 .step-1-body {
 	padding: 24rpx 24rpx 32rpx;
 	box-sizing: border-box;
-	background: var(--view-coupons-light-color, #f5f6f8);
+	background: transparent;
 	min-height: 120rpx;
+	border-top: 1rpx solid #e8e8e8;
 }
 
 .consult-hero {
@@ -678,6 +690,8 @@ export default {
 	padding: 28rpx 24rpx;
 	display: flex;
 	margin-bottom: 24rpx;
+	border: 1rpx solid #eee;
+	box-sizing: border-box;
 }
 
 .doc-avatar {
@@ -743,6 +757,8 @@ export default {
 	border-radius: 16rpx;
 	padding: 8rpx 24rpx 16rpx;
 	margin-bottom: 32rpx;
+	border: 1rpx solid #eee;
+	box-sizing: border-box;
 }
 
 .info-row {

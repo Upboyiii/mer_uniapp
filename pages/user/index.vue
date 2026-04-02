@@ -32,12 +32,14 @@
 											<view class="vip" v-if="userInfo.vipIcon" @click="goEdit()">
 												<image :src="userInfo.vipIcon" alt=""></image>
 											</view>
+										<!-- 入口关闭：付费会员角标跳转 SVIP
 										<view class="vip" v-if="userInfo.isPaidMember"
 											@click="menusTap('/pages/activity/vip_paid/index')">
 											<image
 												:style="{'background-image': `url(${urlDomain}crmebimage/presets/viptu.png)`}">
 											</image>
 										</view>
+										-->
 										</view>
 										<view class="num mt10" v-if="userInfo && userInfo.phone && uid"
 											@click="goEdit()">
@@ -48,6 +50,7 @@
 										<text class="iconfont icon-a-ic_setup1"></text>
 									</view>
 								</view>
+							<!-- 入口关闭：积分 / 优惠券 / 收藏 / 浏览记录
 							<view class="num-wrapper tui-skeleton-rect">
 								<view class="num-item" @click="goMenuPage('/pages/merchant/user_integral/index')">
 									<text
@@ -71,8 +74,10 @@
 									<view class="txt">浏览记录</view>
 								</view>
 							</view>
+							-->
 							</view>
 						</view>
+					<!-- 入口关闭：加入 SVIP
 					<view v-show="userInfo.paidMemberPaidEntrance===1"
 						@click="menusTap('/pages/activity/vip_paid/index')" class="h-128 svip-box px-30 relative"
 						:style="{'background-image': `url(${urlDomain}crmebimage/presets/cardbj.png)`}">
@@ -89,8 +94,8 @@
 							</view>
 						</view>
 					</view>
-						<view class="order-wrapper tui-skeleton-rect 3cfea756"
-							:class="userInfo.paidMemberPaidEntrance===1?'mt34rpx':''">
+					-->
+						<view class="order-wrapper tui-skeleton-rect 3cfea756 order-below-user">
 							<view class="order-hd flex">
 								<view class="left">订单中心</view>
 								<view class="right flex" @click="menusTap('/pages/goods/order_list/index')">查看全部
@@ -110,7 +115,8 @@
 							</view>
 						</view>
 					</view>
-					<view class="contenBox borderPad" id="pageIndex">
+					<view class="contenBox borderPad user-page-content" id="pageIndex">
+						<!-- 中间轮播关闭
 						<view class="slider-wrapper tui-skeleton-rect" @click.native="bindEdit('userBanner')"
 							v-if="centerBanner != null && centerBanner.length > 0">
 							<swiper v-if="centerBanner.length>0" indicator-dots="true" :autoplay="autoplay"
@@ -123,6 +129,7 @@
 								</block>
 							</swiper>
 						</view>
+						-->
 						<!-- 会员菜单 -->
 						<view class="user-menus mt20 borRadius14" @click.native="bindEdit('userMenus')">
 							<view class="menu-title">我的服务</view>
@@ -697,8 +704,9 @@
 		background-size: 100% 100%;
 	}
 
-	.mt34rpx {
-		margin-top: -34rpx;
+	/** 原 mt34rpx 为负边距，与 SVIP 条叠用；已去掉 SVIP/积分行后改为正间距，避免压住下方「我的服务」 */
+	.order-below-user {
+		margin-top: 24rpx;
 	}
 
 	.svip-box {
@@ -763,8 +771,18 @@
 
 		.headBox {
 			width: 100%;
-			height: 492rpx;
+			/* 原 492rpx：去掉积分行/轮播后头部变矮，过高仍盖住下方「我的服务」白卡 */
+			height: 360rpx;
+			z-index: 0;
 			@include index-gradient(theme);
+		}
+
+		.user-page-content {
+			position: relative;
+			z-index: 2;
+			margin-top: 24rpx;
+			padding-top: 8rpx;
+			box-sizing: border-box;
 		}
 
 		.head {

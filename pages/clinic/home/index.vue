@@ -94,13 +94,13 @@
         <view class="action-icon icon-doctor">
           <text class="iconfont icon-ic_crown"></text>
         </view>
-        <text class="action-label">名医专家</text>
+        <text class="action-label">名医列表</text>
       </view>
       <view class="action-card" @click="goTherapistList">
         <view class="action-icon icon-therapist">
           <text class="iconfont icon-ic_leaf"></text>
         </view>
-        <text class="action-label">理疗师</text>
+        <text class="action-label">理疗师列表</text>
       </view>
     </view>
 
@@ -408,7 +408,7 @@ export default {
 
     goAppointmentService() {
       this.markTherapistEnterFromStore();
-      this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/mch_list?mchId=${this.merId}`);
     },
 
     goMyAppointment() {
@@ -431,7 +431,7 @@ export default {
 
     goTherapistList() {
       this.markTherapistEnterFromStore();
-      this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
+      this.$util.navigateTo(`/pages/clinic/therapist/mch_list?mchId=${this.merId}`);
     },
 
     /** 从门店进理疗预约页：返回栈仅一层时 onBackPress 需回到门店 tab */

@@ -103,11 +103,11 @@
 					<!-- 名医专家 -->
 					<view v-if="currentTab === 0" class="tab-content tab-content-doctor">
 						<view v-if="doctorList.length > 0" class="doctor-list">
-							<!-- 先关闭整卡进详情，仅保留下方图文/视频入口 -->
 							<view
 								class="doctor-card"
 								v-for="(doc, index) in doctorList"
 								:key="doc.id || index"
+								@click="goDoctorDetail(doc)"
 							>
 								<view class="doc-avatar-wrap">
 									<view class="doc-avatar-circle">
@@ -183,10 +183,28 @@
 
 					<!-- 理疗专区 -->
 					<view v-if="currentTab === 1" class="tab-content">
-						<view v-if="therapistList.length > 0" class="therapist-list">
+						<view v-if="therapistList.length > 0" class="therapist-search-wrap">
+							<view class="therapist-search-inner">
+								<text class="iconfont icon-ic_search therapist-search-ico"></text>
+								<input
+									class="therapist-search-input"
+									type="text"
+									:value="therapistSearchKey"
+									placeholder="搜索姓名、擅长/理疗类型"
+									confirm-type="search"
+									@input="onTherapistSearchInput"
+								/>
+								<text
+									v-if="therapistSearchKey"
+									class="therapist-search-clear"
+									@click="therapistSearchKey = ''"
+								>×</text>
+							</view>
+						</view>
+						<view v-if="therapistListFiltered.length > 0" class="therapist-list">
 							<view
 								class="therapist-card"
-								v-for="(item, index) in therapistList"
+								v-for="(item, index) in therapistListFiltered"
 								:key="item.id || index"
 								@click="goTherapistDetail(item)"
 							>
@@ -212,6 +230,12 @@
 									<view class="book-btn" @click.stop="goBookTherapist(item)">预约</view>
 								</view>
 							</view>
+						</view>
+						<view
+							v-else-if="therapistList.length > 0 && therapistListFiltered.length === 0 && !therapistLoading"
+							class="therapist-search-empty"
+						>
+							<text>未找到相关理疗师</text>
 						</view>
 						<view v-if="therapistList.length === 0 && !therapistLoading" class="empty-state">
 							<emptyPage title="暂无理疗师~" mTop="0" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
@@ -356,6 +380,17 @@ export default {
 			if (!raw) return '';
 			const host = raw.replace(/\/?$/, '/');
 			return `${host}crmebimage/presets/noShopper.png`;
+		},
+		therapistListFiltered() {
+			const kw = (this.therapistSearchKey || '').trim().toLowerCase();
+			const list = this.therapistList || [];
+			if (!kw) return list;
+			return list.filter((t) => {
+				const name = (t.name || '').toLowerCase();
+				const domain = (t.hospitalDomain || '').toLowerCase();
+				const intro = (t.selfInfo || '').toLowerCase();
+				return name.indexOf(kw) !== -1 || domain.indexOf(kw) !== -1 || intro.indexOf(kw) !== -1;
+			});
 		}
 	},
 	components: {
@@ -381,9 +416,9 @@ export default {
 			showIndexDiy: false,
 			isTabSticky: false,
 
-			// 特色门诊（AI 项名称前增加与右侧一致的图标）
+			// 特色门诊：首项「快捷门诊」进首页第一位名医详情；其余可配 link 或敬请期待
 			clinicList: [
-				{ name: '失眠专病门诊', desc: '无忧入睡', icon: 'icon-ic_clock', link: '' },
+				{ name: '快捷门诊', desc: '快速接诊', icon: 'icon-ic_clock', link: '', quickDoctor: true },
 				{ name: '调养专病门诊', desc: '中医治根本', icon: 'icon-ic_leaf', link: '' },
 				{ name: '肥胖专病门诊', desc: '轻松享瘦', icon: 'icon-ic_crown', link: '' },
 				{ name: 'AI特色门诊', desc: '快速高效', icon: 'icon-ic_xuni', link: '', showTitleIcon: true, titleIcon: 'icon-ic_xuni' }
@@ -404,6 +439,7 @@ export default {
 			therapistLoading: false,
 			therapistLoadend: false,
 			therapistPage: 1,
+			therapistSearchKey: '',
 
 			// 平台商城
 			categoryList: [],
@@ -493,6 +529,7 @@ export default {
 				this.therapistPage = 1;
 				this.therapistLoadend = false;
 				this.therapistList = [];
+				this.therapistSearchKey = '';
 				this.getTherapistList();
 			} else if (this.currentTab === 2) {
 				this.mallPage = 1;
@@ -507,6 +544,9 @@ export default {
 			if (this.currentTab === 0) this.getDoctorList();
 			else if (this.currentTab === 1) this.getTherapistList();
 			else if (this.currentTab === 2) this.getMallProductList();
+		},
+		onTherapistSearchInput(e) {
+			this.therapistSearchKey = (e.detail && e.detail.value) != null ? e.detail.value : '';
 		},
 
 		// ==================== 名医专家 ====================
@@ -526,15 +566,13 @@ export default {
 				});
 		},
 
-		/** 整卡进详情已关闭；恢复时在 doctor-card 上写回 @click="goDoctorDetail(doc)" 并取消注释 */
-		// goDoctorDetail(doc) {
-		// 	try {
-		// 		if (doc && doc.id != null) {
-		// 			uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
-		// 		}
-		// 	} catch (e) {}
-		// 	this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
-		// },
+		goDoctorDetail(doc) {
+			if (!doc || doc.id == null) return;
+			try {
+				uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
+			} catch (e) {}
+			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
+		},
 
 		goConsult(doc, type) {
 			if (!this.isLogin) {
@@ -570,13 +608,25 @@ export default {
 		},
 
 		goTherapistDetail(item) {
-			if (item.mchId) {
-				try {
-					uni.setStorageSync('CLINIC_THERAPIST_REF', 'plat');
-					uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
-				} catch (e) {}
-				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
+			if (!item || item.id == null) {
+				return this.$util.Tips({ title: '数据异常' });
 			}
+			if (!item.mchId) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			try {
+				uni.setStorageSync('CLINIC_THERAPIST_REF', 'plat');
+				uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
+				uni.setStorageSync('therapist_detail_prefill_' + item.id, JSON.stringify(item));
+			} catch (e) {}
+			const q = [
+				`therapistId=${item.id}`,
+				`mchId=${item.mchId}`,
+				`name=${encodeURIComponent(item.name || '')}`,
+				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
+				`picture=${encodeURIComponent(item.picture || '')}`
+			].join('&');
+			this.$util.navigateTo(`/pages/clinic/therapist/detail?${q}`);
 		},
 
 		goBookTherapist(item) {
@@ -681,7 +731,34 @@ export default {
 		goClinicDetail(item) {
 			if (item.link) {
 				this.$util.navigateTo(item.link);
+				return;
 			}
+			if (item.quickDoctor) {
+				this.goFirstDoctorDetail();
+				return;
+			}
+			this.$util.Tips({ title: '敬请期待' });
+		},
+		/** 快捷门诊：进入当前列表第一位名医详情；列表未加载则请求一页 */
+		goFirstDoctorDetail() {
+			const first = this.doctorList && this.doctorList[0];
+			if (first && first.id != null) {
+				this.goDoctorDetail(first);
+				return;
+			}
+			getDoctorListApi({ page: 1, limit: 1 })
+				.then(res => {
+					const list = (res.data && res.data.list) || [];
+					const doc = list[0];
+					if (doc && doc.id != null) {
+						this.goDoctorDetail(doc);
+					} else {
+						this.$util.Tips({ title: '暂无名医数据' });
+					}
+				})
+				.catch(() => {
+					this.$util.Tips({ title: '加载失败' });
+				});
 		},
 
 		resolveImgUrl(path) {
@@ -1477,6 +1554,49 @@ page {
 }
 
 /* ==================== 理疗专区 ==================== */
+.therapist-search-wrap {
+	padding: 0 24rpx 16rpx;
+}
+
+.therapist-search-inner {
+	display: flex;
+	align-items: center;
+	height: 72rpx;
+	padding: 0 20rpx;
+	background: #f5f6f8;
+	border-radius: 36rpx;
+	box-sizing: border-box;
+}
+
+.therapist-search-ico {
+	font-size: 32rpx;
+	color: #bbb;
+	margin-right: 12rpx;
+	flex-shrink: 0;
+}
+
+.therapist-search-input {
+	flex: 1;
+	height: 72rpx;
+	font-size: 28rpx;
+	color: #333;
+}
+
+.therapist-search-clear {
+	font-size: 40rpx;
+	color: #ccc;
+	line-height: 1;
+	padding: 0 8rpx;
+	flex-shrink: 0;
+}
+
+.therapist-search-empty {
+	padding: 48rpx 24rpx;
+	text-align: center;
+	font-size: 26rpx;
+	color: #999;
+}
+
 .therapist-list {
 	padding-bottom: 20rpx;
 }

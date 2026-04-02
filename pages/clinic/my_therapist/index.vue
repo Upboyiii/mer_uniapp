@@ -120,7 +120,23 @@ export default {
     },
 
     goTherapistDetail(item) {
-      this.$util.navigateTo(`/pages/clinic/therapist/detail?id=${item.id}&mchId=${item.mchId || 0}`);
+      if (!item || item.id == null) {
+        return this.$util.Tips({ title: "数据异常" });
+      }
+      if (!item.mchId) {
+        return this.$util.Tips({ title: "该理疗师暂未关联门店" });
+      }
+      try {
+        uni.setStorageSync("therapist_detail_prefill_" + item.id, JSON.stringify(item));
+      } catch (e) {}
+      const q = [
+        `therapistId=${item.id}`,
+        `mchId=${item.mchId}`,
+        `name=${encodeURIComponent(item.name || "")}`,
+        `domain=${encodeURIComponent(item.hospitalDomain || "")}`,
+        `picture=${encodeURIComponent(item.picture || "")}`
+      ].join("&");
+      this.$util.navigateTo(`/pages/clinic/therapist/detail?${q}`);
     },
 
     goBook(item) {
