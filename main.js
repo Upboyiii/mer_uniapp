@@ -23,6 +23,23 @@ Vue.component('CloseIcon', CloseIcon)
 import BaseMoney from './components/BaseMoney.vue';
 Vue.component('BaseMoney', BaseMoney)
 
+// 全局 uni.showModal 默认中文按钮（H5 等端在英文环境下易出现 Cancel/OK）
+// (function patchShowModalZh() {
+// 	const raw = uni.showModal.bind(uni);
+// 	uni.showModal = function (options) {
+// 		const opt = options ? Object.assign({}, options) : {};
+// 		if (opt.confirmText === undefined || opt.confirmText === null) {
+// 			opt.confirmText = '确定';
+// 		}
+// 		if (opt.showCancel !== false) {
+// 			if (opt.cancelText === undefined || opt.cancelText === null) {
+// 				opt.cancelText = '取消';
+// 			}
+// 		}
+// 		return raw(opt);
+// 	};
+// })();
+
 Vue.prototype.$util = util;
 Vue.prototype.$config = configs;
 Vue.prototype.$Cache = Cache;

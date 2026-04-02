@@ -151,15 +151,24 @@ export default {
     if (!this.isLogin) {
       return this.$util.navigateTo('/pages/users/login/index');
     }
-    this.getList();
+    /**
+     * 预约成功后 physio_book 会设 physioAppointmentNeedRefresh。
+     * 若此处仍 getList，会与 onShow 里 reset+getList 并发，两页第一页数据 concat 叠一份（退出再进才正常）。
+     */
+    const app = getApp();
+    if (app.globalData && app.globalData.physioAppointmentNeedRefresh) {
+      this.loading = true;
+    } else {
+      this.getList();
+    }
   },
   onShow() {
     if (!this.isLogin) return;
     const app = getApp();
     if (app.globalData && app.globalData.physioAppointmentNeedRefresh) {
       app.globalData.physioAppointmentNeedRefresh = false;
-      this.loading = false;
       this.resetList();
+      this.loading = false;
       this.getList();
     }
   },

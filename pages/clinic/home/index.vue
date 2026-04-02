@@ -1,6 +1,7 @@
 <template>
   <view class="clinic-home" :data-theme="theme">
-    <!-- 浮动客服按钮：默认半藏，点击展开 -->
+    <!-- 浮动客服按钮：默认半藏，点击展开（先注释） -->
+    <!--
     <view
       class="service-drawer"
       :class="{ 'is-open': serviceOpen }"
@@ -14,6 +15,7 @@
         <text class="drawer-label">平台客服</text>
       </view>
     </view>
+    -->
 
     <!-- 顶部背景图 -->
     <view class="header-bg">
@@ -187,6 +189,21 @@ export default {
     } else {
       this.bootstrapDefaultStore();
     }
+  },
+  onShow() {
+    try {
+      const raw = uni.getStorageSync('CLINIC_HOME_MER_ID');
+      if (!raw) return;
+      uni.removeStorageSync('CLINIC_HOME_MER_ID');
+      const n = parseInt(raw, 10);
+      if (!n || isNaN(n)) return;
+      if (n !== this.merId) this.merId = n;
+      this.page = 1;
+      this.loadend = false;
+      this.productList = [];
+      this.getClinicInfo();
+      if (this.merId) this.getProductList();
+    } catch (e) {}
   },
   onPullDownRefresh() {
     this.page = 1;
@@ -390,6 +407,7 @@ export default {
     },
 
     goAppointmentService() {
+      this.markTherapistEnterFromStore();
       this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
     },
 
@@ -412,7 +430,16 @@ export default {
     },
 
     goTherapistList() {
+      this.markTherapistEnterFromStore();
       this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${this.merId}`);
+    },
+
+    /** 从门店进理疗预约页：返回栈仅一层时 onBackPress 需回到门店 tab */
+    markTherapistEnterFromStore() {
+      try {
+        uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
+        uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(this.merId));
+      } catch (e) {}
     }
   }
 }

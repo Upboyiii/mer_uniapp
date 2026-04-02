@@ -166,11 +166,23 @@ export default {
       return this.$util.navigateTo('/pages/users/login/index');
     }
     this.resetList();
-    if (this.mchId) {
+    const app = getApp();
+    /** 与 appointment/index：避免 onLoad 与 onShow(physioBookJustCreated) 重复拉第一页 */
+    const skipFirstLoad = app.globalData && app.globalData.physioBookJustCreated;
+    if (this.mchId && !skipFirstLoad) {
       this.getAppointmentList();
-    } else {
+    } else if (this.mchId && skipFirstLoad) {
+      this.loading = true;
+    } else if (!this.mchId) {
       this.loading = false;
     }
+  },
+  /**
+   * 栈里只有当前页时（如分享直达），系统返回会落到首页 tab；
+   * 从门店进入时已写入 CLINIC_THERAPIST_REF=store，此处回到门店 tab。
+   */
+  onBackPress() {
+    return this.handleTherapistBack();
   },
   onShow() {
     if (!this.isLogin) return;
@@ -178,13 +190,40 @@ export default {
     if (app.globalData && app.globalData.physioBookJustCreated) {
       app.globalData.physioBookJustCreated = false;
       if (this.mchId) {
-        this.loading = false;
         this.resetList();
+        this.loading = false;
         this.getAppointmentList();
       }
     }
   },
   methods: {
+    handleTherapistBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        return false;
+      }
+      let ref = '';
+      let mer = '';
+      try {
+        ref = uni.getStorageSync('CLINIC_THERAPIST_REF') || '';
+        mer = uni.getStorageSync('CLINIC_THERAPIST_BACK_MER') || '';
+      } catch (e) {}
+      try {
+        uni.removeStorageSync('CLINIC_THERAPIST_REF');
+        uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
+      } catch (e) {}
+
+      const mch = this.mchId || (mer ? parseInt(mer, 10) : 0);
+      if (ref === 'store' && mch) {
+        try {
+          uni.setStorageSync('CLINIC_HOME_MER_ID', String(mch));
+        } catch (e) {}
+        uni.switchTab({ url: '/pages/clinic/home/index' });
+      } else {
+        uni.switchTab({ url: '/pages/index/index' });
+      }
+      return true;
+    },
     therapistTitle(item) {
       const t = item.therapistInfo;
       return t && t.name ? t.name : '理疗预约';

@@ -164,6 +164,32 @@ export function doctorConsultationSaveApi(data) {
   return request.post('doctor/consultation/save', data);
 }
 
+/** GET /api/front/doctor/patient-identity/list 就诊人（患者身份）分页 */
+export function getPatientIdentityListApi(data) {
+  return request.get('doctor/patient-identity/list', data);
+}
+
+/** POST /api/front/doctor/patient-identity/save 新增就诊人 */
+export function patientIdentitySaveApi(data) {
+  return request.post('doctor/patient-identity/save', data);
+}
+
+/** GET /api/front/doctor/patient-identity/info 就诊人详情 */
+export function getPatientIdentityInfoApi(id) {
+  return request.get('doctor/patient-identity/info', { id });
+}
+
+/** GET /api/front/doctor/patient-identity/delete 删除就诊人 */
+export function patientIdentityDeleteApi(id) {
+  return request.get('doctor/patient-identity/delete', { id });
+}
+
+/** POST /api/front/doctor/patient-identity/update 修改就诊人（id 为 query） */
+export function patientIdentityUpdateApi(id, data) {
+  const q = encodeURIComponent(id);
+  return request.post(`doctor/patient-identity/update?id=${q}`, data);
+}
+
 /** POST /api/front/order/cancel/reservation/{orderNo} 取消预约服务订单 */
 export function cancelReservationOrderApi(orderNo) {
   return request.post(`order/cancel/reservation/${orderNo}`, {});

@@ -78,16 +78,18 @@
 <script>
 import { mapGetters } from 'vuex';
 import pageFooter from '@/components/pageFooter/index.vue';
+
+let app = getApp();
 export default {
 	components: { pageFooter },
 	data() {
-		return {};
+		return {
+			/** 与 getTheme / 门店、理疗等页一致，保证 --view-* 随后台主题 */
+			theme: this.$Cache.get('theme') || app.globalData.theme
+		};
 	},
 	computed: {
-		...mapGetters(['viewColor', 'keyColor', 'bottomNavigationIsCustom']),
-		theme() {
-			return this.viewColor || '';
-		}
+		...mapGetters(['bottomNavigationIsCustom'])
 	},
 	onLoad(options) {},
 	methods: {
@@ -116,9 +118,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* 舌诊页：主色 + 天青/浅蓝系，避免 second-theme 偏橙红 */
+$tongue-sky-light: #7dd3fc;
+$tongue-sky-mid: #38bdf8;
+$tongue-sky-deep: #0ea5e9;
+
 .tongue-page {
 	min-height: 100vh;
-	background: #fff;
+	background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 45%, #f1f5f9 100%);
 	/* 自定义导航后预留状态栏 / 刘海安全区 */
 	padding-top: constant(safe-area-inset-top);
 	padding-top: env(safe-area-inset-top);
@@ -137,14 +144,19 @@ export default {
 	left: 0;
 	right: 0;
 	height: 100%;
-	background: linear-gradient(180deg, var(--view-theme, var(--view-theme)) 0%, rgba(255,255,255,0) 100%);
-	opacity: 0.1;
+	background: linear-gradient(
+		180deg,
+		rgba(56, 189, 248, 0.35) 0%,
+		rgba(186, 230, 253, 0.2) 50%,
+		rgba(255, 255, 255, 0) 100%
+	);
+	opacity: 1;
 }
 .bg-circle {
 	position: absolute;
 	border-radius: 50%;
-	opacity: 0.15;
-	background: var(--view-theme, var(--view-theme));
+	opacity: 0.35;
+	background: linear-gradient(135deg, var(--view-theme), $tongue-sky-mid);
 }
 .bg-circle-1 {
 	width: 400rpx;
@@ -179,19 +191,21 @@ export default {
 .main-title {
 	font-size: 56rpx;
 	font-weight: bold;
-	color: #333;
+	color: #0369a1;
 	letter-spacing: 4rpx;
 }
 .sub-badge {
 	margin-top: 20rpx;
 	padding: 10rpx 36rpx;
-	background: rgba(255, 255, 255, 0.85);
+	background: rgba(255, 255, 255, 0.95);
 	border-radius: 30rpx;
-	border: 1rpx solid rgba(0,0,0,0.05);
+	border: 1rpx solid rgba(56, 189, 248, 0.45);
+	box-shadow: 0 4rpx 16rpx rgba(14, 165, 233, 0.12);
 }
 .sub-badge-text {
 	font-size: 26rpx;
-	color: #666;
+	color: #0284c7;
+	font-weight: 500;
 }
 
 /* 舌诊圆形区 */
@@ -208,12 +222,12 @@ export default {
 	width: 380rpx;
 	height: 380rpx;
 	border-radius: 50%;
-	background: var(--view-theme, var(--view-theme));
-	opacity: 0.85;
+	background: linear-gradient(145deg, var(--view-theme) 0%, $tongue-sky-mid 45%, $tongue-sky-light 100%);
+	opacity: 0.98;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	box-shadow: 0 0 60rpx rgba(0, 0, 0, 0.08);
+	box-shadow: 0 16rpx 48rpx rgba(14, 165, 233, 0.28);
 }
 .tongue-inner {
 	width: 280rpx;
@@ -234,8 +248,9 @@ export default {
 	position: absolute;
 	padding: 12rpx 24rpx;
 	border-radius: 20rpx;
-	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+	box-shadow: 0 4rpx 20rpx rgba(14, 165, 233, 0.15);
 	background: #fff;
+	border: 1rpx solid rgba(186, 230, 253, 0.9);
 }
 .label-text {
 	font-size: 24rpx;
@@ -245,17 +260,23 @@ export default {
 .label-left-top {
 	top: 40rpx;
 	left: -20rpx;
-	.label-text { color: #4caf50; }
+	.label-text {
+		color: #0369a1;
+	}
 }
 .label-right-top {
 	top: 80rpx;
 	right: -30rpx;
-	.label-text { color: #4285f4; }
+	.label-text {
+		color: $tongue-sky-deep;
+	}
 }
 .label-left-bottom {
 	bottom: 60rpx;
 	left: -30rpx;
-	.label-text { color: var(--view-theme, var(--view-theme)); }
+	.label-text {
+		color: #0284c7;
+	}
 }
 
 /* 注意事项 */
@@ -281,15 +302,15 @@ export default {
 	height: 90rpx;
 	margin-bottom: 10rpx;
 	border-radius: 50%;
-	background: #f5f5f5;
+	background: #e0f2fe;
 }
 .tip-name {
 	font-size: 22rpx;
-	color: #666;
+	color: #64748b;
 }
 .tips-warn {
 	font-size: 24rpx;
-	color: var(--view-theme, var(--view-theme));
+	color: #0c4a6e;
 	margin-top: 16rpx;
 	font-weight: 500;
 }
@@ -306,18 +327,18 @@ export default {
 }
 .history-text {
 	font-size: 28rpx;
-	color: #666;
+	color: #0284c7;
 }
 .btn-primary {
 	width: 100%;
 	height: 90rpx;
-	background: var(--view-theme, var(--view-theme));
+	background: linear-gradient(90deg, var(--view-theme) 0%, $tongue-sky-deep 55%, #0369a1 100%);
 	border-radius: 45rpx;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	margin-bottom: 24rpx;
-	box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+	box-shadow: 0 10rpx 32rpx rgba(14, 165, 233, 0.35);
 }
 .btn-primary-text {
 	font-size: 32rpx;
@@ -329,7 +350,7 @@ export default {
 	width: 100%;
 	height: 88rpx;
 	background: #fff;
-	border: 2rpx solid #e0e0e0;
+	border: 2rpx solid #7dd3fc;
 	border-radius: 44rpx;
 	display: flex;
 	justify-content: center;
@@ -342,6 +363,6 @@ export default {
 }
 .btn-share-text {
 	font-size: 28rpx;
-	color: #333;
+	color: #0369a1;
 }
 </style>

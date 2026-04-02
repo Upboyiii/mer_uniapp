@@ -50,7 +50,7 @@
 		<view class="tip">选择理疗项目后费用将自动填入；提交后若费用大于 0 需在线支付。</view>
 
 		<view class="footer">
-			<button class="submit-btn bg-color" :disabled="submitting" @click="submit">
+			<button class="book-main bg-color" hover-class="book-main-hover" :disabled="submitting" @click="submit">
 				{{ submitting ? '提交中…' : '提交预约' }}
 			</button>
 		</view>
@@ -99,7 +99,8 @@ export default {
 	mixins: [orderPay],
 	data() {
 		return {
-			theme: app.globalData.theme,
+			/** 与 physio/index、getTheme 缓存一致，保证 --view-theme 为后台接口下发的主题色 */
+			theme: this.$Cache.get('theme') || app.globalData.theme,
 			therapistId: 0,
 			mchId: 0,
 			therapistName: '',
@@ -426,7 +427,8 @@ export default {
 	box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 
-.submit-btn {
+/* 与 pages/clinic/therapist/index「新增预约」一致：book-main + 全局 bg-color 纯色主题 */
+.book-main {
 	width: 100%;
 	height: 88rpx;
 	line-height: 88rpx;
@@ -434,6 +436,21 @@ export default {
 	font-size: 30rpx;
 	color: #fff;
 	border: none;
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+.book-main::after {
+	border: none;
+}
+
+.book-main-hover {
+	opacity: 0.92;
+}
+
+.book-main[disabled] {
+	opacity: 0.55;
 }
 
 .line1 {

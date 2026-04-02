@@ -175,6 +175,11 @@ export default {
     },
 
     goDoctorDetail(item) {
+      try {
+        if (item && item.id != null) {
+          uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
+        }
+      } catch (e) {}
       this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
     },
 
@@ -185,6 +190,11 @@ export default {
       if (item.onlineStatus !== 1) {
         return this.$util.Tips({ title: "医生当前离线" });
       }
+      try {
+        if (item && item.id != null) {
+          uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
+        }
+      } catch (e) {}
       this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
     },
 

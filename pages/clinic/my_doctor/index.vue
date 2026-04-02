@@ -121,6 +121,11 @@ export default {
     },
 
     goDoctorDetail(item) {
+      try {
+        if (item && item.id != null) {
+          uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
+        }
+      } catch (e) {}
       this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
     },
 
@@ -128,6 +133,11 @@ export default {
       if (!this.isLogin) {
         return this.$util.navigateTo("/pages/users/login/index");
       }
+      try {
+        if (item && item.id != null) {
+          uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
+        }
+      } catch (e) {}
       this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
     }
   }

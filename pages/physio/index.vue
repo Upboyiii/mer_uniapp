@@ -5,34 +5,40 @@
 			<view
 				class="therapist-card"
 				v-for="(item, index) in therapistList"
-				:key="item.id || index"
+				:key="'physio-t-' + index + '-' + (item.id != null ? item.id : '')"
 				@click="goTherapistDetail(item)"
 			>
-				<view class="card-avatar">
-					<image
-						class="avatar"
-						:src="item.picture || '/static/images/f.png'"
-						mode="aspectFill"
-					></image>
-				</view>
-				<view class="card-info">
-					<view class="info-name">{{ item.name }}</view>
-					<view class="info-domain line1" v-if="item.hospitalDomain">
-						擅长：{{ item.hospitalDomain }}
+				<view class="therapist-card-row">
+					<view class="card-avatar">
+						<image
+							class="avatar"
+							:src="item.picture || '/static/images/f.png'"
+							mode="aspectFill"
+						></image>
 					</view>
-					<view class="info-stats">
-						<view class="stat" v-if="item.score">
-							<text class="stat-val">{{ item.score }}</text>
-							<text class="stat-label">评分</text>
+					<view class="card-info">
+						<view class="info-name">{{ item.name }}</view>
+						<view class="info-domain line1" v-if="item.hospitalDomain">
+							擅长：{{ item.hospitalDomain }}
 						</view>
-						<view class="stat" v-if="item.treatNum">
-							<text class="stat-val">{{ item.treatNum }}</text>
-							<text class="stat-label">已服务</text>
+						<view class="info-stats">
+							<view class="stat" v-if="item.score">
+								<text class="stat-val">{{ item.score }}</text>
+								<text class="stat-label">评分</text>
+							</view>
+							<view class="stat" v-if="item.treatNum">
+								<text class="stat-val">{{ item.treatNum }}</text>
+								<text class="stat-label">已服务</text>
+							</view>
 						</view>
 					</view>
+					<view class="card-action">
+						<view class="book-btn" @click.stop="goBookTherapist(item)">预约</view>
+					</view>
 				</view>
-				<view class="card-action">
-					<view class="book-btn" @click.stop="goBookTherapist(item)">预约</view>
+				<!-- 小程序对 1rpx+渐变 常只渲染异常，用外层居中 + 内层 border 画 92% 线 -->
+				<view v-if="index < therapistList.length - 1" class="card-divider">
+					<view class="card-divider-line"></view>
 				</view>
 			</view>
 		</view>
@@ -45,9 +51,6 @@
 		<!-- 加载状态 -->
 		<view v-if="loading" class="loading-wrap">
 			<text>加载中...</text>
-		</view>
-		<view v-if="loadend && therapistList.length > 0" class="loading-wrap">
-			<text>没有更多了</text>
 		</view>
 
 		<view v-if="bottomNavigationIsCustom" class="footerBottom"></view>
@@ -112,6 +115,10 @@ export default {
 
 		goTherapistDetail(item) {
 			if (item.mchId) {
+				try {
+					uni.setStorageSync('CLINIC_THERAPIST_REF', 'plat');
+					uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
+				} catch (e) {}
 				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
 			}
 		},
@@ -148,19 +155,52 @@ export default {
 }
 
 .therapist-list {
-	padding: 16rpx 24rpx;
+	padding: 0;
+	background: #fff;
 }
 
 .therapist-card {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
 	background: #fff;
-	border-radius: 16rpx;
+	border-radius: 0;
+	margin: 0;
+	box-shadow: none;
+	box-sizing: border-box;
+}
+
+.therapist-card-row {
+	display: flex;
+	align-items: center;
 	padding: 28rpx 24rpx;
-	margin-bottom: 16rpx;
-	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 	min-height: 160rpx;
 	box-sizing: border-box;
+}
+
+/* 每条下方一条线（最后一条无），约 92% 宽；两端渐隐更柔和 */
+.card-divider {
+	width: 100%;
+	flex-shrink: 0;
+	display: flex;
+	justify-content: center;
+	align-items: stretch;
+	box-sizing: border-box;
+	padding-top: 2rpx;
+}
+
+.card-divider-line {
+	width: 92%;
+	height: 2rpx;
+	border-radius: 1rpx;
+	/* 中间略深、两侧淡出，比实色分割线更柔 */
+	background: linear-gradient(
+		90deg,
+		rgba(0, 0, 0, 0) 0%,
+		rgba(0, 0, 0, 0.035) 14%,
+		rgba(0, 0, 0, 0.055) 50%,
+		rgba(0, 0, 0, 0.035) 86%,
+		rgba(0, 0, 0, 0) 100%
+	);
 }
 
 .card-avatar {

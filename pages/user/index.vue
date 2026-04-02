@@ -170,6 +170,12 @@
 									</view>
 									<text>我的理疗师</text>
 								</view>
+								<view class="item tui-skeleton-rect" @click="menusTap('/pages/users/patient_identity/index')">
+									<view class="menu-icon-wrap icon-patient-wrap">
+										<text class="iconfont icon-a-ic_user1"></text>
+									</view>
+									<text>患者管理</text>
+								</view>
 							</view>
 						</view>
 						<view class="user-menus mt20 borRadius14" v-if="isEmployee">
@@ -1025,6 +1031,10 @@
 
 			.icon-therapist-wrap {
 				background: var(--view-second-theme);
+			}
+
+			.icon-patient-wrap {
+				background: var(--view-theme);
 			}
 
 			.icon-service-wrap {

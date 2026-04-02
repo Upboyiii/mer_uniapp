@@ -101,66 +101,75 @@
 					</view>
 
 					<!-- 名医专家 -->
-					<view v-if="currentTab === 0" class="tab-content">
+					<view v-if="currentTab === 0" class="tab-content tab-content-doctor">
 						<view v-if="doctorList.length > 0" class="doctor-list">
+							<!-- 先关闭整卡进详情，仅保留下方图文/视频入口 -->
 							<view
 								class="doctor-card"
 								v-for="(doc, index) in doctorList"
 								:key="doc.id || index"
-								@click="goDoctorDetail(doc)"
 							>
 								<view class="doc-avatar-wrap">
 									<view class="doc-avatar-circle">
-										<easy-loadimage
-											class="doc-avatar-easy"
-											:image-src="doctorAvatarSrc(doc)"
-											mode="aspectFill"
-											width="110rpx"
-											height="110rpx"
-											radius="50%"
-										/>
+										<view class="doc-avatar-inner">
+											<easy-loadimage
+												class="doc-avatar-easy"
+												:image-src="doctorAvatarSrc(doc)"
+												mode="aspectFill"
+												width="110rpx"
+												height="110rpx"
+												radius="50%"
+											/>
+										</view>
 									</view>
-									<view v-if="doc.onlineStatus === 1" class="online-badge">
+									<view v-if="doc.onlineStatus === 1" class="online-badge-below">
 										<text>接诊中</text>
 									</view>
 								</view>
 								<view class="doc-info">
 									<view class="doc-name-row">
 										<text class="doc-name">{{ doc.name }}</text>
-										<text v-if="doc.hospitalTitle" class="doc-title-tag">{{ doc.hospitalTitle }}</text>
-									</view>
-									<view class="doc-hospital-wrap">
-										<view class="doc-hospital line2" v-if="doc.hospitalName || doc.hospitalSub">
-											<text v-if="doc.hospitalName">{{ doc.hospitalName }}</text>
-											<text v-if="doc.hospitalSub"> · {{ doc.hospitalSub }}</text>
-											<text v-if="doc.hospitalLevel" class="hospital-level">{{ doc.hospitalLevel }}</text>
+										<view v-if="hasStat(doc.score)" class="doctor-score-tag">
+											<text class="iconfont icon-ic_love_2"></text>
+											<text>评分 {{ formatScore(doc.score) }}</text>
 										</view>
 									</view>
-									<view class="doc-domain" v-if="doc.hospitalDomain">
-										<text>擅长：{{ doc.hospitalDomain }}</text>
+									<view class="doc-title-dept" v-if="doc.hospitalTitle || doc.hospitalSub">
+										<text v-if="doc.hospitalTitle">{{ doc.hospitalTitle }}</text>
+										<text v-if="doc.hospitalTitle && doc.hospitalSub"> | </text>
+										<text v-if="doc.hospitalSub">{{ doc.hospitalSub }}</text>
 									</view>
-									<view class="doc-stats-row">
-										<view class="doc-stat" v-if="hasStat(doc.score)">
-											<text class="doc-stat-val">{{ formatScore(doc.score) }}</text>
-											<text class="doc-stat-label">评分</text>
-										</view>
-										<view class="doc-stat" v-if="hasStat(doc.treatNum)">
-											<text class="doc-stat-val">{{ doc.treatNum }}</text>
-											<text class="doc-stat-label">已治疗</text>
-										</view>
-										<view class="doc-stat" v-if="hasStat(doc.responseTime)">
-											<text class="doc-stat-val">{{ doc.responseTime }}min</text>
-											<text class="doc-stat-label">响应</text>
-										</view>
+									<view class="doc-hospital-line" v-if="doc.hospitalName || doc.hospitalLevel">
+										<text v-if="doc.hospitalLevel" class="level-tag">{{ doc.hospitalLevel }}</text>
+										<text class="hosp-name line1">{{ doc.hospitalName }}</text>
+									</view>
+									<view class="doc-domain line2">
+										擅长：{{ doc.hospitalDomain || doc.specialization || '—' }}
+									</view>
+									<view class="doc-stats-line">
+										<text class="stat-num">{{ doc.treatNum != null ? doc.treatNum : 0 }}</text>
+										<text class="stat-txt"> 接诊数</text>
+										<text class="stat-split"> · </text>
+										<text class="stat-txt">{{ doctorResponseLine(doc) }}</text>
 									</view>
 									<view class="doc-actions">
-										<view class="action-btn action-text" v-if="doc.textPrice" @click.stop="goConsult(doc, 'text')">
+										<view
+											class="action-pill"
+											v-if="doctorImageFee(doc) != null"
+											@click.stop="goConsult(doc, 'text')"
+										>
 											<text class="iconfont icon-ic_edit"></text>
-											<text>图文 ¥{{ doc.textPrice }}</text>
+											<text>图文</text>
+											<text class="pill-price">¥{{ formatDoctorPrice(doctorImageFee(doc)) }}</text>
 										</view>
-										<view class="action-btn action-video" v-if="doc.videoPrice" @click.stop="goConsult(doc, 'video')">
+										<view
+											class="action-pill action-pill-video"
+											v-if="doctorVideoFee(doc) != null"
+											@click.stop="goConsult(doc, 'video')"
+										>
 											<text class="iconfont icon-ic_video"></text>
-											<text>视频 ¥{{ doc.videoPrice }}</text>
+											<text>视频</text>
+											<text class="pill-price">¥{{ formatDoctorPrice(doctorVideoFee(doc)) }}</text>
 										</view>
 									</view>
 								</view>
@@ -316,6 +325,7 @@ import { getTemlIds } from '@/api/api.js';
 import { mapGetters } from "vuex";
 import { silenceBindingSpread } from '@/utils/index.js';
 import animationType from '@/utils/animationType.js';
+import { formatDoctorScoreDisplay } from '@/utils/doctorScoreDisplay.js';
 import onShare from "@/mixins/onShare";
 
 const arrTemp = ["beforePay", "afterPay", "createBargain", "pink"];
@@ -516,9 +526,15 @@ export default {
 				});
 		},
 
-		goDoctorDetail(doc) {
-			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
-		},
+		/** 整卡进详情已关闭；恢复时在 doctor-card 上写回 @click="goDoctorDetail(doc)" 并取消注释 */
+		// goDoctorDetail(doc) {
+		// 	try {
+		// 		if (doc && doc.id != null) {
+		// 			uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
+		// 		}
+		// 	} catch (e) {}
+		// 	this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
+		// },
 
 		goConsult(doc, type) {
 			if (!this.isLogin) {
@@ -527,7 +543,13 @@ export default {
 			if (doc.onlineStatus !== 1) {
 				return this.$util.Tips({ title: '医生当前离线' });
 			}
-			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
+			try {
+				if (doc && doc.id != null) {
+					uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
+				}
+			} catch (e) {}
+			const mode = type === 'video' ? 'video' : 'text';
+			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}&mode=${mode}`);
 		},
 
 		// ==================== 理疗专区 ====================
@@ -549,6 +571,10 @@ export default {
 
 		goTherapistDetail(item) {
 			if (item.mchId) {
+				try {
+					uni.setStorageSync('CLINIC_THERAPIST_REF', 'plat');
+					uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
+				} catch (e) {}
 				this.$util.navigateTo(`/pages/clinic/therapist/index?mchId=${item.mchId}`);
 			}
 		},
@@ -658,13 +684,51 @@ export default {
 			}
 		},
 
+		resolveImgUrl(path) {
+			if (!path || !String(path).trim()) return '';
+			const p = String(path).trim();
+			if (/^https?:\/\//i.test(p)) return p;
+			const base = (this.urlDomain || this.$Cache.get('imgHost') || '').replace(/\/?$/, '');
+			if (!base) return p;
+			return p.startsWith('/') ? base + p : `${base}/${p}`;
+		},
 		/** 无头像或空串时用默认用户图（morenT），与「我的」一致 */
 		doctorAvatarSrc(doc) {
 			const p = doc && doc.picture;
 			if (p != null && String(p).trim() !== '') {
-				return String(p).trim();
+				const u = this.resolveImgUrl(String(p).trim());
+				if (u) return u;
 			}
 			return this.defaultAvatarPlaceholder;
+		},
+		/** 与接口一致：imageFee 图文，兼容 textPrice */
+		doctorImageFee(doc) {
+			const v = doc.imageFee != null && doc.imageFee !== '' ? doc.imageFee : doc.textPrice;
+			if (v === null || v === undefined || v === '') return null;
+			const n = Number(v);
+			if (!Number.isFinite(n) || n < 0) return null;
+			if (n === 0) return null;
+			return n;
+		},
+		/** videoFee，兼容 videoPrice */
+		doctorVideoFee(doc) {
+			const v = doc.videoFee != null && doc.videoFee !== '' ? doc.videoFee : doc.videoPrice;
+			if (v === null || v === undefined || v === '') return null;
+			const n = Number(v);
+			if (!Number.isFinite(n) || n < 0) return null;
+			if (n === 0) return null;
+			return n;
+		},
+		formatDoctorPrice(val) {
+			if (val == null || val === '') return '0.00';
+			const n = Number(val);
+			if (!Number.isFinite(n)) return String(val);
+			return n.toFixed(2);
+		},
+		doctorResponseLine(doc) {
+			const t = doc && doc.responseTime;
+			if (t == null || t === '' || Number(t) === 0) return '平均响应 --';
+			return `${t} 分钟内 平均响应`;
 		},
 		therapistAvatarSrc(item) {
 			const p = item && item.picture;
@@ -674,17 +738,16 @@ export default {
 			return this.defaultAvatarPlaceholder;
 		},
 
-		/** 与名医列表页一致：接口有效值才展示 */
+		/** 名医评分：接口常为 string（如 "4.95"）；仅数值 > 0 时展示 */
 		hasStat(val) {
 			if (val === null || val === undefined || val === '') return false;
-			if (typeof val === 'number') return val > 0;
+			const n = Number(val);
+			if (Number.isFinite(n)) return n > 0;
 			return String(val).trim() !== '';
 		},
+		/** 评分展示：纯字符串处理，见 utils/doctorScoreDisplay.js */
 		formatScore(score) {
-			if (score === null || score === undefined || score === '') return '';
-			const n = Number(score);
-			if (!Number.isFinite(n)) return String(score);
-			return n <= 5 ? n.toFixed(1) : String(score);
+			return formatDoctorScoreDisplay(score);
 		},
 
 		// ==================== 原有逻辑保留 ====================
@@ -1186,6 +1249,12 @@ page {
 	min-height: 400rpx;
 }
 
+.tab-content-doctor {
+	padding: 0;
+	margin: 0;
+	border-radius: 0;
+}
+
 /* ==================== 名医专家 ==================== */
 .doctor-list {
 	padding-bottom: 20rpx;
@@ -1201,6 +1270,29 @@ page {
 	box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
+.tab-content-doctor .doctor-card {
+	border-radius: 0;
+	margin: 0;
+	box-shadow: none;
+	border-bottom: none;
+	position: relative;
+}
+
+.tab-content-doctor .doctor-card:not(:last-child)::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	transform: translateX(-50%);
+	width: 90%;
+	height: 0.5px;
+	background: #eee;
+}
+
+.tab-content-doctor .doctor-list {
+	padding-bottom: 0;
+}
+
 .doc-avatar-wrap {
 	display: flex;
 	flex-direction: column;
@@ -1213,10 +1305,15 @@ page {
 .doc-avatar-circle {
 	width: 110rpx;
 	height: 110rpx;
+	flex-shrink: 0;
+}
+
+.doc-avatar-inner {
+	width: 110rpx;
+	height: 110rpx;
 	border-radius: 50%;
 	overflow: hidden;
 	background: #f0f0f0;
-	flex-shrink: 0;
 }
 
 .doc-avatar-easy {
@@ -1226,13 +1323,14 @@ page {
 	overflow: hidden;
 }
 
-.online-badge {
+/* 接诊中：头像正下方（接口 onlineStatus 1=接诊中） */
+.online-badge-below {
 	margin-top: 8rpx;
 	align-self: center;
-	background: #52c41a;
+	background: linear-gradient(90deg, #ff9a3d, #ff7a00);
 	color: #fff;
 	font-size: 18rpx;
-	padding: 4rpx 10rpx;
+	padding: 4rpx 12rpx;
 	border-radius: 8rpx;
 	white-space: nowrap;
 	line-height: 1.2;
@@ -1242,114 +1340,140 @@ page {
 .doc-info {
 	flex: 1;
 	overflow: hidden;
+	min-width: 0;
 }
 
 .doc-name-row {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 6rpx;
+	flex-wrap: wrap;
+	gap: 12rpx;
+	margin-bottom: 8rpx;
 }
 
 .doc-name {
 	font-size: 32rpx;
 	font-weight: 700;
 	color: #282828;
-}
-
-.doc-title-tag {
-	font-size: 22rpx;
-	color: var(--view-theme);
-	background: var(--view-main-rgba);
-	padding: 2rpx 12rpx;
-	border-radius: 6rpx;
 	flex-shrink: 0;
 }
 
-.doc-hospital-wrap {
-	margin-bottom: 8rpx;
+/* 接口 score：≤5 按十分制展示一位小数，否则原样 */
+.doctor-score-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4rpx;
+	font-size: 20rpx;
+	color: #c45c12;
+	background: rgba(255, 154, 61, 0.15);
+	padding: 4rpx 12rpx;
+	border-radius: 20rpx;
+	line-height: 1.2;
+
+	.iconfont {
+		font-size: 22rpx;
+	}
 }
 
-.doc-hospital {
+.doc-title-dept {
 	font-size: 24rpx;
 	color: #666;
-	line-height: 1.5;
+	margin-bottom: 8rpx;
+	line-height: 1.4;
+}
+
+.doc-hospital-line {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8rpx;
+	margin-bottom: 10rpx;
 }
 
 .hospital-level {
 	display: inline-block;
-	@include main_bg_color($main-color-theme1);
-	color: #fff;
+	background: #fff3cd;
+	color: #b8860b;
 	font-size: 20rpx;
 	padding: 2rpx 10rpx;
 	border-radius: 6rpx;
-	margin-right: 8rpx;
+	flex-shrink: 0;
+}
+
+.hosp-name {
+	font-size: 24rpx;
+	color: #333;
+	flex: 1;
+	min-width: 0;
 }
 
 .doc-domain {
 	font-size: 24rpx;
 	color: #999;
-	line-height: 1.5;
-	margin-bottom: 10rpx;
+	line-height: 1.45;
+	margin-bottom: 12rpx;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
 
-.doc-stats-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 24rpx;
-	margin-bottom: 14rpx;
-}
-
-.doc-stat {
-	display: flex;
-	align-items: center;
-	gap: 6rpx;
-}
-
-.doc-stat-val {
-	font-size: 24rpx;
-	font-weight: 600;
-	color: var(--view-second-theme);
-}
-
-.doc-stat-label {
-	font-size: 20rpx;
+.doc-stats-line {
+	font-size: 22rpx;
 	color: #999;
+	margin-bottom: 16rpx;
+	line-height: 1.5;
+}
+
+.doc-stats-line .stat-num {
+	color: #c45c12;
+	font-weight: 600;
+}
+
+.doc-stats-line .stat-txt {
+	color: #999;
+}
+
+.doc-stats-line .stat-split {
+	color: #ccc;
 }
 
 .doc-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 16rpx;
 }
 
-.action-btn {
-	display: flex;
+.action-pill {
+	display: inline-flex;
 	align-items: center;
-	padding: 10rpx 24rpx;
-	border-radius: 28rpx;
+	gap: 8rpx;
+	padding: 12rpx 22rpx;
+	border-radius: 32rpx;
 	font-size: 24rpx;
+	background: #fff8f0;
+	color: #8b5a2b;
+	border: 1rpx solid rgba(196, 92, 18, 0.35);
 
 	.iconfont {
-		font-size: 24rpx;
-		margin-right: 6rpx;
+		font-size: 26rpx;
+		color: #c45c12;
 	}
 }
 
-.action-text {
-	background: var(--view-main-rgba);
-	color: var(--view-theme);
-	border: 1rpx solid var(--view-theme);
+.action-pill-video {
+	background: #f5f9ff;
+	color: #2b6cb0;
+	border-color: rgba(43, 108, 176, 0.35);
+
+	.iconfont {
+		color: #2b6cb0;
+	}
 }
 
-.action-video {
-	background: var(--view-coupons-light-color);
-	color: var(--view-second-theme);
-	border: 1rpx solid var(--view-second-theme);
+.pill-price {
+	font-weight: 600;
+	margin-left: 4rpx;
 }
 
 /* ==================== 理疗专区 ==================== */
