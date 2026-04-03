@@ -1935,6 +1935,29 @@
 					}
 				}
 			}
+		},
+		{
+			"path": "my_consultation/index",
+			"style": {
+				"navigationBarTitleText": "我的问诊",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "my_consultation/detail",
+			"style": {
+				"navigationBarTitleText": "问诊详情",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
 		}
 	]
 	},

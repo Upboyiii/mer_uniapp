@@ -177,14 +177,20 @@
 									</view>
 									<text>我的理疗师</text>
 								</view>
-								<view class="item tui-skeleton-rect" @click="menusTap('/pages/users/patient_identity/index')">
-									<view class="menu-icon-wrap icon-patient-wrap">
-										<text class="iconfont icon-a-ic_user1"></text>
-									</view>
-									<text>患者管理</text>
+							<view class="item tui-skeleton-rect" @click="menusTap('/pages/users/patient_identity/index')">
+								<view class="menu-icon-wrap icon-patient-wrap">
+									<text class="iconfont icon-a-ic_user1"></text>
 								</view>
+								<text>患者管理</text>
+							</view>
+							<view class="item tui-skeleton-rect" @click="menusTap('/pages/clinic/my_consultation/index')">
+								<view class="menu-icon-wrap icon-consultation-wrap">
+									<text class="iconfont icon-ic_notes"></text>
+								</view>
+								<text>我的问诊</text>
 							</view>
 						</view>
+					</view>
 						<view class="user-menus mt20 borRadius14" v-if="isEmployee">
 							<view class="menu-title">店铺管理</view>
 							<view class="list-box">
@@ -1053,6 +1059,10 @@
 
 			.icon-patient-wrap {
 				background: var(--view-theme);
+			}
+
+			.icon-consultation-wrap {
+				background: #1890ff;
 			}
 
 			.icon-service-wrap {
