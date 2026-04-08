@@ -189,6 +189,12 @@
 								</view>
 								<text>我的问诊</text>
 							</view>
+							<view class="item tui-skeleton-rect" @click="menusTap('/pages/clinic/appointment/index')">
+								<view class="menu-icon-wrap icon-appointment-wrap">
+									<text class="iconfont icon-riqi"></text>
+								</view>
+								<text>我的预约</text>
+							</view>
 						</view>
 					</view>
 						<view class="user-menus mt20 borRadius14" v-if="isEmployee">
@@ -288,7 +294,6 @@
 					{ name: '门店入驻', url: '/pages/users/settled/index', icon: 'icon-ic_store3' },
 					{ name: '我的团队', url: '/pages/users/user_spread_user/index', icon: 'icon-ic_friends' },
 					{ name: '我的评价', url: '/pages/goods/evaluation_list/index', icon: 'icon-ic_pencil' },
-					{ name: '我的预约', url: '/pages/clinic/appointment/index', icon: 'icon-riqi' },
 					{ name: '地址管理', url: '/pages/address/user_address_list/index', icon: 'icon-ic_location' },
 					{ name: '申诉', url: '', icon: 'icon-ic_edit' },
 				];
@@ -1063,6 +1068,10 @@
 
 			.icon-consultation-wrap {
 				background: #1890ff;
+			}
+
+			.icon-appointment-wrap {
+				background: #fa8c16;
 			}
 
 			.icon-service-wrap {

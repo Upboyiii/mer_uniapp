@@ -530,7 +530,7 @@ export default {
 					uni.hideLoading();
 					this.submitting = false;
 					const d = payRes.data || {};
-					const goPages = '/pages/clinic/appointment/index';
+					const goPages = '/pages/clinic/my_consultation/index';
 					if (d.jsConfig) {
 						this.weixinPay(
 							d.jsConfig,
@@ -567,7 +567,7 @@ export default {
 				if (pages.length > 1) {
 					uni.navigateBack({ delta: 1 });
 				} else {
-					uni.redirectTo({ url: '/pages/clinic/appointment/index' });
+					uni.redirectTo({ url: '/pages/clinic/my_consultation/index' });
 				}
 			}, 400);
 		}
