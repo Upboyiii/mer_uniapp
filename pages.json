@@ -107,6 +107,17 @@
 					"titleNView": false
 				}
 			}
+		},
+		{
+			"path": "pages/clinic/therapist/detail",
+			"style": {
+				"navigationBarTitleText": "理疗师详情",
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
 		}
 	],
 	"subPackages": [{
@@ -1806,17 +1817,6 @@
 				"path": "therapist/index",
 				"style": {
 					"navigationBarTitleText": "门店理疗预约",
-					"app-plus": {
-						"titleNView": {
-							"type": "default"
-						}
-					}
-				}
-			},
-			{
-				"path": "therapist/detail",
-				"style": {
-					"navigationBarTitleText": "理疗师详情",
 					"app-plus": {
 						"titleNView": {
 							"type": "default"

@@ -183,7 +183,7 @@
 
 					<!-- 理疗专区 -->
 					<view v-if="currentTab === 1" class="tab-content">
-						<view v-if="therapistList.length > 0" class="therapist-search-wrap">
+						<!-- <view v-if="therapistList.length > 0" class="therapist-search-wrap">
 							<view class="therapist-search-inner">
 								<text class="iconfont icon-ic_search therapist-search-ico"></text>
 								<input
@@ -200,7 +200,7 @@
 									@click="therapistSearchKey = ''"
 								>×</text>
 							</view>
-						</view>
+						</view> -->
 						<view v-if="therapistListFiltered.length > 0" class="therapist-list">
 							<view
 								class="therapist-card"
@@ -350,6 +350,7 @@ import { mapGetters } from "vuex";
 import { silenceBindingSpread } from '@/utils/index.js';
 import animationType from '@/utils/animationType.js';
 import { formatDoctorScoreDisplay } from '@/utils/doctorScoreDisplay.js';
+import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
 import onShare from "@/mixins/onShare";
 
 const arrTemp = ["beforePay", "afterPay", "createBargain", "pink"];
@@ -617,16 +618,11 @@ export default {
 			try {
 				uni.setStorageSync('CLINIC_THERAPIST_REF', 'plat');
 				uni.removeStorageSync('CLINIC_THERAPIST_BACK_MER');
-				uni.setStorageSync('therapist_detail_prefill_' + item.id, JSON.stringify(item));
 			} catch (e) {}
-			const q = [
-				`therapistId=${item.id}`,
-				`mchId=${item.mchId}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/therapist/detail?${q}`);
+			setTherapistDetailPrefill(item);
+			this.$util.navigateTo(
+				`/pages/clinic/therapist/detail?therapistId=${item.id}&mchId=${item.mchId}`
+			);
 		},
 
 		goBookTherapist(item) {

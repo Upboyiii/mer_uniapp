@@ -83,6 +83,7 @@
 import { mapGetters } from 'vuex';
 import { getTherapistByMchApi } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
+import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
 
 let app = getApp();
 
@@ -202,16 +203,11 @@ export default {
 			try {
 				uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
 				uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(this.mchId));
-				uni.setStorageSync('therapist_detail_prefill_' + item.id, JSON.stringify(item));
 			} catch (e) {}
-			const q = [
-				`therapistId=${item.id}`,
-				`mchId=${item.mchId}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/therapist/detail?${q}`);
+			setTherapistDetailPrefill(item);
+			this.$util.navigateTo(
+				`/pages/clinic/therapist/detail?therapistId=${item.id}&mchId=${item.mchId}`
+			);
 		},
 		goBookTherapist(item) {
 			if (!this.isLogin) {

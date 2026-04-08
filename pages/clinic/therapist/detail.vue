@@ -63,8 +63,7 @@ import { mapGetters } from 'vuex';
 import { getTherapistPageListApi } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
 import easyLoadimage from '@/components/base/easy-loadimage.vue';
-
-const PREFILL_KEY = 'therapist_detail_prefill_';
+import { THERAPIST_DETAIL_PREFILL_KEY as PREFILL_KEY } from '@/utils/therapistDetailPrefill.js';
 
 export default {
 	components: { emptyPage, easyLoadimage },

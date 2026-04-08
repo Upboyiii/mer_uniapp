@@ -59,6 +59,7 @@
 import { mapGetters } from "vuex";
 import { getMyTherapistListApi } from "@/api/clinic.js";
 import emptyPage from "@/components/emptyPage.vue";
+import { setTherapistDetailPrefill } from "@/utils/therapistDetailPrefill.js";
 
 export default {
   components: { emptyPage },
@@ -126,17 +127,10 @@ export default {
       if (!item.mchId) {
         return this.$util.Tips({ title: "该理疗师暂未关联门店" });
       }
-      try {
-        uni.setStorageSync("therapist_detail_prefill_" + item.id, JSON.stringify(item));
-      } catch (e) {}
-      const q = [
-        `therapistId=${item.id}`,
-        `mchId=${item.mchId}`,
-        `name=${encodeURIComponent(item.name || "")}`,
-        `domain=${encodeURIComponent(item.hospitalDomain || "")}`,
-        `picture=${encodeURIComponent(item.picture || "")}`
-      ].join("&");
-      this.$util.navigateTo(`/pages/clinic/therapist/detail?${q}`);
+      setTherapistDetailPrefill(item);
+      this.$util.navigateTo(
+        `/pages/clinic/therapist/detail?therapistId=${item.id}&mchId=${item.mchId}`
+      );
     },
 
     goBook(item) {
