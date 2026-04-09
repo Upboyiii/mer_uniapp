@@ -140,6 +140,7 @@ import {
 	physiotherapyAppointmentPayApi
 } from '@/api/clinic.js';
 import { cancelReservationApi } from '@/api/order.js';
+import { consumePhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
 
 let app = getApp();
 export default {
@@ -227,11 +228,27 @@ export default {
 		}
 	},
 	onLoad(options) {
-		this.appointmentId = options.id ? parseInt(options.id, 10) : 0;
-		this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
-		this.therapistNameHint = options.therapistName
-			? decodeURIComponent(options.therapistName)
-			: '';
+		const nav = consumePhysioAppointmentDetailNav();
+		let appointmentId = 0;
+		let mchId = 0;
+		let therapistNameHint = '';
+
+		if (nav && nav.appointmentId != null && nav.appointmentId !== '') {
+			appointmentId = parseInt(nav.appointmentId, 10) || 0;
+			mchId = nav.mchId != null && nav.mchId !== '' ? parseInt(nav.mchId, 10) : 0;
+			therapistNameHint = nav.therapistName ? String(nav.therapistName) : '';
+		} else {
+			appointmentId = options.id ? parseInt(options.id, 10) : 0;
+			mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
+			therapistNameHint = options.therapistName
+				? decodeURIComponent(options.therapistName)
+				: '';
+		}
+
+		this.appointmentId = appointmentId;
+		this.mchId = mchId;
+		this.therapistNameHint = therapistNameHint;
+
 		if (!this.appointmentId) {
 			this.loading = false;
 			return this.$util.Tips({ title: '缺少预约编号' });

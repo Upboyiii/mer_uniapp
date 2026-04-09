@@ -93,6 +93,7 @@ import {
 	physiotherapyAppointmentSaveApi,
 	physiotherapyAppointmentPayApi
 } from '@/api/clinic.js';
+import { consumePhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 export default {
@@ -138,11 +139,20 @@ export default {
 		}
 	},
 	onLoad(options) {
-		this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
-		this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
-		this.therapistName = options.name ? decodeURIComponent(options.name) : '';
-		this.therapistDomain = options.domain ? decodeURIComponent(options.domain) : '';
-		this.therapistPicture = options.picture ? decodeURIComponent(options.picture) : '';
+		const nav = consumePhysioBookNav();
+		if (nav && nav.therapistId != null && nav.therapistId !== '') {
+			this.therapistId = parseInt(nav.therapistId, 10) || 0;
+			this.mchId = nav.mchId != null && nav.mchId !== '' ? parseInt(nav.mchId, 10) : 0;
+			this.therapistName = nav.name != null ? String(nav.name) : '';
+			this.therapistDomain = nav.domain != null ? String(nav.domain) : '';
+			this.therapistPicture = nav.picture != null ? String(nav.picture) : '';
+		} else {
+			this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
+			this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
+			this.therapistName = options.name ? decodeURIComponent(options.name) : '';
+			this.therapistDomain = options.domain ? decodeURIComponent(options.domain) : '';
+			this.therapistPicture = options.picture ? decodeURIComponent(options.picture) : '';
+		}
 		if (!this.datePart) {
 			this.datePart = this.dateStart;
 		}

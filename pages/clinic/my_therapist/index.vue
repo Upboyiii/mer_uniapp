@@ -60,6 +60,7 @@ import { mapGetters } from "vuex";
 import { getMyTherapistListApi } from "@/api/clinic.js";
 import emptyPage from "@/components/emptyPage.vue";
 import { setTherapistDetailPrefill } from "@/utils/therapistDetailPrefill.js";
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 export default {
   components: { emptyPage },
@@ -142,14 +143,14 @@ export default {
       if (!tid || !mchId) {
         return this.$util.Tips({ title: "缺少门店或理疗师信息" });
       }
-      const q = [
-        `therapistId=${tid}`,
-        `mchId=${mchId}`,
-        `name=${encodeURIComponent(item.name || "")}`,
-        `domain=${encodeURIComponent(item.hospitalDomain || "")}`,
-        `picture=${encodeURIComponent(item.picture || "")}`
-      ].join("&");
-      this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+      setPhysioBookNav({
+        therapistId: tid,
+        mchId,
+        name: item.name || '',
+        domain: item.hospitalDomain || '',
+        picture: item.picture || ''
+      });
+      this.$util.navigateTo('/pages/clinic/physio_book/index');
     }
   }
 };

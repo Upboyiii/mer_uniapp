@@ -84,6 +84,8 @@ import { mapGetters } from 'vuex';
 import { getTherapistByMchApi } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
+import { consumeMchTherapistListNav } from '@/utils/mchTherapistListNav.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 
@@ -120,7 +122,12 @@ export default {
 		};
 	},
 	onLoad(options) {
-		this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
+		const nav = consumeMchTherapistListNav();
+		let mid = options.mchId ? parseInt(options.mchId, 10) : 0;
+		if (nav && nav.mchId != null && nav.mchId !== '') {
+			mid = parseInt(nav.mchId, 10) || mid;
+		}
+		this.mchId = mid;
 		uni.setNavigationBarTitle({ title: '理疗师列表' });
 		if (this.mchId) {
 			this.getList();
@@ -221,14 +228,14 @@ export default {
 			if (!mchId) {
 				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
 			}
-			const q = [
-				`therapistId=${tid}`,
-				`mchId=${mchId}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+			setPhysioBookNav({
+				therapistId: tid,
+				mchId,
+				name: item.name || '',
+				domain: item.hospitalDomain || '',
+				picture: item.picture || ''
+			});
+			this.$util.navigateTo('/pages/clinic/physio_book/index');
 		}
 	}
 };

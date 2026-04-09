@@ -64,6 +64,7 @@ import { getTherapistPageListApi } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
 import easyLoadimage from '@/components/base/easy-loadimage.vue';
 import { THERAPIST_DETAIL_PREFILL_KEY as PREFILL_KEY } from '@/utils/therapistDetailPrefill.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 export default {
 	components: { emptyPage, easyLoadimage },
@@ -195,14 +196,14 @@ export default {
 			if (!mid) {
 				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
 			}
-			const q = [
-				`therapistId=${item.id}`,
-				`mchId=${mid}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+			setPhysioBookNav({
+				therapistId: item.id,
+				mchId: mid,
+				name: item.name || '',
+				domain: item.hospitalDomain || '',
+				picture: item.picture || ''
+			});
+			this.$util.navigateTo('/pages/clinic/physio_book/index');
 		}
 	}
 };

@@ -92,6 +92,7 @@ import { mapGetters } from "vuex";
 import { getPhysiotherapyAppointmentListApi, getClinicListApi } from '@/api/clinic.js';
 import { cancelReservationApi } from '@/api/order.js';
 import emptyPage from '@/components/emptyPage.vue';
+import { setPhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
 
 let app = getApp();
 export default {
@@ -309,14 +310,17 @@ export default {
       });
     },
     goDetail(item) {
-      if (!item.id) {
+      const appointmentId = item.id != null ? item.id : item.appointmentId;
+      if (appointmentId == null || appointmentId === '') {
         return this.$util.Tips({ title: '缺少预约信息' });
       }
-      const q = [`id=${item.id}`];
-      if (this.currentStoreId > 0) q.push(`mchId=${this.currentStoreId}`);
       const t = item.therapistInfo;
-      if (t && t.name) q.push(`therapistName=${encodeURIComponent(t.name)}`);
-      this.$util.navigateTo(`/pages/clinic/physio_appointment_detail/index?${q.join('&')}`);
+      setPhysioAppointmentDetailNav({
+        appointmentId,
+        mchId: this.currentStoreId > 0 ? this.currentStoreId : undefined,
+        therapistName: (t && t.name) || ''
+      });
+      this.$util.navigateTo('/pages/clinic/physio_appointment_detail/index');
     }
   }
 };

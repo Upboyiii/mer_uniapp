@@ -150,6 +150,7 @@ import { getMerIndexInfoApi, getMerProListApi, getMerStreetApi } from '@/api/mer
 import { chatConfig } from '@/utils/consumerType.js';
 import emptyPage from '@/components/emptyPage.vue';
 import pageFooter from '@/components/pageFooter/index.vue';
+import { setMchTherapistListNav } from '@/utils/mchTherapistListNav.js';
 
 let app = getApp();
 
@@ -408,7 +409,8 @@ export default {
 
     goAppointmentService() {
       this.markTherapistEnterFromStore();
-      this.$util.navigateTo(`/pages/clinic/therapist/mch_list?mchId=${this.merId}`);
+      setMchTherapistListNav({ mchId: this.merId });
+      this.$util.navigateTo('/pages/clinic/therapist/mch_list');
     },
 
     goMyAppointment() {
@@ -431,7 +433,8 @@ export default {
 
     goTherapistList() {
       this.markTherapistEnterFromStore();
-      this.$util.navigateTo(`/pages/clinic/therapist/mch_list?mchId=${this.merId}`);
+      setMchTherapistListNav({ mchId: this.merId });
+      this.$util.navigateTo('/pages/clinic/therapist/mch_list');
     },
 
     /** 从门店进理疗预约页：返回栈仅一层时 onBackPress 需回到门店 tab */

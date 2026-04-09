@@ -91,6 +91,7 @@ import { getTherapistPageListApi } from '@/api/clinic.js';
 import pageFooter from '@/components/pageFooter/index.vue';
 import emptyPage from '@/components/emptyPage.vue';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 export default {
@@ -186,14 +187,14 @@ export default {
 			if (!mchId) {
 				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
 			}
-			const q = [
-				`therapistId=${tid}`,
-				`mchId=${mchId}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+			setPhysioBookNav({
+				therapistId: tid,
+				mchId,
+				name: item.name || '',
+				domain: item.hospitalDomain || '',
+				picture: item.picture || ''
+			});
+			this.$util.navigateTo('/pages/clinic/physio_book/index');
 		}
 	}
 };

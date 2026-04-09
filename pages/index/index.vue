@@ -351,6 +351,7 @@ import { silenceBindingSpread } from '@/utils/index.js';
 import animationType from '@/utils/animationType.js';
 import { formatDoctorScoreDisplay } from '@/utils/doctorScoreDisplay.js';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 import onShare from "@/mixins/onShare";
 
 const arrTemp = ["beforePay", "afterPay", "createBargain", "pink"];
@@ -637,14 +638,14 @@ export default {
 			if (!mchId) {
 				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
 			}
-			const q = [
-				`therapistId=${tid}`,
-				`mchId=${mchId}`,
-				`name=${encodeURIComponent(item.name || '')}`,
-				`domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-				`picture=${encodeURIComponent(item.picture || '')}`
-			].join('&');
-			this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+			setPhysioBookNav({
+				therapistId: tid,
+				mchId,
+				name: item.name || '',
+				domain: item.hospitalDomain || '',
+				picture: item.picture || ''
+			});
+			this.$util.navigateTo('/pages/clinic/physio_book/index');
 		},
 
 		// ==================== 平台商城 ====================

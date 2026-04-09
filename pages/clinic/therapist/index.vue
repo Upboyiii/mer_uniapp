@@ -117,6 +117,8 @@ import { mapGetters } from 'vuex';
 import { getPhysiotherapyAppointmentListApi, getTherapistByMchApi } from '@/api/clinic.js';
 import { cancelReservationApi } from '@/api/order.js';
 import emptyPage from '@/components/emptyPage.vue';
+import { setPhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 export default {
@@ -334,14 +336,17 @@ export default {
       });
     },
     goDetail(item) {
-      if (!item.id) {
+      const appointmentId = item.id != null ? item.id : item.appointmentId;
+      if (appointmentId == null || appointmentId === '') {
         return this.$util.Tips({ title: '缺少预约信息' });
       }
-      const q = [`id=${item.id}`];
-      if (this.mchId) q.push(`mchId=${this.mchId}`);
       const t = item.therapistInfo;
-      if (t && t.name) q.push(`therapistName=${encodeURIComponent(t.name)}`);
-      this.$util.navigateTo(`/pages/clinic/physio_appointment_detail/index?${q.join('&')}`);
+      setPhysioAppointmentDetailNav({
+        appointmentId,
+        mchId: this.mchId || undefined,
+        therapistName: (t && t.name) || ''
+      });
+      this.$util.navigateTo('/pages/clinic/physio_appointment_detail/index');
     },
     openTherapistPicker() {
       if (!this.isLogin) {
@@ -363,14 +368,14 @@ export default {
     },
     goPhysioBook(item) {
       this.showTherapistPicker = false;
-      const q = [
-        `therapistId=${item.id}`,
-        `mchId=${this.mchId}`,
-        `name=${encodeURIComponent(item.name || '')}`,
-        `domain=${encodeURIComponent(item.hospitalDomain || '')}`,
-        `picture=${encodeURIComponent(item.picture || item.avatar || '')}`
-      ].join('&');
-      this.$util.navigateTo(`/pages/clinic/physio_book/index?${q}`);
+      setPhysioBookNav({
+        therapistId: item.id,
+        mchId: this.mchId,
+        name: item.name || '',
+        domain: item.hospitalDomain || '',
+        picture: item.picture || item.avatar || ''
+      });
+      this.$util.navigateTo('/pages/clinic/physio_book/index');
     }
   }
 };
