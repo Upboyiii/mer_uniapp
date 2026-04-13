@@ -5,7 +5,7 @@
 export const PHYSIO_BOOK_NAV_KEY = 'physio_book_nav';
 
 /**
- * @param {{ therapistId: number|string, mchId: number|string, name?: string, domain?: string, picture?: string }} payload
+ * @param {{ therapistId: number|string, mchId: number|string, name?: string, domain?: string, picture?: string, preselectedCategoryId?: number|string }} payload
  */
 export function setPhysioBookNav(payload) {
 	if (!payload || payload.therapistId == null || payload.therapistId === '') return;

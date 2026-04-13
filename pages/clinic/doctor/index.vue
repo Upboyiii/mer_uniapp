@@ -6,12 +6,32 @@
         <text class="iconfont icon-ic_search"></text>
         <input
           class="search-input"
-          placeholder="搜索医生姓名/擅长领域"
+          :placeholder="filterMode === 'dept' ? '搜索医生姓名/科室' : filterMode === 'disease' ? '搜索医生姓名/疾病' : '搜索医生姓名/擅长领域'"
           v-model="keyword"
           confirm-type="search"
           @confirm="onSearch"
         />
       </view>
+    </view>
+
+    <!-- 按科室 / 按疾病：筛选项来自字典接口 Hospital/sub/alllist、Hospital/ill/alllist；列表请求带 hospitalSub / specialization -->
+    <view v-if="filterMode === 'dept'" class="filter-strip">
+      <text class="filter-strip-label">科室</text>
+      <picker mode="selector" :range="deptOptions" :value="pickerDeptIndex" @change="onDeptPick">
+        <view class="filter-strip-picker">
+          <text class="filter-strip-val">{{ hospitalSub || "请选择" }}</text>
+          <text class="iconfont icon-ic_downarrow filter-arrow"></text>
+        </view>
+      </picker>
+    </view>
+    <view v-if="filterMode === 'disease'" class="filter-strip">
+      <text class="filter-strip-label">疾病</text>
+      <picker mode="selector" :range="diseaseOptions" :value="pickerDisIndex" @change="onDiseasePick">
+        <view class="filter-strip-picker">
+          <text class="filter-strip-val">{{ specialization || "请选择" }}</text>
+          <text class="iconfont icon-ic_downarrow filter-arrow"></text>
+        </view>
+      </picker>
     </view>
 
     <!-- 医生列表 -->
@@ -52,8 +72,8 @@
               </view>
             </view>
             <view class="doctor-domain-wrap">
-              <view class="doctor-domain line2" v-if="item.hospitalDomain">
-                擅长：{{ item.hospitalDomain }}
+              <view class="doctor-domain line2" v-if="item.hospitalDomain || item.specialization">
+                擅长：{{ item.hospitalDomain || item.specialization }}
               </view>
             </view>
             <view class="doctor-stats">
@@ -99,7 +119,12 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { getDoctorListApi, getDoctorByMchApi } from "@/api/clinic.js";
+import {
+  getDoctorListApi,
+  getDoctorByMchApi,
+  getHospitalSubAllListApi,
+  getIllAllListApi
+} from "@/api/clinic.js";
 import emptyPage from "@/components/emptyPage.vue";
 
 export default {
@@ -113,6 +138,15 @@ export default {
       theme: getApp().globalData.theme,
       mchId: 0,
       keyword: "",
+      /** dept | disease | '' */
+      filterMode: "",
+      filterOptionsReady: false,
+      deptOptions: ["全部"],
+      diseaseOptions: ["全部"],
+      pickerDeptIndex: 0,
+      pickerDisIndex: 0,
+      hospitalSub: "全部",
+      specialization: "全部",
       doctorList: [],
       loading: false,
       loadend: false,
@@ -123,16 +157,89 @@ export default {
     };
   },
   onLoad(options) {
-    this.mchId = options.mchId ? parseInt(options.mchId) : 0;
+    this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
+    const m = options.mode;
+    this.filterMode = m === "dept" || m === "disease" ? m : "";
+    if (this.filterMode === "dept") {
+      uni.setNavigationBarTitle({ title: "按科室找医生" });
+    } else if (this.filterMode === "disease") {
+      uni.setNavigationBarTitle({ title: "按疾病找医生" });
+    }
     let sys = uni.getSystemInfoSync();
-    this.scrollHeight = sys.windowHeight - 100;
-    this.getDoctorList();
+    const stripPx = this.filterMode ? 44 : 0;
+    this.scrollHeight = sys.windowHeight - 100 - stripPx;
+    if (this.filterMode) {
+      this.loadFilterOptions()
+        .then(() => {
+          this.filterOptionsReady = true;
+          this.getDoctorList();
+        })
+        .catch(() => {
+          this.filterOptionsReady = true;
+          this.getDoctorList();
+        });
+    } else {
+      this.filterOptionsReady = true;
+      this.getDoctorList();
+    }
   },
   onPullDownRefresh() {
     this.onRefresh();
   },
   methods: {
+    loadFilterOptions() {
+      if (this.filterMode === "dept") {
+        return getHospitalSubAllListApi().then(res => {
+          const raw = res.data;
+          const list = Array.isArray(raw) ? raw : [];
+          const names = list
+            .filter(it => it && (it.status === undefined || it.status === 1))
+            .map(it => (it.name != null ? String(it.name).trim() : ""))
+            .filter(Boolean);
+          const uniq = [...new Set(names)].sort((a, b) => a.localeCompare(b, "zh-CN"));
+          this.deptOptions = ["全部", ...uniq];
+          this.pickerDeptIndex = 0;
+          this.hospitalSub = this.deptOptions[0];
+        });
+      }
+      if (this.filterMode === "disease") {
+        return getIllAllListApi().then(res => {
+          const raw = res.data;
+          const list = Array.isArray(raw) ? raw : [];
+          const sorted = list
+            .filter(it => it && (it.status === undefined || it.status === 1))
+            .sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0));
+          const names = sorted
+            .map(it => (it.name != null ? String(it.name).trim() : ""))
+            .filter(Boolean);
+          this.diseaseOptions = ["全部", ...names];
+          this.pickerDisIndex = 0;
+          this.specialization = this.diseaseOptions[0];
+        });
+      }
+      return Promise.resolve();
+    },
+
+    onDeptPick(e) {
+      const idx = parseInt(e.detail.value, 10);
+      if (!isNaN(idx) && this.deptOptions[idx] != null) {
+        this.pickerDeptIndex = idx;
+        this.hospitalSub = this.deptOptions[idx];
+        this.onRefresh();
+      }
+    },
+
+    onDiseasePick(e) {
+      const idx = parseInt(e.detail.value, 10);
+      if (!isNaN(idx) && this.diseaseOptions[idx] != null) {
+        this.pickerDisIndex = idx;
+        this.specialization = this.diseaseOptions[idx];
+        this.onRefresh();
+      }
+    },
+
     getDoctorList() {
+      if (this.filterMode && !this.filterOptionsReady) return;
       if (this.loadend || this.loading) return;
       this.loading = true;
       let params = { page: this.page, limit: this.limit };
@@ -140,6 +247,12 @@ export default {
       if (this.mchId) {
         params.mchId = this.mchId;
         apiFn = getDoctorByMchApi;
+      }
+      if (this.filterMode === "dept" && this.hospitalSub && this.hospitalSub !== "全部") {
+        params.hospitalSub = this.hospitalSub;
+      }
+      if (this.filterMode === "disease" && this.specialization && this.specialization !== "全部") {
+        params.specialization = this.specialization;
       }
       apiFn(params)
         .then(res => {
@@ -237,6 +350,48 @@ export default {
   flex: 1;
   font-size: 26rpx;
   color: #333;
+}
+
+.filter-strip {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 24rpx 16rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.filter-strip-label {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 16rpx;
+}
+
+.filter-strip-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 16rpx 20rpx;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.filter-strip-val {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-arrow {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 8rpx;
 }
 
 .doctor-scroll {

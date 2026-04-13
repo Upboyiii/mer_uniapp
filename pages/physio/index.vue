@@ -1,14 +1,18 @@
 <template>
 	<view class="physio-page" :data-theme="theme">
-		<!-- 搜索：姓名、擅长（理疗类型） -->
-		<view v-if="therapistList.length > 0" class="physio-search-wrap">
+		<!-- 仅 App 端：自定义导航时预留状态栏高度；H5/Web 不渲染，避免多出一截空白 -->
+		<!-- #ifdef APP-PLUS -->
+		<view class="physio-safe-status" :style="{ height: statusBarHeight + 'px' }"></view>
+		<!-- #endif -->
+		<!-- 顶部：仅搜索（不含地址、地图） -->
+		<view class="physio-top">
 			<view class="physio-search-inner">
 				<text class="iconfont icon-ic_search physio-search-ico"></text>
 				<input
 					class="physio-search-input"
 					type="text"
 					:value="therapistSearchKey"
-					placeholder="搜索姓名、擅长/理疗类型"
+					placeholder="搜索技师姓名"
 					confirm-type="search"
 					@input="onTherapistSearchInput"
 				/>
@@ -18,64 +22,58 @@
 					@click="therapistSearchKey = ''"
 				>×</text>
 			</view>
-		</view>
 
-		<!-- 理疗师列表 -->
-		<view v-if="displayTherapistList.length > 0" class="therapist-list">
-			<view
-				class="therapist-card"
-				v-for="(item, index) in displayTherapistList"
-				:key="'physio-t-' + index + '-' + (item.id != null ? item.id : '')"
-				@click="goTherapistDetail(item)"
-			>
-				<view class="therapist-card-row">
-					<view class="card-avatar">
-						<image
-							class="avatar"
-							:src="item.picture || '/static/images/f.png'"
-							mode="aspectFill"
-						></image>
-					</view>
-					<view class="card-info">
-						<view class="info-name">{{ item.name }}</view>
-						<view class="info-domain line1" v-if="item.hospitalDomain">
-							擅长：{{ item.hospitalDomain }}
-						</view>
-						<view class="info-stats">
-							<view class="stat" v-if="item.score">
-								<text class="stat-val">{{ item.score }}</text>
-								<text class="stat-label">评分</text>
-							</view>
-							<view class="stat" v-if="item.treatNum">
-								<text class="stat-val">{{ item.treatNum }}</text>
-								<text class="stat-label">已服务</text>
-							</view>
-						</view>
-					</view>
-					<view class="card-action">
-						<view class="book-btn" @click.stop="goBookTherapist(item)">预约</view>
-					</view>
+			<!-- 筛选条：样式还原，排序可本地生效；时段/全部筛选为占位 -->
+			<view class="filter-bar">
+				<view class="filter-item" @click="openSortSheet">
+					<text class="filter-item-txt">{{ sortLabel }}</text>
+					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
-				<!-- 小程序对 1rpx+渐变 常只渲染异常，用外层居中 + 内层 border 画 92% 线 -->
-				<view v-if="index < displayTherapistList.length - 1" class="card-divider">
-					<view class="card-divider-line"></view>
+				<view class="filter-item filter-item-muted" @click="onFilterPlaceholder('time')">
+					<text class="filter-item-txt">服务时段</text>
+					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
+				</view>
+				<view class="filter-item filter-item-muted" @click="onFilterPlaceholder('more')">
+					<text class="filter-item-txt">全部筛选</text>
+					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
 			</view>
+
+			<!-- 快捷标签 -->
+			<scroll-view scroll-x class="tag-scroll" show-scrollbar="false">
+				<view class="tag-list">
+					<view
+						v-for="(tag, ti) in quickTags"
+						:key="tag.key"
+						class="tag-chip"
+						:class="{ active: activeQuickTag === tag.key, highlight: tag.highlight }"
+						@click="toggleQuickTag(tag.key)"
+					>
+						<text>{{ tag.label }}</text>
+					</view>
+				</view>
+			</scroll-view>
 		</view>
+
+		<physio-therapist-card-list
+			v-if="sortedDisplayList.length > 0"
+			:list="sortedDisplayList"
+			:theme="theme"
+			@detail="goTherapistDetail"
+			@book="goBookTherapist"
+		/>
 
 		<view
-			v-else-if="therapistList.length > 0 && displayTherapistList.length === 0 && !loading"
+			v-else-if="therapistList.length > 0 && sortedDisplayList.length === 0 && !loading"
 			class="search-empty"
 		>
-			<text>未找到相关理疗师，可换个关键词或上拉加载更多后再搜</text>
+			<text>未找到相关理疗师，可换个关键词试试</text>
 		</view>
 
-		<!-- 空状态 -->
 		<view v-if="therapistList.length === 0 && !loading">
-			<emptyPage title="暂无理疗师~" mTop="25%" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></emptyPage>
+			<emptyPage title="暂无理疗师~" mTop="25%" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
 		</view>
 
-		<!-- 加载状态 -->
 		<view v-if="loading" class="loading-wrap">
 			<text>加载中...</text>
 		</view>
@@ -90,41 +88,95 @@ import { mapGetters } from 'vuex';
 import { getTherapistPageListApi } from '@/api/clinic.js';
 import pageFooter from '@/components/pageFooter/index.vue';
 import emptyPage from '@/components/emptyPage.vue';
+import physioTherapistCardList from '@/components/physioTherapistCardList/physioTherapistCardList.vue';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
 import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
+const SORT_ITEMS = [
+	{ key: 'default', label: '智能排序' },
+	{ key: 'score', label: '评分优先' },
+	{ key: 'treat', label: '服务量优先' }
+];
+
 export default {
-	components: { pageFooter, emptyPage },
+	components: { pageFooter, emptyPage, physioTherapistCardList },
 	data() {
 		return {
-			urlDomain: this.$Cache.get("imgHost"),
-			/** 与 getTheme 接口、pageFooter、clinic/therapist 一致，保证 --view-theme 随后台主题色 */
+			urlDomain: this.$Cache.get('imgHost'),
 			theme: this.$Cache.get('theme') || app.globalData.theme,
 			therapistList: [],
 			loading: false,
 			loadend: false,
 			page: 1,
 			limit: 10,
-			therapistSearchKey: ''
+			therapistSearchKey: '',
+			sortMode: 'default',
+			activeQuickTag: '',
+			quickTags: [
+				{ key: 'skill', label: '手法优先', highlight: false },
+				{ key: 'new', label: '新人', highlight: false },
+				{ key: 'sale', label: '特惠', highlight: true },
+				{ key: 'coupon', label: '神券技师', highlight: false },
+				{ key: 'free', label: '免车费', highlight: false }
+			],
+			/** APP 端状态栏占位高度（px），仅配合模板 #ifdef APP-PLUS） */
+			statusBarHeight: 0
 		};
 	},
 	computed: {
 		...mapGetters(['bottomNavigationIsCustom', 'isLogin']),
-		/** 本地按姓名、hospitalDomain（擅长/理疗类型说明）过滤 */
+		sortLabel() {
+			const f = SORT_ITEMS.find(s => s.key === this.sortMode);
+			return f ? f.label : '智能排序';
+		},
 		displayTherapistList() {
 			const kw = (this.therapistSearchKey || '').trim().toLowerCase();
-			const list = this.therapistList || [];
+			let list = this.therapistList || [];
+			if (this.activeQuickTag === 'new') {
+				list = list.filter(t => {
+					const n = Number(t.treatNum);
+					return !isNaN(n) && n > 0 && n <= 8;
+				});
+			} else if (this.activeQuickTag === 'skill') {
+				list = list.filter(t => {
+					const d = ((t.hospitalDomain || '') + (t.specialization || '')).toLowerCase();
+					return d.indexOf('手法') !== -1 || d.indexOf('推拿') !== -1 || d.indexOf('理疗') !== -1;
+				});
+			}
 			if (!kw) return list;
-			return list.filter((t) => {
+			return list.filter(t => {
 				const name = (t.name || '').toLowerCase();
 				const domain = (t.hospitalDomain || '').toLowerCase();
+				const spec = (t.specialization || '').toLowerCase();
 				const intro = (t.selfInfo || '').toLowerCase();
-				return name.indexOf(kw) !== -1 || domain.indexOf(kw) !== -1 || intro.indexOf(kw) !== -1;
+				return (
+					name.indexOf(kw) !== -1 ||
+					domain.indexOf(kw) !== -1 ||
+					spec.indexOf(kw) !== -1 ||
+					intro.indexOf(kw) !== -1
+				);
 			});
+		},
+		sortedDisplayList() {
+			const list = [...this.displayTherapistList];
+			if (this.sortMode === 'score') {
+				list.sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+			} else if (this.sortMode === 'treat') {
+				list.sort((a, b) => (Number(b.treatNum) || 0) - (Number(a.treatNum) || 0));
+			}
+			return list;
 		}
 	},
 	onLoad(options) {
+		// #ifdef APP-PLUS
+		try {
+			const sys = uni.getSystemInfoSync();
+			this.statusBarHeight = (sys && sys.statusBarHeight) || 0;
+		} catch (e) {
+			this.statusBarHeight = 20;
+		}
+		// #endif
 		this.getList();
 	},
 	onPullDownRefresh() {
@@ -140,6 +192,29 @@ export default {
 		onTherapistSearchInput(e) {
 			this.therapistSearchKey = (e.detail && e.detail.value) != null ? e.detail.value : '';
 		},
+		openSortSheet() {
+			const labels = SORT_ITEMS.map(s => s.label);
+			uni.showActionSheet({
+				itemList: labels,
+				success: res => {
+					const idx = res.tapIndex;
+					if (idx >= 0 && idx < SORT_ITEMS.length) {
+						this.sortMode = SORT_ITEMS[idx].key;
+					}
+				}
+			});
+		},
+		onFilterPlaceholder(which) {
+			this.$util.Tips({ title: which === 'time' ? '服务时段筛选敬请期待' : '更多筛选敬请期待' });
+		},
+		toggleQuickTag(key) {
+			if (['sale', 'coupon', 'free'].indexOf(key) !== -1) {
+				this.$util.Tips({ title: '敬请期待' });
+				return;
+			}
+			this.activeQuickTag = this.activeQuickTag === key ? '' : key;
+		},
+
 		getList() {
 			if (this.loadend || this.loading) return;
 			this.loading = true;
@@ -203,20 +278,32 @@ export default {
 <style lang="scss" scoped>
 .physio-page {
 	min-height: 100vh;
-	background: #f5f5f5;
+	background: #f5f6f8;
+	padding-bottom: 24rpx;
 }
 
-.physio-search-wrap {
-	padding: 16rpx 24rpx 0;
+/* App 端占位块，避免内容顶到刘海；无背景线与页面冲突 */
+.physio-safe-status {
+	width: 100%;
+	flex-shrink: 0;
 	background: #fff;
+}
+
+.physio-top {
+	background: #fff;
+	/* 与顶部留出间距，避免贴边「边框」感（H5/App 均生效） */
+	padding-top: 20rpx;
+	padding-bottom: 0;
+	margin-bottom: 16rpx;
 }
 
 .physio-search-inner {
 	display: flex;
 	align-items: center;
+	margin: 0 24rpx 0;
 	height: 72rpx;
 	padding: 0 20rpx;
-	background: #f5f6f8;
+	background: #f3f4f6;
 	border-radius: 36rpx;
 	box-sizing: border-box;
 }
@@ -243,131 +330,79 @@ export default {
 	flex-shrink: 0;
 }
 
+.filter-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20rpx 24rpx 12rpx;
+}
+
+.filter-item {
+	display: flex;
+	align-items: center;
+	gap: 6rpx;
+	flex: 1;
+	justify-content: center;
+}
+
+.filter-item-muted .filter-item-txt {
+	color: #999;
+}
+
+.filter-item-txt {
+	font-size: 26rpx;
+	color: #333;
+	max-width: 200rpx;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.filter-arrow {
+	font-size: 20rpx;
+	color: #bbb;
+}
+
+.tag-scroll {
+	width: 100%;
+	white-space: nowrap;
+	padding: 8rpx 0 8rpx;
+}
+
+.tag-list {
+	display: inline-flex;
+	padding: 0 24rpx;
+	gap: 16rpx;
+}
+
+.tag-chip {
+	flex-shrink: 0;
+	padding: 12rpx 22rpx;
+	font-size: 24rpx;
+	color: #666;
+	background: #f5f6f8;
+	border-radius: 8rpx;
+	border: 1rpx solid transparent;
+}
+
+.tag-chip.highlight {
+	color: #e74c3c;
+	background: #fff5f5;
+	border-color: rgba(231, 76, 60, 0.2);
+}
+
+.tag-chip.active {
+	color: var(--view-theme);
+	background: rgba(110, 163, 90, 0.1);
+	border-color: rgba(110, 163, 90, 0.25);
+}
+
 .search-empty {
 	padding: 80rpx 40rpx;
 	text-align: center;
 	font-size: 26rpx;
 	color: #999;
 	line-height: 1.5;
-}
-
-.therapist-list {
-	padding: 0;
-	background: #fff;
-}
-
-.therapist-card {
-	display: flex;
-	flex-direction: column;
-	background: #fff;
-	border-radius: 0;
-	margin: 0;
-	box-shadow: none;
-	box-sizing: border-box;
-}
-
-.therapist-card-row {
-	display: flex;
-	align-items: center;
-	padding: 28rpx 24rpx;
-	min-height: 160rpx;
-	box-sizing: border-box;
-}
-
-/* 每条下方一条线（最后一条无），约 92% 宽；两端渐隐更柔和 */
-.card-divider {
-	width: 100%;
-	flex-shrink: 0;
-	display: flex;
-	justify-content: center;
-	align-items: stretch;
-	box-sizing: border-box;
-	padding-top: 2rpx;
-}
-
-.card-divider-line {
-	width: 92%;
-	height: 2rpx;
-	border-radius: 1rpx;
-	/* 中间略深、两侧淡出，比实色分割线更柔 */
-	background: linear-gradient(
-		90deg,
-		rgba(0, 0, 0, 0) 0%,
-		rgba(0, 0, 0, 0.035) 14%,
-		rgba(0, 0, 0, 0.055) 50%,
-		rgba(0, 0, 0, 0.035) 86%,
-		rgba(0, 0, 0, 0) 100%
-	);
-}
-
-.card-avatar {
-	flex-shrink: 0;
-	margin-right: 20rpx;
-}
-
-.avatar {
-	width: 110rpx;
-	height: 110rpx;
-	border-radius: 50%;
-}
-
-.card-info {
-	flex: 1;
-	overflow: hidden;
-	min-height: 110rpx;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-}
-
-.info-name {
-	font-size: 30rpx;
-	font-weight: 600;
-	color: #282828;
-	margin-bottom: 8rpx;
-}
-
-.info-domain {
-	font-size: 24rpx;
-	color: #999;
-	margin-bottom: 8rpx;
-	line-height: 1.4;
-}
-
-.info-stats {
-	display: flex;
-	gap: 24rpx;
-	min-height: 36rpx;
-}
-
-.stat {
-	display: flex;
-	align-items: center;
-	gap: 4rpx;
-}
-
-.stat-val {
-	font-size: 24rpx;
-	font-weight: 600;
-	color: #f0932b;
-}
-
-.stat-label {
-	font-size: 20rpx;
-	color: #999;
-}
-
-.card-action {
-	flex-shrink: 0;
-	margin-left: 16rpx;
-}
-
-.book-btn {
-	padding: 14rpx 32rpx;
-	background: var(--view-theme);
-	color: #fff;
-	font-size: 24rpx;
-	border-radius: 30rpx;
 }
 
 .loading-wrap {

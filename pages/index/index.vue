@@ -102,6 +102,28 @@
 
 					<!-- 名医专家 -->
 					<view v-if="currentTab === 0" class="tab-content tab-content-doctor">
+						<view class="doctor-quick-filters">
+							<view class="filter-card filter-card-dept" @click="goDoctorListByDept">
+								<view class="filter-card-icon">
+									<text class="iconfont icon-ic_store3"></text>
+								</view>
+								<view class="filter-card-main">
+									<text class="filter-card-title">按科室找</text>
+									<text class="filter-card-desc">内科、外科等</text>
+								</view>
+								<text class="iconfont icon-ic_rightarrow filter-card-go"></text>
+							</view>
+							<view class="filter-card filter-card-disease" @click="goDoctorListByDisease">
+								<view class="filter-card-icon">
+									<text class="iconfont icon-ic_notes"></text>
+								</view>
+								<view class="filter-card-main">
+									<text class="filter-card-title">按疾病找</text>
+									<text class="filter-card-desc">对症找名医</text>
+								</view>
+								<text class="iconfont icon-ic_rightarrow filter-card-go"></text>
+							</view>
+						</view>
 						<view v-if="doctorList.length > 0" class="doctor-list">
 							<view
 								class="doctor-card"
@@ -181,62 +203,16 @@
 						<view v-if="doctorLoading" class="loading-tip"><text>加载中...</text></view>
 					</view>
 
-					<!-- 理疗专区 -->
-					<view v-if="currentTab === 1" class="tab-content">
-						<!-- <view v-if="therapistList.length > 0" class="therapist-search-wrap">
-							<view class="therapist-search-inner">
-								<text class="iconfont icon-ic_search therapist-search-ico"></text>
-								<input
-									class="therapist-search-input"
-									type="text"
-									:value="therapistSearchKey"
-									placeholder="搜索姓名、擅长/理疗类型"
-									confirm-type="search"
-									@input="onTherapistSearchInput"
-								/>
-								<text
-									v-if="therapistSearchKey"
-									class="therapist-search-clear"
-									@click="therapistSearchKey = ''"
-								>×</text>
-							</view>
-						</view> -->
-						<view v-if="therapistListFiltered.length > 0" class="therapist-list">
-							<view
-								class="therapist-card"
-								v-for="(item, index) in therapistListFiltered"
-								:key="item.id || index"
-								@click="goTherapistDetail(item)"
-							>
-								<view class="therapist-avatar-wrap">
-									<easy-loadimage
-										class="therapist-avatar-easy"
-										:image-src="therapistAvatarSrc(item)"
-										mode="aspectFill"
-										width="110rpx"
-										height="110rpx"
-										radius="50%"
-									/>
-								</view>
-								<view class="therapist-info">
-									<view class="therapist-name">{{ item.name }}</view>
-									<view class="therapist-domain line1" v-if="item.hospitalDomain">擅长：{{ item.hospitalDomain }}</view>
-									<view class="therapist-stats">
-										<text v-if="item.score" class="t-stat">{{ item.score }} 评分</text>
-										<text v-if="item.treatNum" class="t-stat">{{ item.treatNum }} 已服务</text>
-									</view>
-								</view>
-								<view class="therapist-action">
-									<view class="book-btn" @click.stop="goBookTherapist(item)">预约</view>
-								</view>
-							</view>
-						</view>
-						<view
-							v-else-if="therapistList.length > 0 && therapistListFiltered.length === 0 && !therapistLoading"
-							class="therapist-search-empty"
-						>
-							<text>未找到相关理疗师</text>
-						</view>
+					<!-- 理疗专区（列表样式与 pages/physio/index 一致，不含搜索筛选） -->
+					<view v-if="currentTab === 1" class="tab-content tab-content-physio">
+						<physio-therapist-card-list
+							v-if="therapistList.length > 0"
+							:list="therapistList"
+							:theme="theme"
+							embedded
+							@detail="goTherapistDetail"
+							@book="goBookTherapist"
+						/>
 						<view v-if="therapistList.length === 0 && !therapistLoading" class="empty-state">
 							<emptyPage title="暂无理疗师~" mTop="0" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
 						</view>
@@ -337,6 +313,7 @@ import tuiSkeleton from '@/components/base/tui-skeleton.vue';
 import pageFooter from '@/components/pageFooter/index.vue';
 import emptyPage from '@/components/emptyPage.vue';
 import easyLoadimage from '@/components/base/easy-loadimage.vue';
+import physioTherapistCardList from '@/components/physioTherapistCardList/physioTherapistCardList.vue';
 import couponDialog from "../../subPackage/pages/diyPage/couponDialog";
 import { getIndexData, getAppVersion, getOpenAdvApi } from '@/api/api.js';
 import { getCategoryFirst } from '@/api/api.js';
@@ -383,17 +360,6 @@ export default {
 			const host = raw.replace(/\/?$/, '/');
 			return `${host}crmebimage/presets/noShopper.png`;
 		},
-		therapistListFiltered() {
-			const kw = (this.therapistSearchKey || '').trim().toLowerCase();
-			const list = this.therapistList || [];
-			if (!kw) return list;
-			return list.filter((t) => {
-				const name = (t.name || '').toLowerCase();
-				const domain = (t.hospitalDomain || '').toLowerCase();
-				const intro = (t.selfInfo || '').toLowerCase();
-				return name.indexOf(kw) !== -1 || domain.indexOf(kw) !== -1 || intro.indexOf(kw) !== -1;
-			});
-		}
 	},
 	components: {
 		tuiSkeleton,
@@ -401,7 +367,8 @@ export default {
 		advertisement,
 		couponDialog,
 		emptyPage,
-		easyLoadimage
+		easyLoadimage,
+		physioTherapistCardList
 	},
 	data() {
 		return {
@@ -441,7 +408,6 @@ export default {
 			therapistLoading: false,
 			therapistLoadend: false,
 			therapistPage: 1,
-			therapistSearchKey: '',
 
 			// 平台商城
 			categoryList: [],
@@ -531,7 +497,6 @@ export default {
 				this.therapistPage = 1;
 				this.therapistLoadend = false;
 				this.therapistList = [];
-				this.therapistSearchKey = '';
 				this.getTherapistList();
 			} else if (this.currentTab === 2) {
 				this.mallPage = 1;
@@ -547,10 +512,6 @@ export default {
 			else if (this.currentTab === 1) this.getTherapistList();
 			else if (this.currentTab === 2) this.getMallProductList();
 		},
-		onTherapistSearchInput(e) {
-			this.therapistSearchKey = (e.detail && e.detail.value) != null ? e.detail.value : '';
-		},
-
 		// ==================== 名医专家 ====================
 		getDoctorList() {
 			if (this.doctorLoadend || this.doctorLoading) return;
@@ -574,6 +535,13 @@ export default {
 				uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
 			} catch (e) {}
 			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
+		},
+
+		goDoctorListByDept() {
+			this.$util.navigateTo('/pages/clinic/doctor/index?mode=dept');
+		},
+		goDoctorListByDisease() {
+			this.$util.navigateTo('/pages/clinic/doctor/index?mode=disease');
 		},
 
 		goConsult(doc, type) {
@@ -804,14 +772,6 @@ export default {
 			if (t == null || t === '' || Number(t) === 0) return '平均响应 --';
 			return `${t} 分钟内 平均响应`;
 		},
-		therapistAvatarSrc(item) {
-			const p = item && item.picture;
-			if (p != null && String(p).trim() !== '') {
-				return String(p).trim();
-			}
-			return this.defaultAvatarPlaceholder;
-		},
-
 		/** 名医评分：接口常为 string（如 "4.95"）；仅数值 > 0 时展示 */
 		hasStat(val) {
 			if (val === null || val === undefined || val === '') return false;
@@ -1329,6 +1289,89 @@ page {
 	border-radius: 0;
 }
 
+.doctor-quick-filters {
+	display: flex;
+	gap: 20rpx;
+	padding: 20rpx 24rpx 20rpx;
+	background: linear-gradient(180deg, #f8faf8 0%, #ffffff 45%);
+	border-bottom: 1rpx solid #eee;
+}
+
+.filter-card {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	padding: 20rpx 14rpx 20rpx 18rpx;
+	background: #fff;
+	border-radius: 20rpx;
+	box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
+	border: 1rpx solid rgba(0, 0, 0, 0.04);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-card:active {
+	transform: scale(0.98);
+	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.filter-card-icon {
+	flex-shrink: 0;
+	width: 76rpx;
+	height: 76rpx;
+	border-radius: 20rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 14rpx;
+}
+
+.filter-card-dept .filter-card-icon {
+	background: linear-gradient(145deg, rgba(110, 163, 90, 0.22), rgba(110, 163, 90, 0.08));
+}
+
+.filter-card-dept .filter-card-icon .iconfont {
+	font-size: 40rpx;
+	color: var(--view-theme);
+}
+
+.filter-card-disease .filter-card-icon {
+	background: linear-gradient(145deg, rgba(230, 152, 80, 0.28), rgba(230, 152, 80, 0.1));
+}
+
+.filter-card-disease .filter-card-icon .iconfont {
+	font-size: 38rpx;
+	color: #c87b2e;
+}
+
+.filter-card-main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
+}
+
+.filter-card-title {
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #282828;
+	line-height: 1.2;
+}
+
+.filter-card-desc {
+	font-size: 22rpx;
+	color: #999;
+	line-height: 1.2;
+}
+
+.filter-card-go {
+	flex-shrink: 0;
+	font-size: 22rpx;
+	color: #ccc;
+	margin-left: 4rpx;
+}
+
 /* ==================== 名医专家 ==================== */
 .doctor-list {
 	padding-bottom: 20rpx;
@@ -1550,118 +1593,10 @@ page {
 	margin-left: 4rpx;
 }
 
-/* ==================== 理疗专区 ==================== */
-.therapist-search-wrap {
-	padding: 0 24rpx 16rpx;
-}
-
-.therapist-search-inner {
-	display: flex;
-	align-items: center;
-	height: 72rpx;
-	padding: 0 20rpx;
+/* ==================== 理疗专区（列表组件样式在 physioTherapistCardList） ==================== */
+.tab-content.tab-content-physio {
+	padding: 8rpx 0 0;
 	background: #f5f6f8;
-	border-radius: 36rpx;
-	box-sizing: border-box;
-}
-
-.therapist-search-ico {
-	font-size: 32rpx;
-	color: #bbb;
-	margin-right: 12rpx;
-	flex-shrink: 0;
-}
-
-.therapist-search-input {
-	flex: 1;
-	height: 72rpx;
-	font-size: 28rpx;
-	color: #333;
-}
-
-.therapist-search-clear {
-	font-size: 40rpx;
-	color: #ccc;
-	line-height: 1;
-	padding: 0 8rpx;
-	flex-shrink: 0;
-}
-
-.therapist-search-empty {
-	padding: 48rpx 24rpx;
-	text-align: center;
-	font-size: 26rpx;
-	color: #999;
-}
-
-.therapist-list {
-	padding-bottom: 20rpx;
-}
-
-.therapist-card {
-	display: flex;
-	align-items: center;
-	background: #fff;
-	border-radius: 20rpx;
-	padding: 28rpx 24rpx;
-	margin-bottom: 16rpx;
-	box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
-}
-
-.therapist-avatar-wrap {
-	flex-shrink: 0;
-	margin-right: 20rpx;
-}
-
-.therapist-avatar-easy {
-	width: 110rpx;
-	height: 110rpx;
-	border-radius: 50%;
-	overflow: hidden;
-}
-
-.therapist-info {
-	flex: 1;
-	overflow: hidden;
-}
-
-.therapist-name {
-	font-size: 30rpx;
-	font-weight: 600;
-	color: #282828;
-	margin-bottom: 8rpx;
-}
-
-.therapist-domain {
-	font-size: 24rpx;
-	color: #999;
-	margin-bottom: 8rpx;
-	line-height: 1.4;
-}
-
-.therapist-stats {
-	display: flex;
-	gap: 20rpx;
-}
-
-.t-stat {
-	font-size: 22rpx;
-	@include second_color($second-color-theme1);
-	font-weight: 500;
-}
-
-.therapist-action {
-	flex-shrink: 0;
-	margin-left: 16rpx;
-}
-
-.book-btn {
-	padding: 14rpx 36rpx;
-	@include main_bg_color($main-color-theme1);
-	color: #fff;
-	font-size: 26rpx;
-	border-radius: 30rpx;
-	font-weight: 500;
 }
 
 /* ==================== 平台商城 ==================== */

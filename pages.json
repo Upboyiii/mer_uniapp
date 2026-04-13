@@ -80,11 +80,8 @@
 			"path": "pages/physio/index",
 			"style": {
 				"navigationBarTitleText": "理疗",
-				"app-plus": {
-					"titleNView": {
-						"type": "default"
-					}
-				}
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black"
 			}
 		},
 		{

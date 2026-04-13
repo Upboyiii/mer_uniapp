@@ -67,15 +67,34 @@
 					<view
 						v-else
 						class="cate-row"
-						:class="{ active: selectedCate && selectedCate.code === item.code }"
+						:class="{ active: selectedCate && selectedCate.id === item.id }"
 						v-for="(item, idx) in categoryList"
-						:key="item.code || idx"
+						:key="item.id || idx"
 						@click="pickCategory(item)"
 					>
-						<view class="cate-name">{{ item.name }}</view>
+						<image
+							v-if="coverSrc(item)"
+							class="cate-cover"
+							:src="coverSrc(item)"
+							mode="aspectFill"
+						/>
+						<view class="cate-row-body">
+							<view class="cate-name-row">
+								<text class="cate-name">{{ item.name || '理疗项目' }}</text>
+								<text v-if="item.homeService" class="cate-tag-home">可上门</text>
+							</view>
+							<view class="cate-sub">
+								<text v-if="item.duration" class="cate-dur">{{ item.duration }}分钟</text>
+								<text
+									v-if="item.homeService && item.homePrice != null"
+									class="cate-home"
+								>
+									上门 ¥{{ item.homePrice }}
+								</text>
+							</view>
+						</view>
 						<view class="cate-extra">
 							<text class="cate-price">¥{{ item.price != null ? item.price : 0 }}</text>
-							<text class="cate-dur" v-if="item.duration">{{ item.duration }}分钟</text>
 						</view>
 					</view>
 					<view v-if="!cateLoading && categoryList.length === 0" class="empty-txt">暂无理疗项目</view>
@@ -109,6 +128,8 @@ export default {
 			therapistPicture: '',
 			categoryList: [],
 			cateLoading: false,
+			/** 从理疗师详情「套餐预订」带入，加载列表后自动选中 */
+			preselectedCategoryId: 0,
 			showCatePicker: false,
 			selectedCate: null,
 			fee: 0,
@@ -146,6 +167,10 @@ export default {
 			this.therapistName = nav.name != null ? String(nav.name) : '';
 			this.therapistDomain = nav.domain != null ? String(nav.domain) : '';
 			this.therapistPicture = nav.picture != null ? String(nav.picture) : '';
+			if (nav.preselectedCategoryId != null && nav.preselectedCategoryId !== '') {
+				const pid = parseInt(nav.preselectedCategoryId, 10);
+				this.preselectedCategoryId = !isNaN(pid) ? pid : 0;
+			}
 		} else {
 			this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
 			this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
@@ -159,20 +184,48 @@ export default {
 		this.loadCategories();
 	},
 	methods: {
+		/** 封面图：相对路径补全域名 */
+		coverSrc(item) {
+			if (!item || !item.coverImage) return '';
+			let u = String(item.coverImage).trim();
+			if (!u) return '';
+			if (/^https?:\/\//i.test(u)) return u;
+			const raw = this.$Cache.get('imgHost') || '';
+			if (!raw) return u;
+			const base = raw.replace(/\/?$/, '');
+			return u.startsWith('/') ? base + u : `${base}/${u}`;
+		},
+
 		loadCategories() {
 			this.cateLoading = true;
-			getPhysiotherapyCategoryListApi({})
+			const params = { page: 1, limit: 200 };
+			if (this.mchId) {
+				params.mchId = this.mchId;
+			}
+			return getPhysiotherapyCategoryListApi(params)
 				.then(res => {
-					let list = res.data || [];
-					if (!Array.isArray(list)) {
-						list = (res.data && res.data.list) || [];
+					const data = res.data;
+					let list = [];
+					if (data && Array.isArray(data.list)) {
+						list = data.list;
+					} else if (Array.isArray(data)) {
+						list = data;
 					}
-					this.categoryList = list;
-					this.cateLoading = false;
+					this.categoryList = list.filter(it => it && (it.status === undefined || it.status === 1));
+					this.applyPreselectedCategory();
 				})
-				.catch(() => {
+				.catch(() => {})
+				.finally(() => {
 					this.cateLoading = false;
 				});
+		},
+		applyPreselectedCategory() {
+			const pid = this.preselectedCategoryId;
+			if (!pid || !this.categoryList || !this.categoryList.length) return;
+			const found = this.categoryList.find(it => String(it.id) === String(pid));
+			if (found) {
+				this.pickCategory(found);
+			}
 		},
 		pickCategory(item) {
 			this.selectedCate = item;
@@ -265,7 +318,10 @@ export default {
 			}
 			const body = {
 				therapistId: this.therapistId,
-				physiotherapyCategory: this.selectedCate.code,
+				physiotherapyType:
+					this.selectedCate.name != null && String(this.selectedCate.name).trim() !== ''
+						? String(this.selectedCate.name).trim()
+						: String(this.selectedCate.id != null ? this.selectedCate.id : ''),
 				appointTime: this.appointTimeStr,
 				fee: this.fee
 			};
@@ -516,25 +572,69 @@ export default {
 
 .cate-row {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	padding: 28rpx 0;
+	padding: 24rpx 0;
 	border-bottom: 1px solid #f5f5f5;
+	gap: 20rpx;
 
 	&.active {
 		background: rgba(0, 0, 0, 0.02);
 	}
 }
 
+.cate-cover {
+	width: 112rpx;
+	height: 112rpx;
+	border-radius: 12rpx;
+	background: #f0f0f0;
+	flex-shrink: 0;
+}
+
+.cate-row-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.cate-name-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12rpx;
+	margin-bottom: 8rpx;
+}
+
 .cate-name {
 	font-size: 28rpx;
 	color: #282828;
 	font-weight: 500;
+	line-height: 1.35;
+}
+
+.cate-tag-home {
+	font-size: 20rpx;
+	color: var(--view-theme);
+	background: rgba(110, 163, 90, 0.12);
+	padding: 2rpx 10rpx;
+	border-radius: 6rpx;
+	flex-shrink: 0;
+}
+
+.cate-sub {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16rpx;
+}
+
+.cate-home {
+	font-size: 22rpx;
+	color: #999;
 }
 
 .cate-extra {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
+	flex-shrink: 0;
 }
 
 .cate-price {

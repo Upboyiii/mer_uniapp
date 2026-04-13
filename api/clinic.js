@@ -22,7 +22,7 @@ export function getClinicProductListApi(data) {
 }
 
 /**
- * 获取理疗师服务分类
+ * 旧路径，项目内未再调用；理疗类目请用 getPhysiotherapyCategoryListApi({ mchId, page, limit })
  */
 export function getTherapistCategoryApi(merId) {
   return request.get(`clinic/therapist/category/${merId}`, {}, {noAuth:true});
@@ -71,8 +71,30 @@ export function getClinicFeaturedProductApi(merId, data) {
   return request.get(`product/merchant/pro/list`, { merId, ...data }, {noAuth:true});
 }
 
+// ========== interface.md：医生侧「医院/科室/疾病」数据字典 ==========
+
+/** GET /api/front/doctor/Hospital/sub/alllist — 医院科室列表（字典） */
+export function getHospitalSubAllListApi() {
+  return request.get('doctor/Hospital/sub/alllist', {}, { noAuth: true });
+}
+
+/** GET /api/front/doctor/Hospital/ill/alllist — 疾病列表（字典） */
+export function getIllAllListApi() {
+  return request.get('doctor/Hospital/ill/alllist', {}, { noAuth: true });
+}
+
+/**
+ * GET /api/front/doctor/Hospital/list/{keyword} — 医院检索（path: keyword）
+ */
+export function getHospitalListByKeywordApi(keyword) {
+  const k = keyword != null && keyword !== undefined ? String(keyword) : '';
+  return request.get(`doctor/Hospital/list/${encodeURIComponent(k)}`, {}, { noAuth: true });
+}
+
 /**
  * 获取医生列表（全平台）
+ * GET /api/front/doctor/page/list
+ * 常用参数：page、limit；筛选时可传 hospitalSub（科室）、specialization（擅长疾病，与 Doctor 对象字段一致，以后端为准）
  */
 export function getDoctorListApi(data) {
   return request.get('doctor/page/list', data, { noAuth: true });
@@ -116,7 +138,10 @@ export function getMyTherapistListApi(data) {
   return request.get('therapist/page/user/list', data);
 }
 
-/** GET /api/front/therapist/physiotherapy-category/list 理疗类目列表（含 code、名称、价格、时长） */
+/**
+ * GET /api/front/therapist/physiotherapy-category/list
+ * query: page, limit, mchId(门店)；返回 CommonPage，list 为 PhysiotherapyCategory（封面 coverImage、是否上门 homeService、上门价 homePrice 等）
+ */
 export function getPhysiotherapyCategoryListApi(data) {
   return request.get('therapist/physiotherapy-category/list', data, { noAuth: true });
 }

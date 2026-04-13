@@ -2723,3 +2723,331 @@
 	"message": ""
 }
 ```
+
+
+
+## 分页列表
+
+
+**接口地址**:`/api/front/therapist/physiotherapy-category/list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|limit|每页数量|query|false|integer(int32)||
+|mchId|商户ID|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«PhysiotherapyCategory对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«PhysiotherapyCategory对象»|CommonPage«PhysiotherapyCategory对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|PhysiotherapyCategory对象|
+|&emsp;&emsp;&emsp;&emsp;coverImage|封面|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;duration|时长(分钟)|integer||
+|&emsp;&emsp;&emsp;&emsp;homePrice|上门服务价格|number||
+|&emsp;&emsp;&emsp;&emsp;homeService|是否提供上门读服务|boolean||
+|&emsp;&emsp;&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;&emsp;&emsp;name|类目名称|string||
+|&emsp;&emsp;&emsp;&emsp;price|金额|number||
+|&emsp;&emsp;&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;&emsp;&emsp;updateTime|修改时间|string||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"coverImage": "",
+				"createTime": "",
+				"duration": 0,
+				"homePrice": 0,
+				"homeService": true,
+				"id": 0,
+				"mchId": 0,
+				"name": "",
+				"price": 0,
+				"status": 0,
+				"updateTime": ""
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 获取疾病
+
+
+**接口地址**:`/api/front/doctor/Hospital/ill/alllist`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+暂无
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«List«illInfo对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||array|illInfo对象|
+|&emsp;&emsp;code|科室code|string||
+|&emsp;&emsp;createTime|注册时间|string||
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;intro|简介|string||
+|&emsp;&emsp;name|科室名称|string||
+|&emsp;&emsp;sort|排序|integer||
+|&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;updateTime|修改时间|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": [
+		{
+			"code": "",
+			"createTime": "",
+			"id": 0,
+			"intro": "",
+			"name": "",
+			"sort": 0,
+			"status": 0,
+			"updateTime": ""
+		}
+	],
+	"message": ""
+}
+```
+
+
+## 获取医院数据
+
+
+**接口地址**:`/api/front/doctor/Hospital/list/{keyword}`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|keyword|keyword|path|true|string||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«List«HospitalInfo对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||array|HospitalInfo对象|
+|&emsp;&emsp;code|医院code|string||
+|&emsp;&emsp;createTime|注册时间|string||
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;level|级别，比如三甲|string||
+|&emsp;&emsp;name|医院名称|string||
+|&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;updateTime|修改时间|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": [
+		{
+			"code": "",
+			"createTime": "",
+			"id": 0,
+			"level": "",
+			"name": "",
+			"status": 0,
+			"updateTime": ""
+		}
+	],
+	"message": ""
+}
+```
+
+
+
+## 获取医院科室
+
+
+**接口地址**:`/api/front/doctor/Hospital/sub/alllist`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+暂无
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«List«HospitalSubInfo对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||array|HospitalSubInfo对象|
+|&emsp;&emsp;code|科室code|string||
+|&emsp;&emsp;createTime|注册时间|string||
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;name|科室名称|string||
+|&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;updateTime|修改时间|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": [
+		{
+			"code": "",
+			"createTime": "",
+			"id": 0,
+			"name": "",
+			"status": 0,
+			"updateTime": ""
+		}
+	],
+	"message": ""
+}
+```
