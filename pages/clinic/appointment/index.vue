@@ -1,5 +1,25 @@
 <template>
   <view class="appointment-page" :data-theme="theme">
+    <!-- 预约类型：理疗 / 中医（数据源不同） -->
+    <view class="category-tabs-row">
+      <view
+        class="cat-tab"
+        :class="{ active: appointCategory === 'physio' }"
+        @click="switchCategoryTab('physio')"
+      >
+        <text>理疗预约</text>
+        <view v-if="appointCategory === 'physio'" class="cat-tab-line"></view>
+      </view>
+      <view
+        class="cat-tab"
+        :class="{ active: appointCategory === 'tcm' }"
+        @click="switchCategoryTab('tcm')"
+      >
+        <text>中医预约</text>
+        <view v-if="appointCategory === 'tcm'" class="cat-tab-line"></view>
+      </view>
+    </view>
+
     <!-- 顶部门店选择（筛选 query：mchId） -->
     <view class="store-selector" @click="showStorePicker = !showStorePicker">
       <text class="store-name">{{ currentStoreName || '全部门店' }}</text>
@@ -28,14 +48,14 @@
       </view>
     </view>
 
-    <!-- 与 interface.md：query.status 预约状态 0待服务 1已完成 2已取消 -->
+    <!-- 状态筛选：理疗 interface 0待服务 1已完成 2已取消；中医 interface 0待确认 1已确认 2已完成 3已取消 -->
     <scroll-view scroll-x class="status-tabs-wrap" :show-scrollbar="false" enable-flex>
       <view class="status-tabs">
         <view
           class="tab-item"
           :class="{ active: currentStatus === item.value }"
-          v-for="item in statusList"
-          :key="item.value"
+          v-for="item in statusTabs"
+          :key="appointCategory + '-' + item.value"
           @click="switchStatus(item.value)"
         >
           <text>{{ item.label }}</text>
@@ -48,7 +68,7 @@
       <view class="appointment-card" v-for="(item, index) in appointmentList" :key="item.id || index" @click="goDetail(item)">
         <view class="card-header">
           <view class="card-store line1">{{ therapistTitle(item) }}</view>
-          <view class="card-status" :class="statusBadgeClass(item.status)">{{ item.status | physioRowStatusFilter }}</view>
+          <view class="card-status" :class="statusBadgeClass(item.status)">{{ rowStatusText(item.status) }}</view>
         </view>
         <view class="card-body">
           <view class="card-img">
@@ -58,15 +78,15 @@
             <view class="card-name line1">{{ categoryName(item) }}</view>
             <view class="card-meta-line">
               <text class="meta-label">状态</text>
-              <text class="meta-status" :class="statusBadgeClass(item.status)">{{ item.status | physioRowStatusFilter }}</text>
+              <text class="meta-status" :class="statusBadgeClass(item.status)">{{ rowStatusText(item.status) }}</text>
             </view>
             <view class="card-time">
               <text class="time-label">预约时间</text>
               {{ item.appointTime || '--' }}
             </view>
-            <view class="card-time line1" v-if="item.address">地点：{{ item.address }}</view>
+            <view class="card-time line1" v-if="item.address || item.userAddress">地点：{{ item.address || item.userAddress }}</view>
             <view class="card-bottom-pay">
-              <text class="fee-text">¥{{ formatFee(item.fee) }}</text>
+              <text class="fee-text">¥{{ formatFee(itemFee(item)) }}</text>
               <text class="pay-tag" :class="payTagClass(item.payStatus)">{{ item.payStatus | payStatusFilter }}</text>
             </view>
           </view>
@@ -92,7 +112,10 @@
     </view>
 
     <view v-else-if="!loading" class="empty-wrap">
-      <empty-page title="暂无预约记录~" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
+      <empty-page
+        :title="appointCategory === 'tcm' ? '暂无中医预约记录~' : '暂无理疗预约记录~'"
+        :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"
+      ></empty-page>
     </view>
 
     <view v-if="loading" class="loading-wrap">
@@ -111,9 +134,12 @@ import { mapGetters } from "vuex";
 import orderPay from '@/mixins/OrderPay.js';
 import {
   getPhysiotherapyAppointmentListApi,
+  getTcmAppointmentListApi,
   getClinicListApi,
   physiotherapyAppointmentPayApi,
-  physiotherapyAppointmentCancelApi
+  physiotherapyAppointmentCancelApi,
+  tcmAppointmentPayApi,
+  tcmAppointmentCancelApi
 } from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
 import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
@@ -124,26 +150,31 @@ export default {
   mixins: [orderPay],
   components: { emptyPage, physioCancelReasonPopup },
   filters: {
-    /**
-     * 列表项 status（与 interface 预约状态一致）
-     * 0待服务 1已完成 2已取消；若后端仍返回 3 表示已取消则兼容
-     */
-    physioRowStatusFilter(status) {
-      const map = {
-        0: '待服务',
-        1: '已完成',
-        2: '已取消',
-        3: '已取消'
-      };
-      return map[status] != null ? map[status] : '未知';
-    },
     payStatusFilter(ps) {
       const map = { 0: '未支付', 1: '已支付', 2: '已退款' };
       return map[ps] != null ? map[ps] : '';
     }
   },
   computed: {
-    ...mapGetters(['isLogin', 'systemPlatform'])
+    ...mapGetters(['isLogin', 'systemPlatform']),
+    /** interface.md：理疗 status 0待服务 1已完成 2已取消；中医 status 0待确认 1已确认 2已完成 3已取消 */
+    statusTabs() {
+      if (this.appointCategory === 'tcm') {
+        return [
+          { label: '全部', value: -1 },
+          { label: '待确认', value: 0 },
+          { label: '已确认', value: 1 },
+          { label: '已完成', value: 2 },
+          { label: '已取消', value: 3 }
+        ];
+      }
+      return [
+        { label: '全部', value: -1 },
+        { label: '待服务', value: 0 },
+        { label: '已完成', value: 1 },
+        { label: '已取消', value: 2 }
+      ];
+    }
   },
   data() {
     return {
@@ -154,13 +185,6 @@ export default {
       currentStoreId: 0,
       storeList: [],
       showStorePicker: false,
-      /** 与 GET therapist/physiotherapy-appointment/list 的 query.status 一致 */
-      statusList: [
-        { label: '全部', value: -1 },
-        { label: '待服务', value: 0 },
-        { label: '已完成', value: 1 },
-        { label: '已取消', value: 2 }
-      ],
       currentStatus: -1,
       appointmentList: [],
       loading: false,
@@ -170,10 +194,19 @@ export default {
       /** 正在发起支付的预约 id，避免列表重复点击 */
       payingAppointmentId: null,
       cancelReasonPopupVisible: false,
-      cancelTarget: null
+      cancelTarget: null,
+      /** physio：理疗预约单列表；tcm：中医预约单 doctor/tcm-appointment/list */
+      appointCategory: 'physio'
     }
   },
   onLoad(options) {
+    if (options.category === 'tcm') {
+      this.appointCategory = 'tcm';
+      this.currentStatus = -1;
+    } else if (options.category === 'physio') {
+      this.appointCategory = 'physio';
+      this.currentStatus = -1;
+    }
     this.merId = options.merId ? parseInt(options.merId, 10) : 0;
     if (this.merId) {
       this.currentStoreId = this.merId;
@@ -187,8 +220,13 @@ export default {
      * 若此处仍 getList，会与 onShow 里 reset+getList 并发，两页第一页数据 concat 叠一份（退出再进才正常）。
      */
     const app = getApp();
+    const hasCategoryQuery = options.category === 'tcm' || options.category === 'physio';
     if (app.globalData && app.globalData.physioAppointmentNeedRefresh) {
       this.loading = true;
+      if (!hasCategoryQuery) this.appointCategory = 'physio';
+    } else if (app.globalData && app.globalData.tcmAppointmentNeedRefresh) {
+      this.loading = true;
+      if (!hasCategoryQuery) this.appointCategory = 'tcm';
     } else {
       this.getList();
     }
@@ -198,6 +236,14 @@ export default {
     const app = getApp();
     if (app.globalData && app.globalData.physioAppointmentNeedRefresh) {
       app.globalData.physioAppointmentNeedRefresh = false;
+      this.appointCategory = 'physio';
+      this.resetList();
+      this.loading = false;
+      this.getList();
+    }
+    if (app.globalData && app.globalData.tcmAppointmentNeedRefresh) {
+      app.globalData.tcmAppointmentNeedRefresh = false;
+      this.appointCategory = 'tcm';
       this.resetList();
       this.loading = false;
       this.getList();
@@ -221,6 +267,11 @@ export default {
         .catch(() => {});
     },
     therapistTitle(item) {
+      if (this.appointCategory === 'tcm') {
+        const d = item.doctorInfo || item.doctor;
+        if (d && d.name) return d.name;
+        return item.doctorName || '中医预约';
+      }
       const t = item.therapistInfo;
       if (t && t.name) return t.name;
       return '理疗预约';
@@ -234,6 +285,15 @@ export default {
       return p.startsWith('/') ? base + p : `${base}/${p}`;
     },
     therapistAvatar(item) {
+      if (this.appointCategory === 'tcm') {
+        const d = item.doctorInfo || item.doctor;
+        const p = d && (d.picture || d.avatar || d.headImg);
+        if (p && String(p).trim()) {
+          const u = this.resolveImgUrl(String(p).trim());
+          if (u) return u;
+        }
+        return `${this.urlDomain}crmebimage/presets/morenT.png`;
+      }
       const p = item.therapistInfo && item.therapistInfo.picture;
       if (p && String(p).trim()) {
         const u = this.resolveImgUrl(String(p).trim());
@@ -242,6 +302,18 @@ export default {
       return `${this.urlDomain}crmebimage/presets/morenT.png`;
     },
     categoryName(item) {
+      if (this.appointCategory === 'tcm') {
+        const c = item.tcmCategoryInfo;
+        if (c && c.name) return c.name;
+        return (
+          item.serviceName ||
+          item.projectName ||
+          item.tcmServiceName ||
+          item.categoryName ||
+          item.remark ||
+          '中医项目'
+        );
+      }
       const c = item.physiotherapyCategoryInfo;
       if (c && c.name) return c.name;
       return item.physiotherapyCategory || item.physiotherapyType || '理疗项目';
@@ -258,26 +330,61 @@ export default {
       const n = Number(f);
       return isNaN(n) ? f : n;
     },
-    /** 未支付且待服务、金额大于 0，与详情页 canPay 一致 */
+    /** interface 中医列表用 amount 表示预约费用，理疗用 fee */
+    itemFee(item) {
+      if (!item) return '';
+      if (this.appointCategory === 'tcm') {
+        const raw = item.amount != null && item.amount !== '' ? item.amount : item.fee;
+        return raw;
+      }
+      return item.fee != null && item.fee !== '' ? item.fee : item.amount;
+    },
+    rowStatusText(status) {
+      if (this.appointCategory === 'tcm') {
+        const map = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' };
+        return map[status] != null ? map[status] : '未知';
+      }
+      const map = {
+        0: '待服务',
+        1: '已完成',
+        2: '已取消',
+        3: '已取消'
+      };
+      return map[status] != null ? map[status] : '未知';
+    },
+    /** 未支付且未结束、金额大于 0（理疗/中医 status 语义见 interface.md） */
     canPayItem(item) {
       if (!item) return false;
       const s = Number(item.status);
-      if (s === 1 || s === 2 || s === 3) return false;
-      const fee = Number(item.fee);
+      if (this.appointCategory === 'tcm') {
+        if (s === 2 || s === 3) return false;
+      } else {
+        if (s === 1 || s === 2 || s === 3) return false;
+      }
+      const fee = Number(this.itemFee(item));
       if (isNaN(fee) || fee <= 0) return false;
       return Number(item.payStatus) === 0;
     },
-    /** 仅已支付且待服务可取消（与详情 canCancel 一致） */
+    /** 仅已支付且可取消状态可取消 */
     canCancel(item) {
       if (!item) return false;
       const s = item.status;
-      if (s === 1 || s === 2 || s === 3) return false;
+      if (this.appointCategory === 'tcm') {
+        if (s === 2 || s === 3) return false;
+      } else {
+        if (s === 1 || s === 2 || s === 3) return false;
+      }
       const ps = item.payStatus;
       if (ps === 2 || ps === '2') return false;
       return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
     },
     statusBadgeClass(status) {
       const s = Number(status);
+      if (this.appointCategory === 'tcm') {
+        if (s === 2) return 'badge-done';
+        if (s === 3) return 'badge-off';
+        return 'badge-wait';
+      }
       if (s === 1) return 'badge-done';
       if (s === 2 || s === 3) return 'badge-off';
       return 'badge-wait';
@@ -296,7 +403,11 @@ export default {
       if (this.currentStatus >= 0) {
         params.status = this.currentStatus;
       }
-      getPhysiotherapyAppointmentListApi(params)
+      const req =
+        this.appointCategory === 'tcm'
+          ? getTcmAppointmentListApi(params)
+          : getPhysiotherapyAppointmentListApi(params);
+      req
         .then(res => {
           let list = (res.data && res.data.list) || [];
           if (!Array.isArray(list)) list = [];
@@ -310,6 +421,13 @@ export default {
           this.loading = false;
           uni.stopPullDownRefresh();
         });
+    },
+    switchCategoryTab(cat) {
+      if (this.appointCategory === cat) return;
+      this.appointCategory = cat;
+      this.currentStatus = -1;
+      this.resetList();
+      this.getList();
     },
     switchStatus(status) {
       if (this.currentStatus === status) return;
@@ -349,7 +467,11 @@ export default {
         return this.$util.Tips({ title: '缺少预约信息，无法取消' });
       }
       this.cancelReasonPopupVisible = false;
-      physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reasonTrim })
+      const cancelReq =
+        this.appointCategory === 'tcm'
+          ? tcmAppointmentCancelApi({ appointmentId, cancelReason: reasonTrim })
+          : physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reasonTrim });
+      cancelReq
         .then(() => {
           this.$util.Tips({ title: '取消成功' });
           this.appointmentList.splice(index, 1);
@@ -363,6 +485,12 @@ export default {
       const appointmentId = item.id != null ? item.id : item.appointmentId;
       if (appointmentId == null || appointmentId === '') {
         return this.$util.Tips({ title: '缺少预约信息' });
+      }
+      if (this.appointCategory === 'tcm') {
+        this.$util.navigateTo(
+          `/pages/clinic/physio_appointment_detail/index?id=${appointmentId}&tcm=1`
+        );
+        return;
       }
       const t = item.therapistInfo;
       setPhysioAppointmentDetailNav({
@@ -395,17 +523,21 @@ export default {
       if (this.payingAppointmentId != null) return;
       this.payingAppointmentId = id;
       const { payChannel, payType } = this.resolvePayChannel();
-      physiotherapyAppointmentPayApi({
-        id,
-        payChannel,
-        payType,
-        from: ''
-      })
+      const payPayload = { id, payChannel, payType, from: '' };
+      const payReq =
+        this.appointCategory === 'tcm'
+          ? tcmAppointmentPayApi(payPayload)
+          : physiotherapyAppointmentPayApi(payPayload);
+      payReq
         .then((payRes) => {
           const d = payRes.data;
           const g = getApp();
           if (g.globalData) {
-            g.globalData.physioAppointmentNeedRefresh = true;
+            if (this.appointCategory === 'tcm') {
+              g.globalData.tcmAppointmentNeedRefresh = true;
+            } else {
+              g.globalData.physioAppointmentNeedRefresh = true;
+            }
           }
           if (d && d.jsConfig) {
             const mid =
@@ -444,6 +576,37 @@ export default {
 .appointment-page {
   min-height: 100vh;
   background-color: #f5f5f5;
+}
+
+.category-tabs-row {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cat-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 16rpx 22rpx;
+  font-size: 30rpx;
+  color: #666;
+  position: relative;
+
+  &.active {
+    color: #282828;
+    font-weight: 600;
+  }
+}
+
+.cat-tab-line {
+  position: absolute;
+  bottom: 0;
+  width: 56rpx;
+  height: 6rpx;
+  background: var(--view-theme);
+  border-radius: 3rpx;
 }
 
 .store-selector {

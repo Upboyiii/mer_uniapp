@@ -1,5 +1,16 @@
 <template>
   <view class="my-consultation-page" :data-theme="theme">
+    <!-- 自定义顶栏：返回进入「我的」Tab，避免回到支付等中间页 -->
+    <view class="custom-nav" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="nav-inner" :style="{ minHeight: navContentPx + 'px' }">
+        <view class="nav-back" @click="goBack">
+          <text class="iconfont icon-ic_leftarrow"></text>
+        </view>
+        <text class="nav-title">我的问诊</text>
+        <view class="nav-back nav-back--ph"></view>
+      </view>
+    </view>
+
     <scroll-view
       scroll-y
       class="list-scroll"
@@ -95,18 +106,34 @@ export default {
       isRefreshing: false,
       page: 1,
       limit: 10,
-      scrollHeight: 0
+      scrollHeight: 0,
+      statusBarHeight: 20,
+      /** 导航内容区高度（px），与标题栏对齐 */
+      navContentPx: 44
     };
   },
   onLoad() {
-    let sys = uni.getSystemInfoSync();
-    this.scrollHeight = sys.windowHeight;
+    const sys = uni.getSystemInfoSync();
+    this.statusBarHeight = sys.statusBarHeight || 20;
+    const winH = sys.windowHeight || sys.screenHeight || 600;
+    const navTotal = this.statusBarHeight + this.navContentPx;
+    this.scrollHeight = Math.max(200, winH - navTotal);
     this.getList();
   },
   onPullDownRefresh() {
     this.onRefresh();
   },
+  // #ifdef APP-PLUS
+  onBackPress() {
+    this.goBack();
+    return true;
+  },
+  // #endif
   methods: {
+    /** 回到「我的」Tab，不走 navigateBack（避免回到支付页等） */
+    goBack() {
+      uni.switchTab({ url: '/pages/user/index' });
+    },
     getList() {
       if (this.loadend || this.loading) return;
       this.loading = true;
@@ -161,6 +188,44 @@ export default {
 .my-consultation-page {
   background: #f5f5f5;
   min-height: 100vh;
+}
+
+.custom-nav {
+  background: #fff;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16rpx;
+}
+
+.nav-back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .iconfont {
+    font-size: 36rpx;
+    color: #333;
+  }
+
+  &--ph {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #282828;
 }
 
 .list-scroll {

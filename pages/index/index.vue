@@ -32,8 +32,9 @@
 				<!-- 占位高度：状态栏 + 导航内容区（约 80～90px 整体更紧凑） -->
 				<view :style="{ height: (statusBarHeight + navBarContentPx) + 'px' }"></view>
 
-				<!-- Banner区域：双卡片 -->
+				<!-- Banner区域：左舌诊 / 右健康商城→门店 tab；肾经已注释 -->
 				<view class="banner-section">
+					<!--
 					<view class="banner-card banner-card-left" @click="goMeridian">
 						<view class="banner-card-content">
 							<view class="banner-tag-row">
@@ -51,7 +52,8 @@
 						</view>
 						<image class="banner-card-img" src="/static/images/meridian.png" mode="aspectFit"></image>
 					</view>
-					<view class="banner-card banner-card-right" @click="goTongue">
+					-->
+					<view class="banner-card banner-card-left" @click="goTongue">
 						<view class="banner-card-content banner-card-right-inner">
 							<view class="banner-title-row">
 								<text class="iconfont icon-ic_camera2 banner-inline-icon"></text>
@@ -60,6 +62,19 @@
 							<text class="banner-subtitle">身体状况早知道</text>
 							<view class="banner-tongue-icon-wrap">
 								<text class="iconfont icon-ic_picture banner-tongue-deco"></text>
+							</view>
+						</view>
+					</view>
+					<view class="banner-card banner-card-right" @click="goStoreTab">
+						<view class="banner-card-content banner-card-right-inner">
+							<view class="banner-title-row">
+								<text class="iconfont icon-ic_mall banner-inline-icon"></text>
+								<text class="banner-title-bold">健康商城</text>
+							</view>
+							<view class="banner-mall-subrow">
+								<text class="banner-subtitle">理疗产品</text>
+								<text class="banner-mall-sep">·</text>
+								<text class="banner-subtitle">药食同源</text>
 							</view>
 						</view>
 					</view>
@@ -85,7 +100,7 @@
 					</view>
 				</view>
 
-				<!-- Tab区域：名医专家 / 理疗专区 / 平台商城 -->
+				<!-- Tab区域：名医专家 / 理疗专区（平台商城 tab 暂时隐藏） -->
 				<view class="tab-section">
 					<view class="tab-bar" :class="{ 'tab-bar-sticky': isTabSticky }">
 						<view
@@ -219,9 +234,8 @@
 						<view v-if="therapistLoading" class="loading-tip"><text>加载中...</text></view>
 					</view>
 
-					<!-- 平台商城 -->
+					<!-- 平台商城（tab 暂时隐藏，恢复时取消注释并改回 tabList）
 					<view v-if="currentTab === 2" class="tab-content">
-						<!-- 商品分类 -->
 						<view class="mall-cate-bar" v-if="categoryList.length > 0">
 							<scroll-view scroll-x class="mall-cate-scroll">
 								<view class="mall-cate-list">
@@ -274,6 +288,7 @@
 						</view>
 						<view v-if="mallLoading" class="loading-tip"><text>加载中...</text></view>
 					</view>
+					-->
 				</view>
 			</view>
 		</view>
@@ -393,8 +408,8 @@ export default {
 				{ name: 'AI特色门诊', desc: '快速高效', icon: 'icon-ic_xuni', link: '', showTitleIcon: true, titleIcon: 'icon-ic_xuni' }
 			],
 
-			// Tab
-			tabList: ['名医专家', '理疗专区', '平台商城'],
+			// Tab（恢复平台商城：tabList 增加「平台商城」，并取消下方模板与 loadTabData 等注释）
+			tabList: ['名医专家', '理疗专区'],
 			currentTab: 0,
 
 			// 名医专家
@@ -481,10 +496,11 @@ export default {
 				this.getDoctorList();
 			} else if (index === 1 && this.therapistList.length === 0) {
 				this.getTherapistList();
-			} else if (index === 2 && this.mallProductList.length === 0) {
-				this.getCategoryList();
-				this.getMallProductList();
 			}
+			// } else if (index === 2 && this.mallProductList.length === 0) {
+			// 	this.getCategoryList();
+			// 	this.getMallProductList();
+			// }
 		},
 
 		refreshCurrentTab() {
@@ -498,19 +514,20 @@ export default {
 				this.therapistLoadend = false;
 				this.therapistList = [];
 				this.getTherapistList();
-			} else if (this.currentTab === 2) {
-				this.mallPage = 1;
-				this.mallLoadend = false;
-				this.mallProductList = [];
-				this.getMallProductList();
 			}
+			// } else if (this.currentTab === 2) {
+			// 	this.mallPage = 1;
+			// 	this.mallLoadend = false;
+			// 	this.mallProductList = [];
+			// 	this.getMallProductList();
+			// }
 			uni.stopPullDownRefresh();
 		},
 
 		loadMoreCurrentTab() {
 			if (this.currentTab === 0) this.getDoctorList();
 			else if (this.currentTab === 1) this.getTherapistList();
-			else if (this.currentTab === 2) this.getMallProductList();
+			// else if (this.currentTab === 2) this.getMallProductList();
 		},
 		// ==================== 名医专家 ====================
 		getDoctorList() {
@@ -693,6 +710,10 @@ export default {
 
 		goTongue() {
 			uni.switchTab({ url: '/pages/tongue/index' });
+		},
+
+		goStoreTab() {
+			uni.switchTab({ url: '/pages/clinic/home/index' });
 		},
 
 		goClinicDetail(item) {
@@ -1104,6 +1125,24 @@ page {
 	font-size: 22rpx;
 	color: #666;
 	margin-top: 8rpx;
+}
+
+.banner-mall-subrow {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8rpx;
+	margin-top: 8rpx;
+}
+
+.banner-mall-subrow .banner-subtitle {
+	display: inline;
+	margin-top: 0;
+}
+
+.banner-mall-sep {
+	font-size: 22rpx;
+	color: #999;
 }
 
 .banner-info-row {

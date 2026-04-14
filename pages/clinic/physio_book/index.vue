@@ -178,7 +178,9 @@
 							<text class="cate-price">¥{{ item.price != null ? item.price : 0 }}</text>
 						</view>
 					</view>
-					<view v-if="!cateLoading && categoryList.length === 0" class="empty-txt">暂无理疗项目</view>
+					<view v-if="!cateLoading && categoryList.length === 0" class="empty-txt">{{
+						categoryListSource === 'tcm' ? '暂无中医项目' : '暂无理疗项目'
+					}}</view>
 				</scroll-view>
 			</view>
 		</view>
@@ -236,8 +238,11 @@ import orderPay from '@/mixins/OrderPay.js';
 import {
 	getClinicDetailApi,
 	getPhysiotherapyCategoryListApi,
+	getTcmCategoryListApi,
 	physiotherapyAppointmentSaveApi,
-	physiotherapyAppointmentPayApi
+	physiotherapyAppointmentPayApi,
+	tcmAppointmentSaveApi,
+	tcmAppointmentPayApi
 } from '@/api/clinic.js';
 import { getAddressList } from '@/api/user.js';
 import {
@@ -268,6 +273,10 @@ export default {
 			categoryList: [],
 			cateLoading: false,
 			preselectedCategoryId: 0,
+			/** physio：理疗类目；tcm：中医类目（therapist/tcm-category/list） */
+			categoryListSource: 'physio',
+			/** 从医生详情中医预约入口带入，提交 doctor/tcm-appointment/save */
+			doctorId: 0,
 			showCatePicker: false,
 			selectedCate: null,
 			quantity: 1,
@@ -297,6 +306,9 @@ export default {
 			return n && String(n).trim() ? String(n).trim() : '';
 		},
 		storeTitle() {
+			if (this.categoryListSource === 'tcm') {
+				return this.resolvedStoreName || '中医预约';
+			}
 			return this.resolvedStoreName || '理疗预约';
 		},
 		defaultAvatar() {
@@ -449,6 +461,13 @@ export default {
 			if (nav.preselectedCategoryId != null && nav.preselectedCategoryId !== '') {
 				const pid = parseInt(nav.preselectedCategoryId, 10);
 				this.preselectedCategoryId = !isNaN(pid) ? pid : 0;
+			}
+			if (nav.categoryListSource === 'tcm') {
+				this.categoryListSource = 'tcm';
+			}
+			if (nav.doctorId != null && nav.doctorId !== '') {
+				const did = parseInt(nav.doctorId, 10);
+				this.doctorId = !isNaN(did) ? did : 0;
 			}
 		} else {
 			this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
@@ -681,7 +700,11 @@ export default {
 			if (this.mchId) {
 				params.mchId = this.mchId;
 			}
-			return getPhysiotherapyCategoryListApi(params)
+			const req =
+				this.categoryListSource === 'tcm'
+					? getTcmCategoryListApi(params)
+					: getPhysiotherapyCategoryListApi(params);
+			return req
 				.then((res) => {
 					const data = res.data;
 					let list = [];
@@ -801,14 +824,22 @@ export default {
 		markAppointmentListNeedRefresh() {
 			const g = getApp();
 			if (g.globalData) {
-				g.globalData.physioAppointmentNeedRefresh = true;
+				if (this.categoryListSource === 'tcm') {
+					g.globalData.tcmAppointmentNeedRefresh = true;
+				} else {
+					g.globalData.physioAppointmentNeedRefresh = true;
+				}
 			}
 		},
 		notifyPrevPageRefresh() {
 			const g = getApp();
 			if (g.globalData) {
 				g.globalData.physioBookJustCreated = true;
-				g.globalData.physioAppointmentNeedRefresh = true;
+				if (this.categoryListSource === 'tcm') {
+					g.globalData.tcmAppointmentNeedRefresh = true;
+				} else {
+					g.globalData.physioAppointmentNeedRefresh = true;
+				}
 			}
 			try {
 				const pages = getCurrentPages();
@@ -825,15 +856,15 @@ export default {
 				}
 			} catch (e) {}
 		},
-		goBackAfterSubmit() {
-			setTimeout(() => {
-				const pages = getCurrentPages();
-				if (pages.length > 1) {
-					uni.navigateBack({ delta: 1 });
-				} else {
-					uni.redirectTo({ url: '/pages/clinic/appointment/index' });
-				}
-			}, 400);
+		/** 预约提交/支付完成后进入统一成功页（含理疗/中医） */
+		goToAppointmentSuccess(appointmentId) {
+			this.notifyPrevPageRefresh();
+			const cat = this.categoryListSource === 'tcm' ? 'tcm' : 'physio';
+			let url = `/pages/clinic/appointment_success/index?category=${cat}`;
+			if (appointmentId != null && appointmentId !== '') {
+				url += `&id=${encodeURIComponent(appointmentId)}`;
+			}
+			uni.redirectTo({ url });
 		},
 		parseAppointmentId(inner) {
 			if (inner == null || inner === '') return null;
@@ -855,7 +886,12 @@ export default {
 				return this.$util.Tips({ title: '缺少理疗师信息' });
 			}
 			if (!this.selectedCate) {
-				return this.$util.Tips({ title: '请选择理疗项目' });
+				return this.$util.Tips({
+					title: this.categoryListSource === 'tcm' ? '请选择中医项目' : '请选择理疗项目'
+				});
+			}
+			if (this.categoryListSource === 'tcm' && !this.doctorId) {
+				return this.$util.Tips({ title: '缺少医生信息' });
 			}
 			if (!this.appointTimeStr) {
 				return this.$util.Tips({ title: '请选择预约日期与时间' });
@@ -868,19 +904,33 @@ export default {
 				this.selectedCate.id != null && this.selectedCate.id !== ''
 					? parseInt(this.selectedCate.id, 10)
 					: 0;
-			const body = {
-				therapistId: this.therapistId,
-				physiotherapyCategory: !isNaN(cateId) ? cateId : 0,
-				appointTime: this.appointTimeStr,
-				amount: feeNum,
-				addressId: this.homeService && this.selectedAddress && this.selectedAddress.id
+			const addressId =
+				this.homeService && this.selectedAddress && this.selectedAddress.id
 					? parseInt(this.selectedAddress.id, 10) || 0
-					: 0,
-				homeService: !!this.homeService
-			};
+					: 0;
+			const isTcm = this.categoryListSource === 'tcm';
+			/** interface.md「新增中医预约」POST body：TcmAppointmentRequest，无 amount/mchId/therapistId */
+			const body = isTcm
+				? {
+						doctorId: this.doctorId,
+						appointTime: this.appointTimeStr,
+						tcmCategory: !isNaN(cateId) ? cateId : 0,
+						homeService: !!this.homeService,
+						addressId,
+						remark: ''
+				  }
+				: {
+						therapistId: this.therapistId,
+						physiotherapyCategory: !isNaN(cateId) ? cateId : 0,
+						appointTime: this.appointTimeStr,
+						amount: feeNum,
+						addressId,
+						homeService: !!this.homeService
+				  };
 			this.submitting = true;
 			uni.showLoading({ title: '提交中…' });
-			physiotherapyAppointmentSaveApi(body)
+			const saveReq = isTcm ? tcmAppointmentSaveApi(body) : physiotherapyAppointmentSaveApi(body);
+			saveReq
 				.then((res) => {
 					const appointmentId = this.parseAppointmentId(res.data);
 					const needPay = !isNaN(feeNum) && feeNum > 0;
@@ -896,8 +946,7 @@ export default {
 					} else {
 						this.$util.Tips({ title: '预约已提交' });
 					}
-					this.notifyPrevPageRefresh();
-					this.goBackAfterSubmit();
+					this.goToAppointmentSuccess(appointmentId);
 				})
 				.catch((err) => {
 					uni.hideLoading();
@@ -907,23 +956,30 @@ export default {
 		},
 		doPay(appointmentId, payPrice) {
 			const { payChannel, payType } = this.resolvePayChannel();
-			physiotherapyAppointmentPayApi({
-				id: appointmentId,
-				payChannel,
-				payType,
-				from: ''
-			})
+			const payPayload = { id: appointmentId, payChannel, payType, from: '' };
+			const payReq =
+				this.categoryListSource === 'tcm'
+					? tcmAppointmentPayApi(payPayload)
+					: physiotherapyAppointmentPayApi(payPayload);
+			payReq
 				.then((payRes) => {
 					uni.hideLoading();
 					this.submitting = false;
 					const d = payRes.data;
 					this.markAppointmentListNeedRefresh();
+					const cat = this.categoryListSource === 'tcm' ? 'tcm' : 'physio';
+					const goPages = `/pages/clinic/appointment_success/index?category=${cat}`;
 					if (d && d.jsConfig) {
-						const goPages = '/pages/clinic/appointment/index';
-						this.weixinPay(d.jsConfig, String(d.payOrderNo || appointmentId), goPages, 'normal', '');
+						this.weixinPay(
+							d.jsConfig,
+							String(d.payOrderNo || appointmentId),
+							goPages,
+							'normal',
+							''
+						);
 					} else {
 						this.$util.Tips({ title: '预约已提交' });
-						uni.navigateTo({ url: '/pages/clinic/appointment/index' });
+						this.goToAppointmentSuccess(appointmentId);
 					}
 				})
 				.catch((err) => {

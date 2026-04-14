@@ -7,9 +7,9 @@
 			class="content"
 			:class="{ 'content--with-paybar': canPay }"
 		>
-			<!-- 理疗项目（类目） -->
+			<!-- 理疗项目（类目） / 中医项目 -->
 			<view class="card card-block" v-if="categoryBlockShow">
-				<view class="block-title">理疗项目</view>
+				<view class="block-title">{{ isTcm ? '项目信息' : '理疗项目' }}</view>
 				<view class="row">
 					<text class="label">名称</text>
 					<text class="val">{{ categoryNameText }}</text>
@@ -25,6 +25,26 @@
 				<view class="row" v-if="cate && cate.price != null">
 					<text class="label">标价</text>
 					<text class="val price">¥{{ cate.price }}</text>
+				</view>
+			</view>
+
+			<!-- 医师（中医预约） -->
+			<view class="card card-block" v-if="detail.doctorInfo">
+				<view class="block-title">医师</view>
+				<view class="thera-head">
+					<image class="thera-avatar" :src="doctorImg" mode="aspectFill" />
+					<view class="thera-head-text">
+						<text class="thera-name">{{ detail.doctorInfo.name || '--' }}</text>
+						<text class="thera-phone" v-if="detail.doctorInfo.phone">电话 {{ detail.doctorInfo.phone }}</text>
+					</view>
+				</view>
+				<view class="row" v-if="detail.doctorInfo.hospitalTitle || detail.doctorInfo.hospitalSub">
+					<text class="label">职称科室</text>
+					<text class="val text-left">{{ [detail.doctorInfo.hospitalTitle, detail.doctorInfo.hospitalSub].filter(Boolean).join(' ') }}</text>
+				</view>
+				<view class="row" v-if="detail.doctorInfo.hospitalDomain">
+					<text class="label">擅长</text>
+					<text class="val text-left">{{ detail.doctorInfo.hospitalDomain }}</text>
 				</view>
 			</view>
 
@@ -69,7 +89,7 @@
 				<view class="block-title">预约信息</view>
 				<view class="row title-row inner">
 					<text class="proj">{{ headerTitle }}</text>
-					<text class="status-tag" :class="statusBadgeClass(detail.status)">{{ detail.status | physioRowStatusFilter }}</text>
+					<text class="status-tag" :class="statusBadgeClass(detail.status)">{{ detailStatusLabel(detail.status) }}</text>
 				</view>
 				<view class="row" v-if="!detail.therapistInfo && therapistDisplayName">
 					<text class="label">理疗师</text>
@@ -79,9 +99,9 @@
 					<text class="label">预约时间</text>
 					<text class="val">{{ detail.appointTime || '--' }}</text>
 				</view>
-				<view class="row" v-if="detail.address">
-					<text class="label">理疗地点</text>
-					<text class="val text-left">{{ detail.address }}</text>
+				<view class="row" v-if="detail.address || detail.userAddress">
+					<text class="label">{{ isTcm ? '地址' : '理疗地点' }}</text>
+					<text class="val text-left">{{ detail.address || detail.userAddress }}</text>
 				</view>
 				<view class="row">
 					<text class="label">应付金额</text>
@@ -161,8 +181,11 @@ import { mapGetters } from 'vuex';
 import orderPay from '@/mixins/OrderPay.js';
 import {
 	getPhysiotherapyAppointmentInfoApi,
+	getTcmAppointmentInfoApi,
 	physiotherapyAppointmentPayApi,
-	physiotherapyAppointmentCancelApi
+	physiotherapyAppointmentCancelApi,
+	tcmAppointmentPayApi,
+	tcmAppointmentCancelApi
 } from '@/api/clinic.js';
 import { consumePhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
 import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
@@ -172,10 +195,6 @@ export default {
 	components: { physioCancelReasonPopup },
 	mixins: [orderPay],
 	filters: {
-		physioRowStatusFilter(status) {
-			const map = { 0: '待服务', 1: '已完成', 2: '已取消', 3: '已取消' };
-			return map[status] != null ? map[status] : '未知';
-		},
 		payStatusFilter(ps) {
 			if (ps == null || ps === '') return '未支付';
 			const map = { 0: '未支付', 1: '已支付', 2: '已退款' };
@@ -191,21 +210,46 @@ export default {
 			detail: null,
 			loading: true,
 			paying: false,
-			cancelReasonPopupVisible: false
+			cancelReasonPopupVisible: false,
+			/** 来自列表 ?tcm=1，走 doctor/tcm-appointment/info */
+			isTcm: false
 		};
 	},
 	computed: {
 		...mapGetters(['systemPlatform']),
 		cate() {
-			return this.detail && this.detail.physiotherapyCategoryInfo
-				? this.detail.physiotherapyCategoryInfo
-				: null;
+			if (!this.detail) return null;
+			if (this.detail.tcmCategoryInfo) return this.detail.tcmCategoryInfo;
+			return this.detail.physiotherapyCategoryInfo || null;
 		},
 		categoryBlockShow() {
+			if (this.isTcm && this.detail) {
+				const d = this.detail;
+				return !!(
+					(d.tcmCategoryInfo && d.tcmCategoryInfo.name) ||
+					d.serviceName ||
+					d.projectName ||
+					d.tcmServiceName ||
+					(this.cate && (this.cate.name || this.cate.code || this.cate.duration != null || this.cate.price != null))
+				);
+			}
 			return !!(this.cate && (this.cate.name || this.cate.code || this.cate.duration != null || this.cate.price != null));
 		},
 		categoryNameText() {
 			if (!this.detail) return '';
+			if (this.isTcm) {
+				const d = this.detail;
+				const tc = d.tcmCategoryInfo;
+				if (tc && tc.name) return tc.name;
+				return (
+					d.serviceName ||
+					d.projectName ||
+					d.tcmServiceName ||
+					(this.cate && this.cate.name) ||
+					d.physiotherapyCategory ||
+					'--'
+				);
+			}
 			if (this.cate && this.cate.name) return this.cate.name;
 			return (
 				this.detail.physiotherapyCategory ||
@@ -214,6 +258,10 @@ export default {
 			);
 		},
 		headerTitle() {
+			if (this.isTcm) {
+				const t = this.categoryNameText;
+				return t && t !== '--' ? t : '中医预约';
+			}
 			return this.categoryNameText !== '--' ? this.categoryNameText : '理疗预约';
 		},
 		therapistDisplayName() {
@@ -226,6 +274,11 @@ export default {
 		therapistImg() {
 			const t = this.detail && this.detail.therapistInfo;
 			const p = t && t.picture;
+			return this.resolveImgUrl(p) || this.defaultAvatar;
+		},
+		doctorImg() {
+			const d = this.detail && this.detail.doctorInfo;
+			const p = d && (d.picture || d.avatar || d.headImg);
 			return this.resolveImgUrl(p) || this.defaultAvatar;
 		},
 		defaultAvatar() {
@@ -242,7 +295,13 @@ export default {
 		detailFeeDisplay() {
 			const d = this.detail;
 			if (!d) return 0;
-			const raw = d.fee != null && d.fee !== '' ? d.fee : d.amount;
+			const raw = this.isTcm
+				? d.amount != null && d.amount !== ''
+					? d.amount
+					: d.fee
+				: d.fee != null && d.fee !== ''
+					? d.fee
+					: d.amount;
 			const n = Number(raw);
 			return isNaN(n) ? 0 : n;
 		},
@@ -250,7 +309,11 @@ export default {
 			const d = this.detail;
 			if (!d) return false;
 			const s = Number(d.status);
-			if (s === 2 || s === 3) return false;
+			if (this.isTcm) {
+				if (s === 2 || s === 3) return false;
+			} else {
+				if (s === 1 || s === 2 || s === 3) return false;
+			}
 			const fee = this.detailFeeDisplay;
 			if (isNaN(fee) || fee <= 0) return false;
 			const ps = d.payStatus;
@@ -264,7 +327,11 @@ export default {
 			const d = this.detail;
 			if (!d) return false;
 			const s = Number(d.status);
-			if (s === 1 || s === 2 || s === 3) return false;
+			if (this.isTcm) {
+				if (s === 2 || s === 3) return false;
+			} else {
+				if (s === 1 || s === 2 || s === 3) return false;
+			}
 			const ps = d.payStatus;
 			if (ps === 2 || ps === '2') return false;
 			return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
@@ -287,6 +354,8 @@ export default {
 				? decodeURIComponent(options.therapistName)
 				: '';
 		}
+
+		this.isTcm = options.tcm === '1' || options.tcm === 'true' || options.tcm === 1;
 
 		this.appointmentId = appointmentId;
 		this.mchId = mchId;
@@ -312,15 +381,31 @@ export default {
 			const n = Number(v);
 			return isNaN(n) ? v : n;
 		},
+		detailStatusLabel(status) {
+			if (this.isTcm) {
+				const map = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' };
+				return map[status] != null ? map[status] : '未知';
+			}
+			const map = { 0: '待服务', 1: '已完成', 2: '已取消', 3: '已取消' };
+			return map[status] != null ? map[status] : '未知';
+		},
 		statusBadgeClass(status) {
 			const s = Number(status);
+			if (this.isTcm) {
+				if (s === 2) return 'badge-done';
+				if (s === 3) return 'badge-off';
+				return 'badge-wait';
+			}
 			if (s === 1) return 'badge-done';
 			if (s === 2 || s === 3) return 'badge-off';
 			return 'badge-wait';
 		},
 		loadDetail() {
 			this.loading = true;
-			getPhysiotherapyAppointmentInfoApi(this.appointmentId)
+			const req = this.isTcm
+				? getTcmAppointmentInfoApi(this.appointmentId)
+				: getPhysiotherapyAppointmentInfoApi(this.appointmentId);
+			req
 				.then((res) => {
 					this.detail = res.data || null;
 					this.loading = false;
@@ -347,20 +432,28 @@ export default {
 		markListRefresh() {
 			const app = getApp();
 			if (app.globalData) {
-				app.globalData.physioAppointmentNeedRefresh = true;
-				app.globalData.physioBookJustCreated = true;
+				if (this.isTcm) {
+					app.globalData.tcmAppointmentNeedRefresh = true;
+				} else {
+					app.globalData.physioAppointmentNeedRefresh = true;
+					app.globalData.physioBookJustCreated = true;
+				}
 			}
 		},
 		doPay() {
 			if (!this.detail || !this.canPay) return;
 			this.paying = true;
 			const { payChannel, payType } = this.resolvePayChannel();
-			physiotherapyAppointmentPayApi({
+			const payPayload = {
 				id: this.detail.id,
 				payChannel,
 				payType,
 				from: ''
-			})
+			};
+			const payReq = this.isTcm
+				? tcmAppointmentPayApi(payPayload)
+				: physiotherapyAppointmentPayApi(payPayload);
+			payReq
 				.then((payRes) => {
 					const d = payRes.data;
 					this.markListRefresh();
@@ -414,7 +507,10 @@ export default {
 				return this.$util.Tips({ title: '缺少预约信息，无法取消' });
 			}
 			this.cancelReasonPopupVisible = false;
-			physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reason })
+			const cancelReq = this.isTcm
+				? tcmAppointmentCancelApi({ appointmentId, cancelReason: reason })
+				: physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reason });
+			cancelReq
 				.then(() => {
 					this.$util.Tips({ title: '取消成功' });
 					this.markListRefresh();

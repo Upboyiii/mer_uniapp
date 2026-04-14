@@ -1844,6 +1844,16 @@
 				}
 			},
 			{
+				"path": "appointment_success/index",
+				"style": {
+					"navigationStyle": "custom",
+					"navigationBarTitleText": "预约成功",
+					"app-plus": {
+						"titleNView": false
+					}
+				}
+			},
+			{
 				"path": "consult_book/index",
 				"style": {
 					"navigationStyle": "custom",
@@ -1946,12 +1956,11 @@
 		{
 			"path": "my_consultation/index",
 			"style": {
+				"navigationStyle": "custom",
 				"navigationBarTitleText": "我的问诊",
 				"enablePullDownRefresh": true,
 				"app-plus": {
-					"titleNView": {
-						"type": "default"
-					}
+					"titleNView": false
 				}
 			}
 		},

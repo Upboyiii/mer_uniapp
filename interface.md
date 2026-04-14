@@ -3056,3 +3056,430 @@
 	"message": ""
 }
 ```
+
+
+
+
+## 中医预约分页列表
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment/list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|limit|每页数量|query|false|integer(int32)||
+|mchId|商户ID|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+|status|预约状态 0待确认 1已确认 2已完成 3已取消|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«TcmAppointmentSearchResponse对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«TcmAppointmentSearchResponse对象»|CommonPage«TcmAppointmentSearchResponse对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|TcmAppointmentSearchResponse对象|
+|&emsp;&emsp;&emsp;&emsp;amount|预约费用|number||
+|&emsp;&emsp;&emsp;&emsp;appointTime|预约时间|string||
+|&emsp;&emsp;&emsp;&emsp;cancelReason|取消原因|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;doctorInfo|中医师信息|Doctor对象|Doctor对象|
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;addressDetail|商户详细地址|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;auditNotes|认证备注|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;auditStatus|认证状态，-1新建，0未审核，1审核通过，2审核失败|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;city|市|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;createTime|注册时间|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;district|区|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;email|邮箱|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;filingNotes|备案备注|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;filingStatus|备案状态，-1新建，0未审核，1审核通过，2审核失败|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;graduateSchoolImageUrl|院校毕业证图片|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalCareer|医院职业，执业医生，助理医生|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalDomain|擅长领域介绍|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalLevel|级别 比如三甲 一甲|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalName|医院名称|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalSub|医院科室，如中医科|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalTitle|医院抬头，如主治医生，副主任|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;hospitalTitleImageUrl|职称证图片|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;idcardNum|身份证号码|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;idcardObverseImageUrl|身份证正面|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;idcardReverseImageUrl|身份证反面|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;imageFee|图片咨询价格|number||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;isLogoff|是否注销|boolean||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;lastIp|最后登录IP|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;lastLoginTime|最后登录时间|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;latitude|纬度|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;licenseImageUrl|医生执业证图片|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;licenseLocalionImageUrl|医生执业证执业地点页|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;logoffTime|注销时间|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;longitude|经度|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;name|医生姓名|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;onlineStatus|在线状态 1接诊中 2离线|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;password|密码（建议存储加密后的值）|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;phone|手机号码|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;picture|头像|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;province|省|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;qualificationImageUrl|医生资格证图片|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;responseTime|响应时间|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;score|评分|number||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;selfInfo|个人简介|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;sex|性别 0未知 1男 2女 3保密|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;signatureImageUrl|签名图片|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;specialization|医生擅长的疾病（男性问题、女性问题 ，逗号分开）|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;treatNum|治疗人数|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;type|类型，1医院医生 2爱尔康医生|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;updateTime|修改时间|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;videoFee|视频咨询价格|number||
+|&emsp;&emsp;&emsp;&emsp;endTime|预约结束时间|string||
+|&emsp;&emsp;&emsp;&emsp;homeService|是否提供上门服务|boolean||
+|&emsp;&emsp;&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;&emsp;&emsp;mchName|门店名称|string||
+|&emsp;&emsp;&emsp;&emsp;orderNo|订单号|string||
+|&emsp;&emsp;&emsp;&emsp;payOrderNo|支付单号|string||
+|&emsp;&emsp;&emsp;&emsp;payStatus|支付状态 0未支付 1已支付 2已退款|integer||
+|&emsp;&emsp;&emsp;&emsp;payTime|支付时间|string||
+|&emsp;&emsp;&emsp;&emsp;realName|收货人姓名|string||
+|&emsp;&emsp;&emsp;&emsp;remark|备注说明|string||
+|&emsp;&emsp;&emsp;&emsp;status|预约状态 0待确认 1已确认 2已完成 3已取消|integer||
+|&emsp;&emsp;&emsp;&emsp;tcmCategoryInfo|中医项目信息|TcmCategory对象|TcmCategory对象|
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;coverImage|封面|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;duration|时长(分钟)|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;homePrice|上门服务价格|number||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;homeService|是否提供上门读服务|boolean||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;name|类目名称|string||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;price|金额|number||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;updateTime|修改时间|string||
+|&emsp;&emsp;&emsp;&emsp;updateTime|更新时间|string||
+|&emsp;&emsp;&emsp;&emsp;userAddress|收货详细地址|string||
+|&emsp;&emsp;&emsp;&emsp;userId|用户ID|integer||
+|&emsp;&emsp;&emsp;&emsp;userPhone|收货人电话|string||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"amount": 0,
+				"appointTime": "",
+				"cancelReason": "",
+				"createTime": "",
+				"doctorInfo": {
+					"addressDetail": "",
+					"auditNotes": "",
+					"auditStatus": 0,
+					"city": "",
+					"createTime": "",
+					"district": "",
+					"email": "",
+					"filingNotes": "",
+					"filingStatus": 0,
+					"graduateSchoolImageUrl": "",
+					"hospitalCareer": "",
+					"hospitalDomain": "",
+					"hospitalLevel": "",
+					"hospitalName": "",
+					"hospitalSub": "",
+					"hospitalTitle": "",
+					"hospitalTitleImageUrl": "",
+					"id": 0,
+					"idcardNum": "",
+					"idcardObverseImageUrl": "",
+					"idcardReverseImageUrl": "",
+					"imageFee": 0,
+					"isLogoff": true,
+					"lastIp": "",
+					"lastLoginTime": "",
+					"latitude": "",
+					"licenseImageUrl": "",
+					"licenseLocalionImageUrl": "",
+					"logoffTime": "",
+					"longitude": "",
+					"mchId": 0,
+					"name": "",
+					"onlineStatus": 0,
+					"password": "",
+					"phone": "",
+					"picture": "",
+					"province": "",
+					"qualificationImageUrl": "",
+					"responseTime": 0,
+					"score": 0,
+					"selfInfo": "",
+					"sex": 0,
+					"signatureImageUrl": "",
+					"specialization": "",
+					"status": 0,
+					"treatNum": 0,
+					"type": 0,
+					"updateTime": "",
+					"videoFee": 0
+				},
+				"endTime": "",
+				"homeService": true,
+				"id": 0,
+				"mchId": 0,
+				"mchName": "",
+				"orderNo": "",
+				"payOrderNo": "",
+				"payStatus": 0,
+				"payTime": "",
+				"realName": "",
+				"remark": "",
+				"status": 0,
+				"tcmCategoryInfo": {
+					"coverImage": "",
+					"createTime": "",
+					"duration": 0,
+					"homePrice": 0,
+					"homeService": true,
+					"id": 0,
+					"mchId": 0,
+					"name": "",
+					"price": 0,
+					"status": 0,
+					"updateTime": ""
+				},
+				"updateTime": "",
+				"userAddress": "",
+				"userId": 0,
+				"userPhone": ""
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 中医类目分页列表
+
+
+**接口地址**:`/api/front/therapist/tcm-category/list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|limit|每页数量|query|false|integer(int32)||
+|mchId|商户ID|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«TcmCategory对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«TcmCategory对象»|CommonPage«TcmCategory对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|TcmCategory对象|
+|&emsp;&emsp;&emsp;&emsp;coverImage|封面|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;duration|时长(分钟)|integer||
+|&emsp;&emsp;&emsp;&emsp;homePrice|上门服务价格|number||
+|&emsp;&emsp;&emsp;&emsp;homeService|是否提供上门读服务|boolean||
+|&emsp;&emsp;&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;&emsp;&emsp;name|类目名称|string||
+|&emsp;&emsp;&emsp;&emsp;price|金额|number||
+|&emsp;&emsp;&emsp;&emsp;status|状态，0不可用；1启用|integer||
+|&emsp;&emsp;&emsp;&emsp;updateTime|修改时间|string||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"coverImage": "",
+				"createTime": "",
+				"duration": 0,
+				"homePrice": 0,
+				"homeService": true,
+				"id": 0,
+				"mchId": 0,
+				"name": "",
+				"price": 0,
+				"status": 0,
+				"updateTime": ""
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 新增中医预约
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment/save`
+
+
+**请求方式**:`POST`
+
+
+**请求数据类型**:`application/json`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求示例**:
+
+
+```javascript
+{
+  "addressId": 0,
+  "appointTime": "",
+  "doctorId": 0,
+  "homeService": true,
+  "remark": "",
+  "tcmCategory": 0
+}
+```
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|request|中医预约请求对象|body|true|TcmAppointmentRequest对象|TcmAppointmentRequest对象|
+|&emsp;&emsp;addressId|地址ID（上门服务时必填）||false|integer||
+|&emsp;&emsp;appointTime|预约时间||true|string||
+|&emsp;&emsp;doctorId|中医师ID||true|integer||
+|&emsp;&emsp;homeService|是否提供上门服务||false|boolean||
+|&emsp;&emsp;remark|备注说明||false|string||
+|&emsp;&emsp;tcmCategory|中医项目ID||true|integer||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«string»|
+|201|Created||
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": "",
+	"message": ""
+}
+```

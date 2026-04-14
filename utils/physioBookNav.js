@@ -5,7 +5,8 @@
 export const PHYSIO_BOOK_NAV_KEY = 'physio_book_nav';
 
 /**
- * @param {{ therapistId: number|string, mchId: number|string, name?: string, domain?: string, picture?: string, preselectedCategoryId?: number|string }} payload
+ * @param {{ therapistId: number|string, mchId: number|string, name?: string, domain?: string, picture?: string, preselectedCategoryId?: number|string, categoryListSource?: 'physio'|'tcm', doctorId?: number|string }} payload
+ * categoryListSource=tcm 时预约页拉取 therapist/tcm-category/list；需带 doctorId 提交中医预约
  */
 export function setPhysioBookNav(payload) {
 	if (!payload || payload.therapistId == null || payload.therapistId === '') return;

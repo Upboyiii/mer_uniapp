@@ -146,6 +146,14 @@ export function getPhysiotherapyCategoryListApi(data) {
   return request.get('therapist/physiotherapy-category/list', data, { noAuth: true });
 }
 
+/**
+ * GET /api/front/therapist/tcm-category/list（interface.md：中医类目分页列表）
+ * query：page、limit、mchId（商户/门店）
+ */
+export function getTcmCategoryListApi(data) {
+  return request.get('therapist/tcm-category/list', data, { noAuth: true });
+}
+
 // ========== interface.md：理疗预约 / 问诊 / 取消预约（与 /api/front 文档对应） ==========
 // 注意：以下为「理疗预约单」资源；therapist/page/list 是「理疗师人员」列表，路径与语义均不同。
 
@@ -175,6 +183,37 @@ export function physiotherapyAppointmentSaveApi(data) {
  */
 export function physiotherapyAppointmentCancelApi(data) {
   return request.post('therapist/physiotherapy-appointment/cancel', data);
+}
+
+/**
+ * GET /api/front/doctor/tcm-appointment/list（interface.md）
+ * query：page、limit、mchId、status（0待确认 1已确认 2已完成 3已取消）；「全部」不传 status
+ */
+export function getTcmAppointmentListApi(data) {
+  return request.get('doctor/tcm-appointment/list', data);
+}
+
+/** GET /api/front/doctor/tcm-appointment/info — 中医预约详情 */
+export function getTcmAppointmentInfoApi(id) {
+  return request.get('doctor/tcm-appointment/info', { id });
+}
+
+/** POST /api/front/doctor/tcm-appointment/pay */
+export function tcmAppointmentPayApi(data) {
+  return request.post('doctor/tcm-appointment/pay', data);
+}
+
+/**
+ * POST /api/front/doctor/tcm-appointment/cancel
+ * @param {{ appointmentId: number, cancelReason: string }} data
+ */
+export function tcmAppointmentCancelApi(data) {
+  return request.post('doctor/tcm-appointment/cancel', data);
+}
+
+/** POST /api/front/doctor/tcm-appointment/save 新增中医预约 */
+export function tcmAppointmentSaveApi(data) {
+  return request.post('doctor/tcm-appointment/save', data);
 }
 
 /** GET /api/front/doctor/consultation/info 问诊详情 */

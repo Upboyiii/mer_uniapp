@@ -132,10 +132,10 @@
 				<view v-if="hasMchForCate" class="pkg-from-therapist">
 					<view class="cate-section">
 						<view class="cate-sec-head">
-							<text class="cate-sec-badge">订</text>
-							<text class="cate-sec-title">套餐预订</text>
+							<text class="cate-sec-badge">医</text>
+							<text class="cate-sec-title">中医项目</text>
 						</view>
-						<view class="cate-guarantee">未服务全额退 | 技师爽约再赔30元</view>
+						<view class="cate-guarantee">未服务全额退 | 按门店规则履约</view>
 						<view v-if="cateLoading" class="cate-loading"><text>加载项目中...</text></view>
 						<block v-else>
 							<view
@@ -150,7 +150,7 @@
 									mode="aspectFill"
 								/>
 								<view class="pkg-mid">
-									<text class="pkg-name">{{ item.name || '理疗项目' }}</text>
+									<text class="pkg-name">{{ item.name || '中医项目' }}</text>
 									<text class="pkg-sub line-clamp-1">{{ categorySubLine(item) }}</text>
 									<view class="pkg-price-row">
 										<text class="pkg-price">¥{{ formatPkgPrice(item.price) }}</text>
@@ -163,7 +163,7 @@
 									</view>
 								</view>
 								<view class="pkg-right">
-									<text class="pkg-sales">技师销量 {{ treatNumDisplay }}</text>
+									<text class="pkg-sales">接诊人次 {{ treatNumDisplay }}</text>
 									<button
 										class="pkg-book-btn"
 										hover-class="pkg-book-hover"
@@ -173,7 +173,7 @@
 									</button>
 								</view>
 							</view>
-							<view v-if="categoryList.length === 0" class="cate-empty">暂无理疗项目</view>
+							<view v-if="categoryList.length === 0" class="cate-empty">暂无中医项目</view>
 						</block>
 					</view>
 				</view>
@@ -217,7 +217,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { getDoctorListApi, getPhysiotherapyCategoryListApi, getTherapistByMchApi } from '@/api/clinic.js';
+import { getDoctorListApi, getTcmCategoryListApi, getTherapistByMchApi } from '@/api/clinic.js';
 import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 import emptyPage from '@/components/emptyPage.vue';
 import easyLoadimage from '@/components/base/easy-loadimage.vue';
@@ -452,7 +452,7 @@ export default {
 				return;
 			}
 			this.cateLoading = true;
-			getPhysiotherapyCategoryListApi({ page: 1, limit: 200, mchId: mid })
+			getTcmCategoryListApi({ page: 1, limit: 200, mchId: mid })
 				.then((res) => {
 					const data = res.data;
 					let list = [];
@@ -493,7 +493,6 @@ export default {
 				parts.push(`${item.duration}分钟`);
 			}
 			parts.push(item.homeService ? '可上门' : '到店服务');
-			parts.push('缓解疲劳');
 			return parts.join(' | ');
 		},
 		formatPkgPrice(v) {
@@ -524,7 +523,9 @@ export default {
 						mchId: mid,
 						name: t.name || '',
 						domain: t.hospitalDomain || '',
-						picture: t.picture || ''
+						picture: t.picture || '',
+						categoryListSource: 'tcm',
+						doctorId: this.doctorId
 					};
 					if (cat && cat.id != null) {
 						payload.preselectedCategoryId = cat.id;
