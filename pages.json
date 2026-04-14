@@ -1853,6 +1853,17 @@
 				}
 			},
 			{
+				"path": "consultation_pay_success/index",
+				"style": {
+					"navigationBarTitleText": "支付成功",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
 				"path": "physio_appointment_detail/index",
 				"style": {
 					"navigationBarTitleText": "预约详情",

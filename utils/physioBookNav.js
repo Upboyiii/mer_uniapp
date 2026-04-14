@@ -28,3 +28,9 @@ export function consumePhysioBookNav() {
 	}
 	return null;
 }
+
+/** 门店切换页回写：选中的商户/门店 ID（与 pages/clinic/store_switch 配合） */
+export const PHYSIO_BOOK_SELECTED_MCH_KEY = 'physio_book_selected_mch';
+
+/** 理疗师列表页回写：physio_pick 模式下选择的理疗师 */
+export const PHYSIO_BOOK_PICK_THERAPIST_KEY = 'physio_book_pick_therapist';

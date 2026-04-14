@@ -26,8 +26,11 @@
 					<text class="weather-in-txt">由于恶劣天气影响，技师可能会延误，请谅解！</text>
 				</view>
 				<view class="addr-divider" />
-				<view class="addr-row" @click="onTapAddress" :class="{ 'addr-row--readonly': !homeService }">
+				<view class="addr-row" @click="onTapAddress">
 					<view class="addr-text-wrap">
+						<text v-if="!homeService && resolvedStoreName" class="addr-line-store line1">{{
+							resolvedStoreName
+						}}</text>
 						<text class="addr-line-main line2">{{ storeAddressLine }}</text>
 						<text class="addr-line-sub" v-if="storeContactLine">{{ storeContactLine }}</text>
 					</view>
@@ -77,7 +80,7 @@
 
 			<!-- 预约选项（参考稿：每行右侧箭头；时间/出行为橙色） -->
 			<view class="card card-options">
-				<view class="opt-row">
+				<view class="opt-row" @click="onPickTherapist">
 					<text class="opt-label">服务人员</text>
 					<view class="opt-right">
 						<text class="opt-val opt-val--name">{{ therapistName || '理疗师' }}</text>
@@ -85,16 +88,10 @@
 						<text class="iconfont icon-ic_rightarrow opt-arrow"></text>
 					</view>
 				</view>
-				<view class="opt-row">
+				<view class="opt-row" @click="openServiceTimePicker">
 					<text class="opt-label">服务时间</text>
 					<view class="opt-right opt-right--time">
-						<picker mode="date" :value="datePart" :start="dateStart" @change="onDateChange">
-							<text class="opt-accent">{{ datePart }}</text>
-						</picker>
-						<text class="opt-accent opt-accent-gap"> </text>
-						<picker mode="time" :value="timePart" @change="onTimeChange">
-							<text class="opt-accent">{{ timePart }}</text>
-						</picker>
+						<text class="opt-accent">{{ serviceTimeRowDisplay }}</text>
 						<text class="iconfont icon-ic_rightarrow opt-arrow"></text>
 					</view>
 				</view>
@@ -185,6 +182,51 @@
 				</scroll-view>
 			</view>
 		</view>
+
+		<!-- 服务时间：今天 / 明天 / 后天 + 时段 -->
+		<view
+			v-if="showServiceTimeModal"
+			class="picker-mask st-time-mask"
+			@click="showServiceTimeModal = false"
+		>
+			<view class="st-time-panel" @click.stop>
+				<view class="st-time-head">
+					<view class="st-time-head-text">
+						<text class="st-time-title">请选择服务时间</text>
+						<text class="st-time-sub">实际到达可能会有 30 分钟的浮动</text>
+					</view>
+					<text class="st-time-close" @click="showServiceTimeModal = false">×</text>
+				</view>
+				<view class="st-day-row">
+					<view
+						v-for="d in relativeDayOptions"
+						:key="d.dateStr"
+						class="st-day-chip"
+						:class="{ on: tempDatePart === d.dateStr }"
+						@click="tempDatePart = d.dateStr"
+					>
+						<text class="st-day-label">{{ d.label }}</text>
+						<text class="st-day-sub">{{ d.sub }}</text>
+					</view>
+				</view>
+				<scroll-view scroll-y class="st-time-scroll">
+					<view v-if="serviceTimeSlotList.length === 0" class="st-time-empty">
+						<text>今日可约时段已结束，请选择明天或后天</text>
+					</view>
+					<view v-else class="st-time-grid">
+						<view
+							v-for="(t, ti) in serviceTimeSlotList"
+							:key="ti"
+							class="st-time-cell"
+							:class="{ on: isServiceTimeCellActive(t) }"
+							@click="pickServiceTimeSlot(t)"
+						>
+							<text class="st-time-t">{{ t }}</text>
+						</view>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -198,7 +240,12 @@ import {
 	physiotherapyAppointmentPayApi
 } from '@/api/clinic.js';
 import { getAddressList } from '@/api/user.js';
-import { consumePhysioBookNav } from '@/utils/physioBookNav.js';
+import {
+	consumePhysioBookNav,
+	PHYSIO_BOOK_SELECTED_MCH_KEY,
+	PHYSIO_BOOK_PICK_THERAPIST_KEY
+} from '@/utils/physioBookNav.js';
+import { setMchTherapistListNav } from '@/utils/mchTherapistListNav.js';
 
 let app = getApp();
 const PHYSIO_BOOK_ADDRESS_KEY = 'physio_book_selected_address';
@@ -213,6 +260,10 @@ export default {
 			therapistDomain: '',
 			therapistPicture: '',
 			storeInfo: null,
+			/** 从门店切换页带回的名称，在门店详情接口无 name 时用于顶栏/地址区展示 */
+			pendingStoreName: '',
+			/** 从门店切换页带回的地址文案；详情接口缺地址字段时仍展示列表里那一行 */
+			pendingStoreAddress: '',
 			selectedAddress: null,
 			categoryList: [],
 			cateLoading: false,
@@ -228,15 +279,25 @@ export default {
 			footerSafeBottom: 16,
 			statusBarHeight: 20,
 			/** 自定义顶栏总高度(px)，用于 scroll 上内边距 */
-			navTotalPx: 88
+			navTotalPx: 88,
+			showServiceTimeModal: false,
+			/** 弹层中选中的日期 yyyy-mm-dd，仅今天/明天/后天 */
+			tempDatePart: ''
 		};
 	},
 	computed: {
 		...mapGetters(['systemPlatform']),
-		storeTitle() {
+		resolvedStoreName() {
+			if (this.pendingStoreName && String(this.pendingStoreName).trim()) {
+				return String(this.pendingStoreName).trim();
+			}
 			const s = this.storeInfo;
-			if (s && s.name && String(s.name).trim()) return String(s.name).trim();
-			return '理疗预约';
+			if (!s) return '';
+			const n = s.name || s.merName;
+			return n && String(n).trim() ? String(n).trim() : '';
+		},
+		storeTitle() {
+			return this.resolvedStoreName || '理疗预约';
 		},
 		defaultAvatar() {
 			const raw = this.$Cache.get('imgHost') || '';
@@ -260,7 +321,14 @@ export default {
 		serviceModeHint() {
 			return this.homeService
 				? '上门服务将前往您选择的收货地址；费用以所选项目上门价为准。'
-				: '到店服务请按预约时间前往门店；下方为门店地址。';
+				: '到店服务请按预约时间前往门店。点击地址可选择或切换门店。';
+		},
+		/** 到店：是否已有可展示的地址（接口多字段或切换页带回） */
+		hasValidStoreAddress() {
+			if (this.pendingStoreAddress && String(this.pendingStoreAddress).trim()) return true;
+			const s = this.storeInfo;
+			if (!s) return false;
+			return !!this.pickMerchantAddress(s);
 		},
 		unitPrice() {
 			if (!this.selectedCate) return 0;
@@ -300,8 +368,13 @@ export default {
 				return '请选择收货地址';
 			}
 			const s = this.storeInfo;
+			if (!s && !this.pendingStoreAddress) return '门店地址加载中…';
+			const fromApi = s ? this.pickMerchantAddress(s) : '';
+			if (fromApi) return fromApi;
+			const pending = (this.pendingStoreAddress || '').trim();
+			if (pending) return pending;
 			if (!s) return '门店地址加载中…';
-			return (s.addressDetail || s.address || '暂无门店地址').trim();
+			return '';
 		},
 		storeContactLine() {
 			if (this.homeService) {
@@ -335,6 +408,34 @@ export default {
 		},
 		showFirstOrderTag() {
 			return this.unitPrice > 0;
+		},
+		/** 今天 / 明天 / 后天 + 月-日 */
+		relativeDayOptions() {
+			const now = new Date();
+			const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+			const pad = (n) => String(n).padStart(2, '0');
+			const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+			const sub = (d) => `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+			const t1 = new Date(t0);
+			t1.setDate(t1.getDate() + 1);
+			const t2 = new Date(t0);
+			t2.setDate(t2.getDate() + 2);
+			return [
+				{ label: '今天', sub: sub(t0), dateStr: fmt(t0) },
+				{ label: '明天', sub: sub(t1), dateStr: fmt(t1) },
+				{ label: '后天', sub: sub(t2), dateStr: fmt(t2) }
+			];
+		},
+		/** 弹层内可选时段：「今天」从当前时间之后算起，明天后天全天 9:00–23:30 */
+		serviceTimeSlotList() {
+			return this.getSlotsForDateString(this.tempDatePart);
+		},
+		/** 列表行展示 */
+		serviceTimeRowDisplay() {
+			if (!this.datePart || !this.timePart) return '请选择';
+			const opt = this.relativeDayOptions.find((o) => o.dateStr === this.datePart);
+			const dayLabel = opt ? opt.label : this.datePart;
+			return `${dayLabel} ${this.timePart}`;
 		}
 	},
 	onLoad(options) {
@@ -364,9 +465,14 @@ export default {
 		this.loadMerchantInfo();
 		this.loadUserAddress();
 		this.loadCategories();
+		this.$nextTick(() => {
+			this.snapServiceTimeToBookable();
+		});
 	},
 	onShow() {
 		this.consumeSelectedAddress();
+		this.consumeSelectedMchFromStore();
+		this.consumePickedTherapist();
 	},
 	methods: {
 		layoutNav() {
@@ -394,6 +500,70 @@ export default {
 				}
 			} catch (e) {}
 		},
+		consumeSelectedMchFromStore() {
+			try {
+				const raw = uni.getStorageSync(PHYSIO_BOOK_SELECTED_MCH_KEY);
+				if (!raw) return;
+				uni.removeStorageSync(PHYSIO_BOOK_SELECTED_MCH_KEY);
+				const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+				const mid = obj && obj.mchId != null ? parseInt(obj.mchId, 10) : 0;
+				if (!mid || isNaN(mid)) return;
+				const pickedName =
+					obj.name != null && String(obj.name).trim() ? String(obj.name).trim() : '';
+				this.pendingStoreName = pickedName;
+				const addrPick =
+					obj.addressDetail != null && String(obj.addressDetail).trim()
+						? String(obj.addressDetail).trim()
+						: '';
+				this.pendingStoreAddress = addrPick;
+				if (mid !== this.mchId) {
+					this.mchId = mid;
+					this.storeInfo = null;
+					this.categoryList = [];
+					this.selectedCate = null;
+					this.loadMerchantInfo();
+					this.loadCategories();
+				} else {
+					this.loadMerchantInfo();
+				}
+			} catch (e) {}
+		},
+		consumePickedTherapist() {
+			try {
+				const raw = uni.getStorageSync(PHYSIO_BOOK_PICK_THERAPIST_KEY);
+				if (!raw) return;
+				uni.removeStorageSync(PHYSIO_BOOK_PICK_THERAPIST_KEY);
+				const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+				if (!obj || obj.therapistId == null) return;
+				const tid = parseInt(obj.therapistId, 10) || 0;
+				if (tid) this.therapistId = tid;
+				this.therapistName = obj.name != null ? String(obj.name) : '';
+				this.therapistDomain = obj.domain != null ? String(obj.domain) : '';
+				this.therapistPicture = obj.picture != null ? String(obj.picture) : '';
+				if (obj.mchId != null && obj.mchId !== '') {
+					const mid = parseInt(obj.mchId, 10) || 0;
+					if (mid && mid !== this.mchId) {
+						this.mchId = mid;
+						this.storeInfo = null;
+						this.categoryList = [];
+						this.selectedCate = null;
+						this.loadMerchantInfo();
+						this.loadCategories();
+					}
+				}
+			} catch (e) {}
+		},
+		onPickTherapist() {
+			if (!this.mchId) {
+				return this.$util.Tips({
+					title: '请先选择门店：若暂无门店地址，请点击上方地址进入门店列表选择'
+				});
+			}
+			setMchTherapistListNav({ mchId: this.mchId });
+			this.$util.navigateTo(
+				`/pages/clinic/therapist/mch_list?source=physio_pick&mchId=${this.mchId}`
+			);
+		},
 		loadUserAddress() {
 			this.consumeSelectedAddress();
 			if (this.selectedAddress && this.selectedAddress.id) return;
@@ -411,21 +581,57 @@ export default {
 			const inset = (sys.safeAreaInsets && sys.safeAreaInsets.bottom) || 0;
 			this.footerSafeBottom = inset + 12;
 		},
+		/** 门店详情/商户首页接口里地址可能散落在多个字段 */
+		pickMerchantAddress(s) {
+			if (!s || typeof s !== 'object') return '';
+			const keys = [
+				'addressDetail',
+				'address',
+				'merAddressDetail',
+				'detailAddress',
+				'fullAddress',
+				'storeAddress',
+				'street',
+				'userAddress'
+			];
+			for (let i = 0; i < keys.length; i++) {
+				const k = keys[i];
+				const v = s[k];
+				if (v != null && typeof v === 'string' && v.trim()) return v.trim();
+			}
+			const nested = s.merAddress || s.returnAddress;
+			if (nested && typeof nested === 'object') {
+				const nv = nested.addressDetail || nested.address;
+				if (nv != null && String(nv).trim()) return String(nv).trim();
+			}
+			return '';
+		},
 		loadMerchantInfo() {
 			if (!this.mchId) return;
 			getClinicDetailApi(this.mchId)
 				.then((res) => {
 					this.storeInfo = (res && res.data) || null;
+					const nm =
+						this.storeInfo &&
+						(this.storeInfo.name || this.storeInfo.merName) &&
+						String(this.storeInfo.name || this.storeInfo.merName).trim();
+					if (nm) {
+						this.pendingStoreName = '';
+					}
+					if (this.storeInfo && this.pickMerchantAddress(this.storeInfo)) {
+						this.pendingStoreAddress = '';
+					}
 				})
 				.catch(() => {
 					this.storeInfo = null;
 				});
 		},
 		onTapAddress() {
-			if (!this.homeService) {
-				return this.$util.Tips({ title: '到店服务使用门店地址，如需上门请切换为「上门服务」' });
+			if (this.homeService) {
+				return this.$util.navigateTo('/pages/address/user_address_list/index?source=physio_book');
 			}
-			this.$util.navigateTo('/pages/address/user_address_list/index?source=physio_book');
+			const mid = this.mchId || 0;
+			return this.$util.navigateTo(`/pages/clinic/store_switch/index?source=physio_book&merId=${mid}`);
 		},
 		onServiceModePick() {
 			const list = ['到店服务', '上门服务'];
@@ -520,11 +726,63 @@ export default {
 			if (q > 99) q = 99;
 			this.quantity = q;
 		},
-		onDateChange(e) {
-			this.datePart = e.detail.value;
+		/** 全部半小时档位 9:00–23:30 */
+		buildAllHalfHourSlots() {
+			const slots = [];
+			for (let m = 9 * 60; m <= 23 * 60 + 30; m += 30) {
+				const h = Math.floor(m / 60);
+				const min = m % 60;
+				slots.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+			}
+			return slots;
 		},
-		onTimeChange(e) {
-			this.timePart = e.detail.value;
+		/**
+		 * 某日可选时段：仅「今天」按当前时刻截断（早于当前时间的半点档不展示），
+		 * 最小可约 = 当前时间向上取整到下一个 30 分钟（如 17:40 → 从 18:00 起）
+		 */
+		getSlotsForDateString(dateStr) {
+			const all = this.buildAllHalfHourSlots();
+			const opts = this.relativeDayOptions;
+			if (!dateStr || !opts.length) return all;
+			const todayStr = opts[0].dateStr;
+			if (dateStr !== todayStr) return all;
+			const now = new Date();
+			const nowMin = now.getHours() * 60 + now.getMinutes();
+			const minBookable = Math.ceil(nowMin / 30) * 30;
+			return all.filter((t) => {
+				const parts = t.split(':');
+				const th = parseInt(parts[0], 10);
+				const tm = parseInt(parts[1], 10);
+				if (isNaN(th) || isNaN(tm)) return false;
+				return th * 60 + tm >= minBookable;
+			});
+		},
+		/** 若当前选中的时刻已早于今日可约范围，顺推到第一个可约时段 */
+		snapServiceTimeToBookable() {
+			const slots = this.getSlotsForDateString(this.datePart);
+			if (slots.length && !slots.includes(this.timePart)) {
+				this.timePart = slots[0];
+			}
+		},
+		openServiceTimePicker() {
+			const opts = this.relativeDayOptions;
+			const ok = opts.some((o) => o.dateStr === this.datePart);
+			this.tempDatePart = ok ? this.datePart : opts[0].dateStr;
+			this.showServiceTimeModal = true;
+			this.$nextTick(() => {
+				const slots = this.serviceTimeSlotList;
+				if (slots.length && !slots.includes(this.timePart)) {
+					this.timePart = slots[0];
+				}
+			});
+		},
+		isServiceTimeCellActive(t) {
+			return this.timePart === t && this.datePart === this.tempDatePart;
+		},
+		pickServiceTimeSlot(t) {
+			this.datePart = this.tempDatePart;
+			this.timePart = t;
+			this.showServiceTimeModal = false;
 		},
 		resolvePayChannel() {
 			const payType = 'weixin';
@@ -831,6 +1089,15 @@ $red: #e6285f;
 	padding-right: 12rpx;
 }
 
+.addr-line-store {
+	display: block;
+	font-size: 30rpx;
+	color: #111;
+	font-weight: 600;
+	line-height: 1.35;
+	margin-bottom: 10rpx;
+}
+
 .addr-line-main {
 	font-size: 28rpx;
 	color: #111;
@@ -1069,10 +1336,6 @@ $red: #e6285f;
 	font-size: 22rpx;
 	color: #999;
 	line-height: 1.45;
-}
-
-.addr-row--readonly .addr-chevron {
-	opacity: 0.35;
 }
 
 .card-price {
@@ -1325,6 +1588,138 @@ $red: #e6285f;
 	padding: 40rpx 0;
 	font-size: 24rpx;
 	color: #999;
+}
+
+/* 服务时间：今天 / 明天 / 后天 + 半小时档位 */
+.st-time-mask {
+	align-items: flex-end;
+	z-index: 1001;
+}
+
+.st-time-panel {
+	width: 100%;
+	max-height: 72vh;
+	background: #fff;
+	border-radius: 24rpx 24rpx 0 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.st-time-head {
+	position: relative;
+	padding: 28rpx 56rpx 20rpx 32rpx;
+	border-bottom: 1rpx solid #f0f0f0;
+}
+
+.st-time-head-text {
+	display: block;
+}
+
+.st-time-title {
+	display: block;
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #282828;
+}
+
+.st-time-sub {
+	display: block;
+	margin-top: 8rpx;
+	font-size: 24rpx;
+	color: #999;
+	line-height: 1.4;
+}
+
+.st-time-close {
+	position: absolute;
+	right: 20rpx;
+	top: 20rpx;
+	font-size: 44rpx;
+	color: #bbb;
+	line-height: 1;
+	padding: 8rpx;
+}
+
+.st-day-row {
+	display: flex;
+	flex-direction: row;
+	padding: 20rpx 24rpx 12rpx;
+	gap: 16rpx;
+	background: #fafafa;
+}
+
+.st-day-chip {
+	flex: 1;
+	min-width: 0;
+	padding: 20rpx 12rpx;
+	border-radius: 12rpx;
+	background: #fff;
+	border: 2rpx solid #eee;
+	text-align: center;
+
+	&.on {
+		border-color: $orange;
+		background: #fff8f0;
+	}
+}
+
+.st-day-label {
+	display: block;
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #111;
+}
+
+.st-day-sub {
+	display: block;
+	margin-top: 6rpx;
+	font-size: 22rpx;
+	color: #999;
+}
+
+.st-time-empty {
+	padding: 48rpx 32rpx 56rpx;
+	text-align: center;
+	font-size: 26rpx;
+	color: #999;
+	line-height: 1.5;
+}
+
+.st-time-scroll {
+	max-height: 46vh;
+	min-height: 200rpx;
+}
+
+.st-time-grid {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 16rpx 16rpx 40rpx;
+}
+
+.st-time-cell {
+	width: 25%;
+	box-sizing: border-box;
+	padding: 8rpx;
+}
+
+.st-time-t {
+	display: block;
+	padding: 18rpx 4rpx;
+	text-align: center;
+	font-size: 26rpx;
+	color: #333;
+	font-weight: 500;
+	background: #f5f5f5;
+	border-radius: 8rpx;
+	border: 2rpx solid transparent;
+}
+
+.st-time-cell.on .st-time-t {
+	color: $orange;
+	font-weight: 600;
+	background: #fff5e8;
+	border-color: rgba(255, 106, 0, 0.45);
 }
 </style>
 

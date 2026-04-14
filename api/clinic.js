@@ -169,6 +169,14 @@ export function physiotherapyAppointmentSaveApi(data) {
   return request.post('therapist/physiotherapy-appointment/save', data);
 }
 
+/**
+ * POST（application/json）/api/front/therapist/physiotherapy-appointment/cancel
+ * @param {{ appointmentId: number, cancelReason: string }} data
+ */
+export function physiotherapyAppointmentCancelApi(data) {
+  return request.post('therapist/physiotherapy-appointment/cancel', data);
+}
+
 /** GET /api/front/doctor/consultation/info 问诊详情 */
 export function getDoctorConsultationInfoApi(id) {
   return request.get('doctor/consultation/info', { id });

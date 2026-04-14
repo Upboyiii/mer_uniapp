@@ -56,7 +56,7 @@
                 </view>
               </view>
               <view class="card-footer" v-if="canCancel(item)">
-                <view class="cancel-btn" @click.stop="cancelAppointment(item, index)">取消预约</view>
+                <view class="cancel-btn" @click.stop="openCancelDialog(item, index)">取消预约</view>
               </view>
             </view>
           </view>
@@ -109,20 +109,29 @@
         </scroll-view>
       </view>
     </view>
+
+    <physio-cancel-reason-popup
+      :visible.sync="cancelReasonPopupVisible"
+      @confirm="submitCancelWithReason"
+    />
   </view>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import { getPhysiotherapyAppointmentListApi, getTherapistByMchApi } from '@/api/clinic.js';
-import { cancelReservationApi } from '@/api/order.js';
+import {
+  getPhysiotherapyAppointmentListApi,
+  getTherapistByMchApi,
+  physiotherapyAppointmentCancelApi
+} from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
+import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
 import { setPhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
 import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 export default {
-  components: { emptyPage },
+  components: { emptyPage, physioCancelReasonPopup },
   filters: {
     physioRowStatusFilter(status) {
       const map = { 0: '待服务', 1: '已完成', 2: '已取消', 3: '已取消' };
@@ -159,7 +168,9 @@ export default {
       limit: 10,
       showTherapistPicker: false,
       pickTherapistList: [],
-      pickLoading: false
+      pickLoading: false,
+      cancelReasonPopupVisible: false,
+      cancelTarget: null
     };
   },
   onLoad(options) {
@@ -271,9 +282,12 @@ export default {
       return 'badge-wait';
     },
     canCancel(item) {
+      if (!item) return false;
       const s = item.status;
       if (s === 1 || s === 2 || s === 3) return false;
-      return !!item.payOrderNo;
+      const ps = item.payStatus;
+      if (ps === 2 || ps === '2') return false;
+      return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
     },
     getAppointmentList() {
       if (!this.mchId || this.loadend || this.loading) return;
@@ -313,27 +327,35 @@ export default {
       this.resetList();
       this.getAppointmentList();
     },
-    cancelAppointment(item, index) {
-      const orderNo = item.payOrderNo;
-      if (!orderNo) {
-        return this.$util.Tips({ title: '暂无关联订单号，无法取消' });
+    openCancelDialog(item, index) {
+      if (!this.canCancel(item)) return;
+      this.cancelTarget = { item, index };
+      this.cancelReasonPopupVisible = true;
+    },
+    submitCancelWithReason(reason) {
+      const ctx = this.cancelTarget;
+      if (!ctx) return;
+      const { item, index } = ctx;
+      const reasonTrim = (reason || '').trim();
+      if (!reasonTrim) {
+        return this.$util.Tips({ title: '请填写取消原因' });
       }
-      uni.showModal({
-        title: '提示',
-        content: '确定取消该预约吗？',
-        success: (res) => {
-          if (res.confirm) {
-            cancelReservationApi(orderNo)
-              .then(() => {
-                this.$util.Tips({ title: '取消成功' });
-                this.appointmentList.splice(index, 1);
-              })
-              .catch(err => {
-                this.$util.Tips({ title: err || '取消失败' });
-              });
-          }
-        }
-      });
+      const rawId = item.id != null ? item.id : item.appointmentId;
+      const appointmentId =
+        typeof rawId === 'number' ? rawId : parseInt(rawId, 10);
+      if (rawId == null || rawId === '' || isNaN(appointmentId)) {
+        return this.$util.Tips({ title: '缺少预约信息，无法取消' });
+      }
+      this.cancelReasonPopupVisible = false;
+      physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reasonTrim })
+        .then(() => {
+          this.$util.Tips({ title: '取消成功' });
+          this.appointmentList.splice(index, 1);
+          this.cancelTarget = null;
+        })
+        .catch(err => {
+          this.$util.Tips({ title: err || '取消失败' });
+        });
     },
     goDetail(item) {
       const appointmentId = item.id != null ? item.id : item.appointmentId;

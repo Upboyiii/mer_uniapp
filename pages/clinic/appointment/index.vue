@@ -71,8 +71,22 @@
             </view>
           </view>
         </view>
-        <view class="card-footer" v-if="canCancel(item)">
-          <view class="cancel-btn" @click.stop="cancelAppointment(item, index)">取消预约</view>
+        <view class="card-footer" v-if="canPayItem(item) || canCancel(item)">
+          <view
+            v-if="canPayItem(item)"
+            class="pay-btn"
+            :class="{ 'pay-btn--busy': payingAppointmentId === item.id }"
+            @click.stop="payAppointment(item)"
+          >
+            {{ payingAppointmentId === item.id ? '支付中…' : '立即支付' }}
+          </view>
+          <view
+            v-if="canCancel(item)"
+            class="cancel-btn"
+            @click.stop="openCancelDialog(item, index)"
+          >
+            取消预约
+          </view>
         </view>
       </view>
     </view>
@@ -84,19 +98,31 @@
     <view v-if="loading" class="loading-wrap">
       <text>加载中...</text>
     </view>
+
+    <physio-cancel-reason-popup
+      :visible.sync="cancelReasonPopupVisible"
+      @confirm="submitCancelWithReason"
+    />
   </view>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
-import { getPhysiotherapyAppointmentListApi, getClinicListApi } from '@/api/clinic.js';
-import { cancelReservationApi } from '@/api/order.js';
+import orderPay from '@/mixins/OrderPay.js';
+import {
+  getPhysiotherapyAppointmentListApi,
+  getClinicListApi,
+  physiotherapyAppointmentPayApi,
+  physiotherapyAppointmentCancelApi
+} from '@/api/clinic.js';
 import emptyPage from '@/components/emptyPage.vue';
+import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
 import { setPhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
 
 let app = getApp();
 export default {
-  components: { emptyPage },
+  mixins: [orderPay],
+  components: { emptyPage, physioCancelReasonPopup },
   filters: {
     /**
      * 列表项 status（与 interface 预约状态一致）
@@ -117,7 +143,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['isLogin'])
+    ...mapGetters(['isLogin', 'systemPlatform'])
   },
   data() {
     return {
@@ -140,7 +166,11 @@ export default {
       loading: false,
       loadend: false,
       page: 1,
-      limit: 10
+      limit: 10,
+      /** 正在发起支付的预约 id，避免列表重复点击 */
+      payingAppointmentId: null,
+      cancelReasonPopupVisible: false,
+      cancelTarget: null
     }
   },
   onLoad(options) {
@@ -228,11 +258,23 @@ export default {
       const n = Number(f);
       return isNaN(n) ? f : n;
     },
-    /** 仅待服务且有关联订单号时可取消（与 status 0/1/2 筛选一致） */
+    /** 未支付且待服务、金额大于 0，与详情页 canPay 一致 */
+    canPayItem(item) {
+      if (!item) return false;
+      const s = Number(item.status);
+      if (s === 1 || s === 2 || s === 3) return false;
+      const fee = Number(item.fee);
+      if (isNaN(fee) || fee <= 0) return false;
+      return Number(item.payStatus) === 0;
+    },
+    /** 仅已支付且待服务可取消（与详情 canCancel 一致） */
     canCancel(item) {
+      if (!item) return false;
       const s = item.status;
       if (s === 1 || s === 2 || s === 3) return false;
-      return !!item.payOrderNo;
+      const ps = item.payStatus;
+      if (ps === 2 || ps === '2') return false;
+      return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
     },
     statusBadgeClass(status) {
       const s = Number(status);
@@ -287,27 +329,35 @@ export default {
       this.loadend = false;
       this.appointmentList = [];
     },
-    cancelAppointment(item, index) {
-      const orderNo = item.payOrderNo;
-      if (!orderNo) {
-        return this.$util.Tips({ title: '暂无关联订单号，无法取消' });
+    openCancelDialog(item, index) {
+      if (!this.canCancel(item)) return;
+      this.cancelTarget = { item, index };
+      this.cancelReasonPopupVisible = true;
+    },
+    submitCancelWithReason(reason) {
+      const ctx = this.cancelTarget;
+      if (!ctx) return;
+      const { item, index } = ctx;
+      const reasonTrim = (reason || '').trim();
+      if (!reasonTrim) {
+        return this.$util.Tips({ title: '请填写取消原因' });
       }
-      uni.showModal({
-        title: '提示',
-        content: '确定取消该预约吗？',
-        success: (res) => {
-          if (res.confirm) {
-            cancelReservationApi(orderNo)
-              .then(() => {
-                this.$util.Tips({ title: '取消成功' });
-                this.appointmentList.splice(index, 1);
-              })
-              .catch(err => {
-                this.$util.Tips({ title: err || '取消失败' });
-              });
-          }
-        }
-      });
+      const rawId = item.id != null ? item.id : item.appointmentId;
+      const appointmentId =
+        typeof rawId === 'number' ? rawId : parseInt(rawId, 10);
+      if (rawId == null || rawId === '' || isNaN(appointmentId)) {
+        return this.$util.Tips({ title: '缺少预约信息，无法取消' });
+      }
+      this.cancelReasonPopupVisible = false;
+      physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reasonTrim })
+        .then(() => {
+          this.$util.Tips({ title: '取消成功' });
+          this.appointmentList.splice(index, 1);
+          this.cancelTarget = null;
+        })
+        .catch(err => {
+          this.$util.Tips({ title: err || '取消失败' });
+        });
     },
     goDetail(item) {
       const appointmentId = item.id != null ? item.id : item.appointmentId;
@@ -321,6 +371,70 @@ export default {
         therapistName: (t && t.name) || ''
       });
       this.$util.navigateTo('/pages/clinic/physio_appointment_detail/index');
+    },
+    resolvePayChannel() {
+      const payType = 'weixin';
+      let payChannel = 'mini';
+      // #ifdef H5
+      payChannel = this.$wechat.isWeixin() ? 'public' : 'h5';
+      // #endif
+      // #ifdef APP-PLUS
+      payChannel = this.systemPlatform === 'ios' ? 'wechatIos' : 'wechatAndroid';
+      // #endif
+      // #ifdef MP
+      payChannel = 'mini';
+      // #endif
+      return { payChannel, payType };
+    },
+    payAppointment(item) {
+      if (!this.canPayItem(item)) return;
+      const id = item.id != null ? item.id : item.appointmentId;
+      if (id == null || id === '') {
+        return this.$util.Tips({ title: '缺少预约编号' });
+      }
+      if (this.payingAppointmentId != null) return;
+      this.payingAppointmentId = id;
+      const { payChannel, payType } = this.resolvePayChannel();
+      physiotherapyAppointmentPayApi({
+        id,
+        payChannel,
+        payType,
+        from: ''
+      })
+        .then((payRes) => {
+          const d = payRes.data;
+          const g = getApp();
+          if (g.globalData) {
+            g.globalData.physioAppointmentNeedRefresh = true;
+          }
+          if (d && d.jsConfig) {
+            const mid =
+              item.mchId ||
+              (item.therapistInfo && item.therapistInfo.mchId) ||
+              this.currentStoreId;
+            const goPages =
+              mid > 0
+                ? `/pages/clinic/therapist/index?mchId=${mid}`
+                : '/pages/clinic/appointment/index';
+            this.payingAppointmentId = null;
+            this.weixinPay(
+              d.jsConfig,
+              String(d.payOrderNo || id),
+              goPages,
+              'normal',
+              ''
+            );
+          } else {
+            this.payingAppointmentId = null;
+            this.$util.Tips({ title: '支付已发起' });
+            this.resetList();
+            this.getList();
+          }
+        })
+        .catch((err) => {
+          this.payingAppointmentId = null;
+          this.$util.Tips({ title: err || '支付发起失败' });
+        });
     }
   }
 };
@@ -579,8 +693,24 @@ export default {
 
 .card-footer {
   display: flex;
+  flex-direction: row;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16rpx;
   padding: 0 24rpx 24rpx;
+}
+
+.pay-btn {
+  padding: 12rpx 36rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #fff;
+  background: var(--view-theme);
+
+  &--busy {
+    opacity: 0.75;
+  }
 }
 
 .cancel-btn {

@@ -93,6 +93,7 @@ import { mapGetters } from "vuex";
 import { getMyClinicListApi } from '@/api/clinic.js';
 import { getMerStreetApi } from '@/api/merchant.js';
 import emptyPage from '@/components/emptyPage.vue';
+import { PHYSIO_BOOK_SELECTED_MCH_KEY } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 
@@ -170,10 +171,13 @@ export default {
       loadend: false,
       page: 1,
       limit: 10,
-      useMock: false
+      useMock: false,
+      /** physio_book：选门店后回写并返回预约页 */
+      navSource: ''
     }
   },
   onLoad(options) {
+    this.navSource = options.source || '';
     this.merId = options.merId ? parseInt(options.merId) : 0;
     this.getLocation();
     this.getStoreList();
@@ -253,6 +257,21 @@ export default {
         content: `确定切换到 ${item.name} 吗？`,
         success: (res) => {
           if (res.confirm) {
+            if (this.navSource === 'physio_book' && item && item.id != null) {
+              try {
+                const addrLine = (item.addressDetail || item.address || '').trim();
+                uni.setStorageSync(
+                  PHYSIO_BOOK_SELECTED_MCH_KEY,
+                  JSON.stringify({
+                    mchId: item.id,
+                    name: (item.name != null && String(item.name).trim()) ? String(item.name).trim() : '',
+                    addressDetail: addrLine
+                  })
+                );
+              } catch (e) {}
+              uni.navigateBack();
+              return;
+            }
             let pages = getCurrentPages();
             let prevPage = pages[pages.length - 2];
             if (prevPage) {

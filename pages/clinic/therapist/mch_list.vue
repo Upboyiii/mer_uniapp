@@ -1,7 +1,10 @@
 <template>
 	<view class="mch-therapist-page" :data-theme="theme">
 		<view v-if="mchId" class="store-tip">
-			<text>当前门店 · 店内理疗师（点卡片进详情，点立即预订直接下单）</text>
+			<text v-if="source === 'physio_pick'">
+				选择理疗师后返回预约页；点卡片「立即预订」确认选择
+			</text>
+			<text v-else>当前门店 · 店内理疗师（点卡片进详情，点立即预订直接下单）</text>
 		</view>
 
 		<physio-therapist-card-list
@@ -36,7 +39,7 @@ import emptyPage from '@/components/emptyPage.vue';
 import physioTherapistCardList from '@/components/physioTherapistCardList/physioTherapistCardList.vue';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
 import { consumeMchTherapistListNav } from '@/utils/mchTherapistListNav.js';
-import { setPhysioBookNav } from '@/utils/physioBookNav.js';
+import { setPhysioBookNav, PHYSIO_BOOK_PICK_THERAPIST_KEY } from '@/utils/physioBookNav.js';
 
 let app = getApp();
 
@@ -58,10 +61,13 @@ export default {
 			loading: false,
 			loadend: false,
 			page: 1,
-			limit: 10
+			limit: 10,
+			/** physio_pick：选理疗师后返回预约页，不重复打开 physio_book */
+			source: ''
 		};
 	},
 	onLoad(options) {
+		this.source = options.source || '';
 		const nav = consumeMchTherapistListNav();
 		let mid = options.mchId ? parseInt(options.mchId, 10) : 0;
 		if (nav && nav.mchId != null && nav.mchId !== '') {
@@ -164,6 +170,21 @@ export default {
 			}
 			if (!mchId) {
 				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			if (this.source === 'physio_pick') {
+				try {
+					uni.setStorageSync(
+						PHYSIO_BOOK_PICK_THERAPIST_KEY,
+						JSON.stringify({
+							therapistId: tid,
+							mchId,
+							name: item.name || '',
+							domain: item.hospitalDomain || '',
+							picture: item.picture || ''
+						})
+					);
+				} catch (e) {}
+				return uni.navigateBack({ delta: 1 });
 			}
 			setPhysioBookNav({
 				therapistId: tid,

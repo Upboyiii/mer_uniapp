@@ -69,10 +69,12 @@ function baseRequest(url, method, data, {
 	if (token) {
 		header[TOKENNAME] = token;
 	}
+	const httpMethod = (method || 'GET').toUpperCase();
 	return new Promise((reslove, reject) => {
 		uni.request({
 			url: Url + '/api/front/' + url,
-			method: method || 'GET',
+			// uni / 部分服务端要求标准大写：GET、POST、PUT…
+			method: httpMethod,
 			header: header,
 			data: data || {},
 			success: (res) => {

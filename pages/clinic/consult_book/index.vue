@@ -530,7 +530,7 @@ export default {
 					uni.hideLoading();
 					this.submitting = false;
 					const d = payRes.data || {};
-					const goPages = '/pages/clinic/my_consultation/index';
+					const goPages = '/pages/clinic/consultation_pay_success/index';
 					if (d.jsConfig) {
 						this.weixinPay(
 							d.jsConfig,
@@ -553,7 +553,7 @@ export default {
 						return;
 					}
 					this.$util.Tips({ title: '支付已处理' });
-					uni.navigateTo({ url: goPages });
+					uni.reLaunch({ url: goPages });
 				})
 				.catch((err) => {
 					uni.hideLoading();

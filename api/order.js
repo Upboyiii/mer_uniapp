@@ -380,8 +380,10 @@ export function getWorkOrderInfoApi(workOrderNo) {
 }
 
 /**
- * 取消预约服务订单
+ * POST（application/json）取消预约服务订单
+ * @param {string} orderNo
+ * @param {{ cancelReason?: string, appointmentId?: number }} [body] 与后端约定可传取消原因、预约单 ID
  */
-export function cancelReservationApi(orderNo) {
-	return request.post(`order/cancel/reservation/${orderNo}`);
+export function cancelReservationApi(orderNo, body) {
+	return request.post(`order/cancel/reservation/${orderNo}`, body || {});
 }

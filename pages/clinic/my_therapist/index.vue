@@ -1,249 +1,156 @@
 <template>
-  <view class="my-therapist-page" :data-theme="theme">
-    <scroll-view
-      scroll-y
-      class="list-scroll"
-      :style="{ height: scrollHeight + 'px' }"
-      @scrolltolower="loadMore"
-      refresher-enabled
-      :refresher-triggered="isRefreshing"
-      @refresherrefresh="onRefresh"
-    >
-      <view v-if="therapistList.length > 0" class="therapist-list">
-        <view
-          class="therapist-card"
-          v-for="(item, index) in therapistList"
-          :key="item.id || index"
-          @click="goTherapistDetail(item)"
-        >
-          <view class="card-avatar">
-            <image
-              class="avatar"
-              :src="item.picture || '/static/images/f.png'"
-              mode="aspectFill"
-            ></image>
-          </view>
-          <view class="card-info">
-            <view class="info-top">
-              <text class="name">{{ item.name }}</text>
-            </view>
-            <view class="info-domain line1" v-if="item.hospitalDomain">
-              擅长：{{ item.hospitalDomain }}
-            </view>
-            <view class="info-stats">
-              <text v-if="item.score" class="stat">评分 {{ item.score }}</text>
-              <text v-if="item.treatNum" class="stat">已服务 {{ item.treatNum }}人</text>
-            </view>
-          </view>
-          <view class="card-action">
-            <view class="action-btn" @click.stop="goBook(item)">再次预约</view>
-          </view>
-        </view>
-      </view>
+	<view class="my-therapist-page" :data-theme="theme">
+		<view class="page-tip">
+			<text>最近服务过的理疗师 · 点卡片看详情，点按钮快速预约</text>
+		</view>
 
-      <view v-if="therapistList.length === 0 && !loading" class="empty-wrap">
-        <emptyPage title="暂无关联理疗师~" mTop="30%" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
-      </view>
+		<physio-therapist-card-list
+			v-if="therapistList.length > 0"
+			:list="therapistList"
+			:theme="theme"
+			book-button-text="再次预约"
+			@detail="goTherapistDetail"
+			@book="goBook"
+		/>
 
-      <view v-if="loading" class="loading-wrap">
-        <text>加载中...</text>
-      </view>
-      <view v-if="loadend && therapistList.length > 0" class="loading-wrap">
-        <text>没有更多了</text>
-      </view>
-    </scroll-view>
-  </view>
+		<view v-else-if="!loading" class="empty-wrap">
+			<emptyPage
+				title="暂无关联理疗师~"
+				mTop="20%"
+				:imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"
+			></emptyPage>
+		</view>
+
+		<view v-if="loading" class="loading-wrap">
+			<text>加载中...</text>
+		</view>
+		<view v-if="loadend && therapistList.length > 0" class="loading-wrap">
+			<text>没有更多了</text>
+		</view>
+	</view>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import { getMyTherapistListApi } from "@/api/clinic.js";
-import emptyPage from "@/components/emptyPage.vue";
-import { setTherapistDetailPrefill } from "@/utils/therapistDetailPrefill.js";
+import { mapGetters } from 'vuex';
+import { getMyTherapistListApi } from '@/api/clinic.js';
+import emptyPage from '@/components/emptyPage.vue';
+import physioTherapistCardList from '@/components/physioTherapistCardList/physioTherapistCardList.vue';
+import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
 import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 
+let app = getApp();
+
 export default {
-  components: { emptyPage },
-  computed: {
-    ...mapGetters(["isLogin"])
-  },
-  data() {
-    return {
-      urlDomain: this.$Cache.get("imgHost"),
-      theme: getApp().globalData.theme,
-      therapistList: [],
-      loading: false,
-      loadend: false,
-      isRefreshing: false,
-      page: 1,
-      limit: 10,
-      scrollHeight: 0
-    };
-  },
-  onLoad() {
-    let sys = uni.getSystemInfoSync();
-    this.scrollHeight = sys.windowHeight;
-    this.getList();
-  },
-  onPullDownRefresh() {
-    this.onRefresh();
-  },
-  methods: {
-    getList() {
-      if (this.loadend || this.loading) return;
-      this.loading = true;
-      getMyTherapistListApi({ page: this.page, limit: this.limit })
-        .then(res => {
-          let list = (res.data && res.data.list) || [];
-          if (list.length < this.limit) this.loadend = true;
-          this.therapistList = this.therapistList.concat(list);
-          this.page++;
-          this.loading = false;
-          this.isRefreshing = false;
-          uni.stopPullDownRefresh();
-        })
-        .catch(() => {
-          this.loading = false;
-          this.isRefreshing = false;
-          uni.stopPullDownRefresh();
-        });
-    },
-
-    onRefresh() {
-      this.isRefreshing = true;
-      this.page = 1;
-      this.loadend = false;
-      this.therapistList = [];
-      this.getList();
-    },
-
-    loadMore() {
-      this.getList();
-    },
-
-    goTherapistDetail(item) {
-      if (!item || item.id == null) {
-        return this.$util.Tips({ title: "数据异常" });
-      }
-      if (!item.mchId) {
-        return this.$util.Tips({ title: "该理疗师暂未关联门店" });
-      }
-      setTherapistDetailPrefill(item);
-      this.$util.navigateTo(
-        `/pages/clinic/therapist/detail?therapistId=${item.id}&mchId=${item.mchId}`
-      );
-    },
-
-    goBook(item) {
-      if (!this.isLogin) {
-        return this.$util.navigateTo("/pages/users/login/index");
-      }
-      const tid = item.id;
-      const mchId = item.mchId;
-      if (!tid || !mchId) {
-        return this.$util.Tips({ title: "缺少门店或理疗师信息" });
-      }
-      setPhysioBookNav({
-        therapistId: tid,
-        mchId,
-        name: item.name || '',
-        domain: item.hospitalDomain || '',
-        picture: item.picture || ''
-      });
-      this.$util.navigateTo('/pages/clinic/physio_book/index');
-    }
-  }
+	components: { emptyPage, physioTherapistCardList },
+	computed: {
+		...mapGetters(['isLogin'])
+	},
+	data() {
+		return {
+			urlDomain: this.$Cache.get('imgHost'),
+			theme: this.$Cache.get('theme') || app.globalData.theme,
+			therapistList: [],
+			loading: false,
+			loadend: false,
+			page: 1,
+			limit: 10
+		};
+	},
+	onLoad() {
+		this.getList();
+	},
+	onReachBottom() {
+		this.loadMore();
+	},
+	onPullDownRefresh() {
+		this.page = 1;
+		this.loadend = false;
+		this.therapistList = [];
+		this.getList(() => uni.stopPullDownRefresh());
+	},
+	methods: {
+		getList(cb) {
+			if (this.loadend || this.loading) {
+				cb && cb();
+				return;
+			}
+			this.loading = true;
+			getMyTherapistListApi({ page: this.page, limit: this.limit })
+				.then((res) => {
+					let list = (res.data && res.data.list) || [];
+					if (list.length < this.limit) this.loadend = true;
+					this.therapistList = this.therapistList.concat(list);
+					this.page++;
+					this.loading = false;
+					cb && cb();
+				})
+				.catch(() => {
+					this.loading = false;
+					cb && cb();
+				});
+		},
+		loadMore() {
+			this.getList();
+		},
+		goTherapistDetail(item) {
+			if (!item || item.id == null) {
+				return this.$util.Tips({ title: '数据异常' });
+			}
+			if (!item.mchId) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			setTherapistDetailPrefill(item);
+			this.$util.navigateTo(
+				`/pages/clinic/therapist/detail?therapistId=${item.id}&mchId=${item.mchId}`
+			);
+		},
+		goBook(item) {
+			if (!this.isLogin) {
+				return this.$util.navigateTo('/pages/users/login/index');
+			}
+			const tid = item.id;
+			const mchId = item.mchId;
+			if (!tid || !mchId) {
+				return this.$util.Tips({ title: '缺少门店或理疗师信息' });
+			}
+			setPhysioBookNav({
+				therapistId: tid,
+				mchId,
+				name: item.name || '',
+				domain: item.hospitalDomain || '',
+				picture: item.picture || ''
+			});
+			this.$util.navigateTo('/pages/clinic/physio_book/index');
+		}
+	}
 };
 </script>
 
 <style lang="scss" scoped>
 .my-therapist-page {
-  background: #f5f5f5;
-  min-height: 100vh;
+	min-height: 100vh;
+	background: #f5f6f8;
+	padding-bottom: 32rpx;
+	box-sizing: border-box;
 }
 
-.list-scroll {
-  width: 100%;
-}
-
-.therapist-list {
-  padding: 16rpx 24rpx;
-}
-
-.therapist-card {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 28rpx 24rpx;
-  margin-bottom: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-}
-
-.card-avatar {
-  flex-shrink: 0;
-  margin-right: 20rpx;
-}
-
-.avatar {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-}
-
-.card-info {
-  flex: 1;
-  overflow: hidden;
-}
-
-.info-top {
-  margin-bottom: 8rpx;
-}
-
-.name {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #282828;
-}
-
-.info-domain {
-  font-size: 22rpx;
-  color: #999;
-  margin-bottom: 8rpx;
-}
-
-.info-stats {
-  display: flex;
-  gap: 16rpx;
-}
-
-.stat {
-  font-size: 22rpx;
-  color: #f0932b;
-}
-
-.card-action {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-}
-
-.action-btn {
-  padding: 14rpx 24rpx;
-  background: var(--view-theme);
-  color: #fff;
-  font-size: 24rpx;
-  border-radius: 30rpx;
-  white-space: nowrap;
+.page-tip {
+	padding: 20rpx 24rpx;
+	font-size: 24rpx;
+	color: #888;
+	background: #fff;
+	margin-bottom: 16rpx;
+	line-height: 1.5;
 }
 
 .empty-wrap {
-  padding-top: 100rpx;
+	min-height: 50vh;
 }
 
 .loading-wrap {
-  text-align: center;
-  padding: 30rpx 0;
-  font-size: 24rpx;
-  color: #999;
+	text-align: center;
+	padding: 30rpx 0;
+	font-size: 24rpx;
+	color: #999;
 }
 </style>

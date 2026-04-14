@@ -131,6 +131,10 @@ export default {
 		},
 		//微信支付
 		weixinPay(jsConfig, orderNo, goPages,productType,fromType) {
+			const goPagesFail =
+				String(goPages || '') +
+				(String(goPages || '').indexOf('?') >= 0 ? '&' : '?') +
+				'status=2';
 			// #ifdef MP
 			if (productType === 'video') {
 				uni.requestOrderPayment({
@@ -157,7 +161,7 @@ export default {
 							title: '取消支付'
 						}, {
 							tab: 5,
-							url: goPages + '&status=2'
+							url: goPagesFail
 						});
 					},
 					complete: function(e) {
@@ -168,7 +172,7 @@ export default {
 							title: '取消支付'
 						}, {
 							tab: 5,
-							url: goPages + '&status=2'
+							url: goPagesFail
 						});
 					},
 				})
@@ -198,7 +202,7 @@ export default {
 							title: '取消支付'
 						}, {
 							tab: 5,
-							url: goPages + '&status=2'
+							url: goPagesFail
 						});
 					},
 					complete: function(e) {
@@ -209,7 +213,7 @@ export default {
 							title: '取消支付'
 						}, {
 							tab: 5,
-							url: goPages + '&status=2'
+							url: goPagesFail
 						});
 					},
 				})
@@ -238,7 +242,7 @@ export default {
 						title: '取消支付'
 					}, {
 						tab: 5,
-						url: goPages + '&status=2'
+						url: goPagesFail
 					});
 				});
 			} else {
@@ -278,7 +282,7 @@ export default {
 						success: function(res) {
 							if (res.confirm) {
 								uni.redirectTo({
-									url: goPages + '&status=2'
+									url: goPagesFail
 								})
 							}
 						}

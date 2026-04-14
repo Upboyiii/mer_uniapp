@@ -91,7 +91,7 @@
 						hover-class="book-main-hover"
 						@click.stop="onBookClick(item)"
 					>
-						立即预订
+						{{ bookButtonText }}
 					</button>
 				</view>
 			</view>
@@ -123,6 +123,11 @@ export default {
 		embedded: {
 			type: Boolean,
 			default: false
+		},
+		/** 底部主按钮文案，如我的理疗师页用「再次预约」 */
+		bookButtonText: {
+			type: String,
+			default: '立即预订'
 		}
 	},
 	methods: {

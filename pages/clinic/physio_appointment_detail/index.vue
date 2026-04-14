@@ -1,8 +1,12 @@
 <template>
 	<view class="detail-page" :data-theme="theme">
 		<view v-if="loading" class="loading-wrap"><text>加载中...</text></view>
-
-		<view v-else-if="detail" class="content">
+		<template v-else>
+		<view
+			v-if="detail"
+			class="content"
+			:class="{ 'content--with-paybar': canPay }"
+		>
 			<!-- 理疗项目（类目） -->
 			<view class="card card-block" v-if="categoryBlockShow">
 				<view class="block-title">理疗项目</view>
@@ -81,7 +85,7 @@
 				</view>
 				<view class="row">
 					<text class="label">应付金额</text>
-					<text class="val price">¥{{ formatMoney(detail.fee) }}</text>
+					<text class="val price">¥{{ formatMoney(detailFeeDisplay) }}</text>
 				</view>
 				<view class="row">
 					<text class="label">支付状态</text>
@@ -106,16 +110,13 @@
 			</view>
 
 			<view class="actions">
-				<button v-if="canPay" class="btn-pay bg-color" :disabled="paying" @click="doPay">
-					{{ paying ? '支付中…' : '立即支付' }}
-				</button>
-				<button
+				<!-- <button
 					v-if="detail.payOrderNo"
 					class="btn-order plain"
 					@click="goOrderDetail"
 				>
 					查看商品订单
-				</button>
+				</button> -->
 				<button
 					v-if="canCancel"
 					class="btn-cancel plain"
@@ -126,9 +127,32 @@
 			</view>
 		</view>
 
-		<view v-else class="empty-wrap">
+		<!-- 未支付：底部固定支付条，避免遗漏 -->
+		<view v-if="detail && canPay" class="pay-bar-fixed">
+			<view class="pay-bar-inner">
+				<view class="pay-bar-left">
+					<text class="pay-bar-label">待支付</text>
+					<text class="pay-bar-fee">¥{{ formatMoney(detailFeeDisplay) }}</text>
+				</view>
+				<button
+					class="pay-bar-btn bg-color"
+					:disabled="paying"
+					@click="doPay"
+				>
+					{{ paying ? '支付中…' : '立即支付' }}
+				</button>
+			</view>
+		</view>
+
+		<view v-else-if="!detail" class="empty-wrap">
 			<text>未找到预约信息</text>
 		</view>
+		</template>
+
+		<physio-cancel-reason-popup
+			:visible.sync="cancelReasonPopupVisible"
+			@confirm="submitCancelWithReason"
+		/>
 	</view>
 </template>
 
@@ -137,13 +161,15 @@ import { mapGetters } from 'vuex';
 import orderPay from '@/mixins/OrderPay.js';
 import {
 	getPhysiotherapyAppointmentInfoApi,
-	physiotherapyAppointmentPayApi
+	physiotherapyAppointmentPayApi,
+	physiotherapyAppointmentCancelApi
 } from '@/api/clinic.js';
-import { cancelReservationApi } from '@/api/order.js';
 import { consumePhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
+import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
 
 let app = getApp();
 export default {
+	components: { physioCancelReasonPopup },
 	mixins: [orderPay],
 	filters: {
 		physioRowStatusFilter(status) {
@@ -151,6 +177,7 @@ export default {
 			return map[status] != null ? map[status] : '未知';
 		},
 		payStatusFilter(ps) {
+			if (ps == null || ps === '') return '未支付';
 			const map = { 0: '未支付', 1: '已支付', 2: '已退款' };
 			return map[ps] != null ? map[ps] : '';
 		}
@@ -163,7 +190,8 @@ export default {
 			therapistNameHint: '',
 			detail: null,
 			loading: true,
-			paying: false
+			paying: false,
+			cancelReasonPopupVisible: false
 		};
 	},
 	computed: {
@@ -210,21 +238,36 @@ export default {
 			const parts = [t.province, t.city, t.district].filter(Boolean);
 			return parts.length ? parts.join(' ') : '';
 		},
+		/** 与列表页一致；兼容 payStatus 缺省=未付、fee/amount 字段名 */
+		detailFeeDisplay() {
+			const d = this.detail;
+			if (!d) return 0;
+			const raw = d.fee != null && d.fee !== '' ? d.fee : d.amount;
+			const n = Number(raw);
+			return isNaN(n) ? 0 : n;
+		},
 		canPay() {
 			const d = this.detail;
 			if (!d) return false;
 			const s = Number(d.status);
 			if (s === 2 || s === 3) return false;
-			const fee = Number(d.fee);
+			const fee = this.detailFeeDisplay;
 			if (isNaN(fee) || fee <= 0) return false;
-			return Number(d.payStatus) === 0;
+			const ps = d.payStatus;
+			if (ps === 1 || ps === '1' || ps === true) return false;
+			if (ps === 2 || ps === '2') return false;
+			if (ps == null || ps === '') return true;
+			return Number(ps) === 0;
 		},
+		/** 仅已支付且待服务可取消；未支付 / 已退款 / 已结束不可 */
 		canCancel() {
 			const d = this.detail;
-			if (!d || !d.payOrderNo) return false;
+			if (!d) return false;
 			const s = Number(d.status);
 			if (s === 1 || s === 2 || s === 3) return false;
-			return true;
+			const ps = d.payStatus;
+			if (ps === 2 || ps === '2') return false;
+			return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
 		}
 	},
 	onLoad(options) {
@@ -352,23 +395,34 @@ export default {
 			);
 		},
 		onCancel() {
-			if (!this.canCancel || !this.detail.payOrderNo) return;
-			uni.showModal({
-				title: '提示',
-				content: '确定取消该预约吗？',
-				success: (res) => {
-					if (!res.confirm) return;
-					cancelReservationApi(this.detail.payOrderNo)
-						.then(() => {
-							this.$util.Tips({ title: '取消成功' });
-							this.markListRefresh();
-							this.loadDetail();
-						})
-						.catch((err) => {
-							this.$util.Tips({ title: err || '取消失败' });
-						});
-				}
-			});
+			if (!this.canCancel || !this.detail) return;
+			this.cancelReasonPopupVisible = true;
+		},
+		submitCancelWithReason(cancelReason) {
+			const reason = (cancelReason || '').trim();
+			if (!reason) {
+				return this.$util.Tips({ title: '请填写取消原因' });
+			}
+			if (!this.canCancel || !this.detail) return;
+			const d = this.detail;
+			const appointmentRaw = d.id != null ? d.id : d.appointmentId;
+			const appointmentId =
+				typeof appointmentRaw === 'number'
+					? appointmentRaw
+					: parseInt(appointmentRaw, 10);
+			if (appointmentRaw == null || appointmentRaw === '' || isNaN(appointmentId)) {
+				return this.$util.Tips({ title: '缺少预约信息，无法取消' });
+			}
+			this.cancelReasonPopupVisible = false;
+			physiotherapyAppointmentCancelApi({ appointmentId, cancelReason: reason })
+				.then(() => {
+					this.$util.Tips({ title: '取消成功' });
+					this.markListRefresh();
+					this.loadDetail();
+				})
+				.catch((err) => {
+					this.$util.Tips({ title: err || '取消失败' });
+				});
 		}
 	}
 };
@@ -393,6 +447,61 @@ export default {
 
 .content {
 	padding-bottom: 48rpx;
+}
+
+.content--with-paybar {
+	padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+}
+
+.pay-bar-fixed {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 100;
+	padding: 16rpx 24rpx;
+	padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+	background: #fff;
+	box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.06);
+	box-sizing: border-box;
+}
+
+.pay-bar-inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24rpx;
+}
+
+.pay-bar-left {
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+	min-width: 0;
+}
+
+.pay-bar-label {
+	font-size: 24rpx;
+	color: #999;
+}
+
+.pay-bar-fee {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: var(--view-theme);
+}
+
+.pay-bar-btn {
+	flex-shrink: 0;
+	min-width: 220rpx;
+	height: 80rpx;
+	line-height: 80rpx;
+	padding: 0 40rpx;
+	border-radius: 40rpx;
+	font-size: 28rpx;
+	color: #fff;
+	border: none;
+	margin: 0;
 }
 
 .card {
