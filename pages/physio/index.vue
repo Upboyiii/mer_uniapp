@@ -208,10 +208,6 @@ export default {
 			this.$util.Tips({ title: which === 'time' ? '服务时段筛选敬请期待' : '更多筛选敬请期待' });
 		},
 		toggleQuickTag(key) {
-			if (['sale', 'coupon', 'free'].indexOf(key) !== -1) {
-				this.$util.Tips({ title: '敬请期待' });
-				return;
-			}
 			this.activeQuickTag = this.activeQuickTag === key ? '' : key;
 		},
 
@@ -385,16 +381,12 @@ export default {
 	border: 1rpx solid transparent;
 }
 
-.tag-chip.highlight {
+/* 选中态与「特惠」同款：浅粉底 + 红字 + 浅红边 */
+.tag-chip.highlight,
+.tag-chip.active {
 	color: #e74c3c;
 	background: #fff5f5;
 	border-color: rgba(231, 76, 60, 0.2);
-}
-
-.tag-chip.active {
-	color: var(--view-theme);
-	background: rgba(110, 163, 90, 0.1);
-	border-color: rgba(110, 163, 90, 0.25);
 }
 
 .search-empty {

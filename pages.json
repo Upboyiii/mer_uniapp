@@ -1836,11 +1836,10 @@
 			{
 				"path": "physio_book/index",
 				"style": {
+					"navigationStyle": "custom",
 					"navigationBarTitleText": "理疗预约",
 					"app-plus": {
-						"titleNView": {
-							"type": "default"
-						}
+						"titleNView": false
 					}
 				}
 			},

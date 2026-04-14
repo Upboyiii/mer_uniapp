@@ -80,6 +80,7 @@
 		mapGetters
 	} from "vuex";
 	let app = getApp();
+const PHYSIO_BOOK_ADDRESS_KEY = 'physio_book_selected_address';
 	export default {
 		components: {
 			emptyPage,
@@ -103,7 +104,8 @@
 				theme: app.globalData.theme,
 				locationContent: '授权位置信息，提供完整服务',
 				locationStatus: false,
-        productId: 0
+        productId: 0,
+				source: ''
 			};
 		},
 		computed: mapGetters(['isLogin']),
@@ -121,6 +123,7 @@
 			if (this.isLogin) {
 				this.orderNo = options.orderNo || 0;
         this.productId = Number(options.id) || 0; //商品id
+				this.source = options.source || '';
 				this.getAddressList(true);
 			} else {
 				toLogin();
@@ -242,6 +245,15 @@
 				})
 			},
 			goOrder: function(id) {
+				if (this.source === 'physio_book') {
+					const item = this.addressList.find((it) => String(it.id) === String(id));
+					if (item) {
+						try {
+							uni.setStorageSync(PHYSIO_BOOK_ADDRESS_KEY, JSON.stringify(item));
+						} catch (e) {}
+					}
+					return uni.navigateBack({ delta: 1 });
+				}
 				if (this.orderNo) {
 					uni.redirectTo({
 						url: '/pages/goods/order_confirm/index?is_address=1&orderNo=' + this.orderNo +

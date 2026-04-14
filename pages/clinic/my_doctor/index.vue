@@ -126,7 +126,8 @@ export default {
           uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
         }
       } catch (e) {}
-      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
+      const midQ = item && item.mchId ? `&mchId=${item.mchId}` : "";
+      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}${midQ}`);
     },
 
     goConsult(item) {
@@ -138,7 +139,8 @@ export default {
           uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
         }
       } catch (e) {}
-      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
+      const midQ = item && item.mchId ? `&mchId=${item.mchId}` : "";
+      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}${midQ}`);
     }
   }
 };

@@ -128,6 +128,56 @@
 					</view>
 				</view>
 
+				<!-- 套餐列表（mchId）；不含理疗师页的「预订」Tab 与顶部说明 -->
+				<view v-if="hasMchForCate" class="pkg-from-therapist">
+					<view class="cate-section">
+						<view class="cate-sec-head">
+							<text class="cate-sec-badge">订</text>
+							<text class="cate-sec-title">套餐预订</text>
+						</view>
+						<view class="cate-guarantee">未服务全额退 | 技师爽约再赔30元</view>
+						<view v-if="cateLoading" class="cate-loading"><text>加载项目中...</text></view>
+						<block v-else>
+							<view
+								v-for="(item, idx) in categoryList"
+								:key="'pkg-' + (item.id != null ? item.id : idx)"
+								class="pkg-row"
+								@click="bookCategory(item)"
+							>
+								<image
+									class="pkg-cover"
+									:src="categoryCoverSrc(item)"
+									mode="aspectFill"
+								/>
+								<view class="pkg-mid">
+									<text class="pkg-name">{{ item.name || '理疗项目' }}</text>
+									<text class="pkg-sub line-clamp-1">{{ categorySubLine(item) }}</text>
+									<view class="pkg-price-row">
+										<text class="pkg-price">¥{{ formatPkgPrice(item.price) }}</text>
+										<text
+											v-if="item.homeService && item.homePrice != null"
+											class="pkg-home"
+										>
+											上门 ¥{{ formatPkgPrice(item.homePrice) }}
+										</text>
+									</view>
+								</view>
+								<view class="pkg-right">
+									<text class="pkg-sales">技师销量 {{ treatNumDisplay }}</text>
+									<button
+										class="pkg-book-btn"
+										hover-class="pkg-book-hover"
+										@click.stop="bookCategory(item)"
+									>
+										预订
+									</button>
+								</view>
+							</view>
+							<view v-if="categoryList.length === 0" class="cate-empty">暂无理疗项目</view>
+						</block>
+					</view>
+				</view>
+
 				<view class="notice-box">
 					<text class="notice-title">{{ noticeTitle }}</text>
 					<view class="notice-item" v-for="(line, i) in noticeLines" :key="i">
@@ -167,7 +217,8 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import { getDoctorListApi } from '@/api/clinic.js';
+import { getDoctorListApi, getPhysiotherapyCategoryListApi, getTherapistByMchApi } from '@/api/clinic.js';
+import { setPhysioBookNav } from '@/utils/physioBookNav.js';
 import emptyPage from '@/components/emptyPage.vue';
 import easyLoadimage from '@/components/base/easy-loadimage.vue';
 import onShare from '@/mixins/onShare';
@@ -277,6 +328,23 @@ export default {
 		showPrescribeTag() {
 			const c = this.doctor && this.doctor.hospitalCareer;
 			return c && String(c).indexOf('处方') !== -1;
+		},
+		resolvedMchId() {
+			const route = Number(this.mchId);
+			if (Number.isFinite(route) && route > 0) return route;
+			const d = this.doctor;
+			if (!d) return 0;
+			const raw = d.mchId != null && d.mchId !== '' ? d.mchId : d.merId;
+			const n = Number(raw);
+			return Number.isFinite(n) && n > 0 ? n : 0;
+		},
+		hasMchForCate() {
+			return this.resolvedMchId > 0;
+		},
+		treatNumDisplay() {
+			const n = this.doctor && this.doctor.treatNum;
+			if (n != null && n !== '' && !isNaN(Number(n))) return String(n);
+			return '0';
 		}
 	},
 	data() {
@@ -289,6 +357,9 @@ export default {
 			selectedMode: 'text',
 			expandSpecialty: false,
 			expandIntro: false,
+			mchId: 0,
+			categoryList: [],
+			cateLoading: false,
 			safeBottom: 0,
 			/** 底栏与屏幕底之间的内边距（安全区 + 额外留白，避免贴边） */
 			bottomBarPad: 16,
@@ -298,6 +369,7 @@ export default {
 	},
 	onLoad(options) {
 		this.doctorId = options.id ? parseInt(options.id, 10) : 0;
+		this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
 		if (options.mode === 'video') this.selectedMode = 'video';
 		else this.selectedMode = 'text';
 		const sys = uni.getSystemInfoSync();
@@ -349,6 +421,7 @@ export default {
 					this.syncModeByFee();
 					this.loading = false;
 					this.applyNavTitle();
+					this.loadCategories();
 					this.$nextTick(() => this.measureScrollAreaHeight());
 					return;
 				}
@@ -366,7 +439,103 @@ export default {
 				.finally(() => {
 					this.loading = false;
 					this.applyNavTitle();
+					if (this.doctor) {
+						this.loadCategories();
+					}
 					this.$nextTick(() => this.measureScrollAreaHeight());
+				});
+		},
+		loadCategories() {
+			const mid = this.resolvedMchId;
+			if (!mid) {
+				this.categoryList = [];
+				return;
+			}
+			this.cateLoading = true;
+			getPhysiotherapyCategoryListApi({ page: 1, limit: 200, mchId: mid })
+				.then((res) => {
+					const data = res.data;
+					let list = [];
+					if (data && Array.isArray(data.list)) {
+						list = data.list;
+					} else if (Array.isArray(data)) {
+						list = data;
+					}
+					this.categoryList = list.filter(
+						(it) => it && (it.status === undefined || it.status === 1)
+					);
+				})
+				.catch(() => {
+					this.categoryList = [];
+				})
+				.finally(() => {
+					this.cateLoading = false;
+				});
+		},
+		categoryCoverSrc(item) {
+			const u = item && item.coverImage ? String(item.coverImage).trim() : '';
+			if (!u) {
+				const raw = this.$Cache.get('imgHost') || '';
+				if (!raw) return '/static/images/f.png';
+				const host = raw.replace(/\/?$/, '/');
+				return `${host}crmebimage/presets/morenT.png`;
+			}
+			if (/^https?:\/\//i.test(u)) return u;
+			const raw = this.$Cache.get('imgHost') || '';
+			if (!raw) return u;
+			const base = raw.replace(/\/?$/, '');
+			return u.startsWith('/') ? base + u : `${base}/${u}`;
+		},
+		categorySubLine(item) {
+			if (!item) return '';
+			const parts = [];
+			if (item.duration != null && item.duration !== '') {
+				parts.push(`${item.duration}分钟`);
+			}
+			parts.push(item.homeService ? '可上门' : '到店服务');
+			parts.push('缓解疲劳');
+			return parts.join(' | ');
+		},
+		formatPkgPrice(v) {
+			if (v == null || v === '') return '0';
+			const n = Number(v);
+			if (isNaN(n)) return '0';
+			return Number.isInteger(n) ? String(n) : n.toFixed(2);
+		},
+		bookCategory(cat) {
+			if (!this.isLogin) {
+				return this.$util.navigateTo('/pages/users/login/index');
+			}
+			const mid = this.resolvedMchId;
+			if (!mid) {
+				return this.$util.Tips({ title: '该医生暂未关联门店' });
+			}
+			uni.showLoading({ title: '请稍候…' });
+			getTherapistByMchApi({ mchId: mid, page: 1, limit: 1 })
+				.then((res) => {
+					const list = (res.data && res.data.list) || [];
+					const t = list[0];
+					if (!t || !t.id) {
+						uni.hideLoading();
+						return this.$util.Tips({ title: '该门店暂无理疗师，暂无法预订套餐' });
+					}
+					const payload = {
+						therapistId: t.id,
+						mchId: mid,
+						name: t.name || '',
+						domain: t.hospitalDomain || '',
+						picture: t.picture || ''
+					};
+					if (cat && cat.id != null) {
+						payload.preselectedCategoryId = cat.id;
+					}
+					setPhysioBookNav(payload);
+					uni.hideLoading();
+					this.$util.navigateTo('/pages/clinic/physio_book/index');
+				})
+				.catch(() => {
+					uni.hideLoading();
+					this.$util.Tips({ title: '加载失败' });
 				});
 		},
 		applyNavTitle() {
@@ -656,9 +825,9 @@ export default {
 }
 
 .block-card {
-	margin: 16rpx 24rpx 0;
+	// margin: 16rpx 24rpx 0;
 	background: #fff;
-	border-radius: 16rpx;
+	// border-radius: 16rpx;
 	padding: 24rpx;
 	box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.03);
 }
@@ -689,7 +858,7 @@ export default {
 
 .stats-row {
 	display: flex;
-	margin: 20rpx 24rpx 0;
+	margin: 20rpx 0rpx 0;
 	background: #fff;
 	border-radius: 16rpx;
 	padding: 24rpx 12rpx;
@@ -818,6 +987,167 @@ export default {
 	text-align: center;
 	color: var(--view-theme);
 	font-weight: 700;
+}
+
+/* 套餐区：仅「套餐预订」白卡片，与上方模块左右对齐 */
+.pkg-from-therapist {
+	margin: 16rpx 24rpx 0;
+}
+
+.pkg-from-therapist .cate-section {
+	background: #fff;
+	border-radius: 16rpx;
+	padding: 24rpx 20rpx 8rpx;
+	box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.03);
+}
+
+.cate-sec-head {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	margin-bottom: 12rpx;
+}
+
+.cate-sec-badge {
+	width: 40rpx;
+	height: 40rpx;
+	line-height: 40rpx;
+	text-align: center;
+	font-size: 22rpx;
+	color: #fff;
+	font-weight: 600;
+	background: linear-gradient(135deg, #ff7a45, #fa541c);
+	border-radius: 8rpx;
+}
+
+.cate-sec-title {
+	font-size: 30rpx;
+	font-weight: 600;
+	color: #282828;
+}
+
+.cate-guarantee {
+	font-size: 22rpx;
+	color: #d48806;
+	background: #fff7e6;
+	padding: 12rpx 16rpx;
+	border-radius: 8rpx;
+	margin-bottom: 16rpx;
+	line-height: 1.4;
+}
+
+.cate-loading,
+.cate-empty {
+	text-align: center;
+	padding: 40rpx 0;
+	font-size: 26rpx;
+	color: #999;
+}
+
+.pkg-row {
+	display: flex;
+	align-items: stretch;
+	padding: 20rpx 0;
+	gap: 16rpx;
+	border-bottom: 1rpx solid #f5f5f5;
+}
+
+.pkg-row:last-of-type {
+	border-bottom: none;
+}
+
+.pkg-cover {
+	width: 144rpx;
+	height: 144rpx;
+	border-radius: 12rpx;
+	flex-shrink: 0;
+	background: #f0f0f0;
+}
+
+.pkg-mid {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	padding: 4rpx 0;
+}
+
+.pkg-name {
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #111;
+	line-height: 1.35;
+}
+
+.pkg-sub {
+	font-size: 22rpx;
+	color: #999;
+	margin-top: 6rpx;
+	line-height: 1.4;
+}
+
+.line-clamp-1 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.pkg-price-row {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 12rpx;
+	margin-top: 8rpx;
+}
+
+.pkg-price {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: #e6285f;
+}
+
+.pkg-home {
+	font-size: 22rpx;
+	color: #666;
+}
+
+.pkg-right {
+	flex-shrink: 0;
+	width: 160rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	justify-content: space-between;
+	padding: 4rpx 0 8rpx;
+}
+
+.pkg-sales {
+	font-size: 20rpx;
+	color: #bbb;
+}
+
+.pkg-book-btn {
+	width: 132rpx;
+	height: 56rpx;
+	line-height: 56rpx;
+	padding: 0;
+	margin: 0;
+	font-size: 26rpx;
+	font-weight: 600;
+	color: #333;
+	background: linear-gradient(180deg, #ffe14d, #ffc107);
+	border-radius: 28rpx;
+	border: none;
+	box-sizing: border-box;
+}
+
+.pkg-book-btn::after {
+	border: none;
+}
+
+.pkg-book-hover {
+	opacity: 0.9;
 }
 
 .notice-box {

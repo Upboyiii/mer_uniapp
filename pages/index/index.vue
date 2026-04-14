@@ -534,7 +534,8 @@ export default {
 			try {
 				uni.setStorageSync('doctor_detail_prefill_' + doc.id, JSON.stringify(doc));
 			} catch (e) {}
-			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}`);
+			const midQ = doc.mchId ? `&mchId=${doc.mchId}` : '';
+			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}${midQ}`);
 		},
 
 		goDoctorListByDept() {
@@ -557,7 +558,8 @@ export default {
 				}
 			} catch (e) {}
 			const mode = type === 'video' ? 'video' : 'text';
-			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}&mode=${mode}`);
+			const midQ = doc.mchId ? `&mchId=${doc.mchId}` : '';
+			this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${doc.id}&mode=${mode}${midQ}`);
 		},
 
 		// ==================== 理疗专区 ====================

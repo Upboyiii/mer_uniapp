@@ -1175,6 +1175,8 @@
 
 
 
+
+
 ## 新增
 
 
@@ -1198,9 +1200,11 @@
 
 ```javascript
 {
+  "addressId": 0,
+  "amount": 0,
   "appointTime": "",
-  "fee": 0,
-  "physiotherapyType": "",
+  "homeService": true,
+  "physiotherapyCategory": 0,
   "therapistId": 0
 }
 ```
@@ -1215,9 +1219,11 @@
 | 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
 | -------- | -------- | ----- | -------- | -------- | ------ |
 |physiotherapyAppointmentRequest|理疗预约请求对象|body|true|PhysiotherapyAppointmentRequest对象|PhysiotherapyAppointmentRequest对象|
+|&emsp;&emsp;addressId|收货地址ID||false|integer||
+|&emsp;&emsp;amount|预约费用||false|number||
 |&emsp;&emsp;appointTime|预约时间||false|string||
-|&emsp;&emsp;fee|预约费用||false|number||
-|&emsp;&emsp;physiotherapyType|理疗项目/类型||false|string||
+|&emsp;&emsp;homeService|上门服务||false|boolean||
+|&emsp;&emsp;physiotherapyCategory|理疗项目/类型||false|integer||
 |&emsp;&emsp;therapistId|理疗师ID||false|integer||
 
 
@@ -1251,7 +1257,6 @@
 	"message": ""
 }
 ```
-
 
 # 问诊
 ## 详情

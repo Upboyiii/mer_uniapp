@@ -293,7 +293,8 @@ export default {
           uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
         }
       } catch (e) {}
-      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
+      const midQ = item && item.mchId ? `&mchId=${item.mchId}` : "";
+      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}${midQ}`);
     },
 
     goConsult(item) {
@@ -308,7 +309,8 @@ export default {
           uni.setStorageSync("doctor_detail_prefill_" + item.id, JSON.stringify(item));
         }
       } catch (e) {}
-      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}`);
+      const midQ = item && item.mchId ? `&mchId=${item.mchId}` : "";
+      this.$util.navigateTo(`/pages/clinic/doctor/detail?id=${item.id}${midQ}`);
     },
 
     /** 接口有有效值才展示统计项（null/undefined/空串不展示；数字 0 视为无数据不展示） */
