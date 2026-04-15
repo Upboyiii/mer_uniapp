@@ -173,6 +173,49 @@
 			:visible.sync="cancelReasonPopupVisible"
 			@confirm="submitCancelWithReason"
 		/>
+
+		<view v-if="showPaySheet" class="pay-sheet-mask" @click="closePaySheet(false)">
+			<view class="pay-sheet" @click.stop>
+				<view class="pay-sheet-grabber"></view>
+				<view class="pay-sheet-head">
+					<text class="pay-sheet-title">确认支付</text>
+					<text class="iconfont icon-ic_close pay-sheet-close" @click="closePaySheet(false)"></text>
+				</view>
+				<text class="pay-sheet-amount">¥{{ formatMoney(detailFeeDisplay) }}</text>
+				<text v-if="detail && detail.orderNo" class="pay-sheet-order line1">订单号 {{ detail.orderNo }}</text>
+				<view class="pay-method-wrap">
+					<text class="pay-method-title">支付方式</text>
+					<view class="pay-option" @click="sheetPayMethod = 'weixin'">
+						<text class="po-name">微信支付</text>
+						<text
+							class="iconfont"
+							:class="sheetPayMethod === 'weixin' ? 'icon-a-ic_CompleteSelect check' : 'icon-ic_unselect unsel'"
+						></text>
+					</view>
+					<!-- #ifndef MP -->
+					<view class="pay-option" @click="sheetPayMethod = 'alipay'">
+						<text class="po-name">支付宝支付</text>
+						<text
+							class="iconfont"
+							:class="sheetPayMethod === 'alipay' ? 'icon-a-ic_CompleteSelect check' : 'icon-ic_unselect unsel'"
+						></text>
+					</view>
+					<!-- #endif -->
+				</view>
+				<button
+					class="sheet-pay-btn bg-color"
+					hover-class="sheet-pay-btn-hover"
+					:disabled="paying"
+					@click="confirmPayInSheet"
+				>
+					{{ paying ? '支付中…' : '立即支付' }}
+				</button>
+			</view>
+		</view>
+
+		<!-- #ifdef H5 -->
+		<view v-if="formContent" class="alipaysubmit" v-html="formContent"></view>
+		<!-- #endif -->
 	</view>
 </template>
 
@@ -212,7 +255,12 @@ export default {
 			paying: false,
 			cancelReasonPopupVisible: false,
 			/** 来自列表 ?tcm=1，走 doctor/tcm-appointment/info */
-			isTcm: false
+			isTcm: false,
+			showPaySheet: false,
+			sheetPayMethod: 'weixin',
+			// #ifdef H5
+			formContent: ''
+			// #endif
 		};
 	},
 	computed: {
@@ -416,6 +464,17 @@ export default {
 				});
 		},
 		resolvePayChannel() {
+			if (this.sheetPayMethod === 'alipay') {
+				// #ifdef H5
+				return { payChannel: 'alipay', payType: 'alipay' };
+				// #endif
+				// #ifdef APP-PLUS
+				return { payChannel: 'alipayApp', payType: 'alipay' };
+				// #endif
+				// #ifdef MP
+				return { payChannel: 'mini', payType: 'weixin' };
+				// #endif
+			}
 			const payType = 'weixin';
 			let payChannel = 'mini';
 			// #ifdef H5
@@ -442,7 +501,61 @@ export default {
 		},
 		doPay() {
 			if (!this.detail || !this.canPay) return;
+			if (this.paying) return;
+			this.sheetPayMethod = 'weixin';
+			this.showPaySheet = true;
+		},
+		closePaySheet(showTip) {
+			this.showPaySheet = false;
+			this.sheetPayMethod = 'weixin';
+			if (showTip && !this.paying) {
+				this.$util.Tips({ title: '预约订单创建成功，可在详情页继续支付' });
+			}
+		},
+		invokeWeixinPay(jsConfig) {
+			return new Promise((resolve, reject) => {
+				// #ifdef MP
+				uni.requestPayment({
+					timeStamp: jsConfig.timeStamp,
+					nonceStr: jsConfig.nonceStr,
+					package: jsConfig.packages,
+					signType: jsConfig.signType,
+					paySign: jsConfig.paySign,
+					ticket: jsConfig.ticket || null,
+					success: () => resolve(),
+					fail: (e) => reject(e || '支付失败')
+				});
+				// #endif
+				// #ifdef H5
+				if (!this.$wechat.isWeixin()) return reject('请在微信内完成支付');
+				const data = {
+					timestamp: jsConfig.timeStamp,
+					nonceStr: jsConfig.nonceStr,
+					package: jsConfig.packages,
+					signType: jsConfig.signType,
+					paySign: jsConfig.paySign
+				};
+				this.$wechat
+					.pay(data)
+					.then(() => resolve())
+					.catch((e) => reject(e || '支付失败'));
+				// #endif
+				// #ifdef APP-PLUS
+				reject('请在当前端完成支付');
+				// #endif
+			});
+		},
+		confirmPayInSheet() {
+			if (!this.detail || !this.canPay || this.paying) return;
+			// #ifdef MP
+			if (this.sheetPayMethod === 'alipay') {
+				return this.$util.Tips({ title: '小程序暂不支持支付宝，请使用微信支付' });
+			}
+			// #endif
+			this.showPaySheet = false;
+			if (this.paying) return;
 			this.paying = true;
+			uni.showLoading({ title: '支付中…' });
 			const { payChannel, payType } = this.resolvePayChannel();
 			const payPayload = {
 				id: this.detail.id,
@@ -455,28 +568,48 @@ export default {
 				: physiotherapyAppointmentPayApi(payPayload);
 			payReq
 				.then((payRes) => {
-					const d = payRes.data;
+					const d = payRes.data || {};
 					this.markListRefresh();
 					if (d && d.jsConfig) {
-						const goPages =
-							this.mchId > 0
-								? `/pages/clinic/therapist/index?mchId=${this.mchId}`
-								: '/pages/clinic/appointment/index';
+						this.invokeWeixinPay(d.jsConfig)
+							.then(() => {
+								this.loadDetail();
+							})
+							.catch((e) => {
+								const msg =
+									(typeof e === 'string' && e) ||
+									(e && e.errMsg) ||
+									'支付未完成，请重试';
+								this.$util.Tips({ title: msg });
+							})
+							.finally(() => {
+								uni.hideLoading();
+								this.paying = false;
+							});
+						return;
+					}
+					if (d.alipayRequest) {
+						uni.hideLoading();
 						this.paying = false;
-						this.weixinPay(
-							d.jsConfig,
-							String(d.payOrderNo || this.detail.id),
-							goPages,
+						this.handleOrderPay(
+							payRes,
+							String(d.payOrderNo != null ? d.payOrderNo : this.detail.id),
 							'normal',
-							''
+							'',
+							'alipay',
+							this.detailFeeDisplay
 						);
-					} else {
+						return;
+					}
+					{
+						uni.hideLoading();
 						this.paying = false;
 						this.$util.Tips({ title: '支付已发起' });
 						this.loadDetail();
 					}
 				})
 				.catch((err) => {
+					uni.hideLoading();
 					this.paying = false;
 					this.$util.Tips({ title: err || '支付发起失败' });
 				});
@@ -753,5 +886,148 @@ export default {
 .btn-cancel {
 	color: #e54d42;
 	border-color: #f5c4c1;
+}
+
+.pay-sheet-mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 1200;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.pay-sheet {
+	width: 100%;
+	box-sizing: border-box;
+	background: #fff;
+	border-radius: 24rpx 24rpx 0 0;
+	padding: 24rpx 40rpx 48rpx;
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+	height: 45vh;
+	max-height: 45vh;
+	box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.08);
+	overflow-y: auto;
+	animation: paySheetUp 0.2s ease-out;
+}
+
+@keyframes paySheetUp {
+	from { transform: translateY(100%); }
+	to { transform: translateY(0); }
+}
+
+.pay-sheet-grabber {
+	width: 72rpx;
+	height: 8rpx;
+	background: #e8e8e8;
+	border-radius: 4rpx;
+	margin: 0 auto 28rpx;
+}
+
+.pay-sheet-head {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10rpx;
+}
+
+.pay-sheet-title {
+	font-size: 34rpx;
+	font-weight: 600;
+	color: #333;
+}
+
+.pay-sheet-close {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 38rpx;
+	color: #b5b5b5;
+	padding: 8rpx;
+}
+
+.pay-sheet-amount {
+	display: block;
+	text-align: center;
+	font-size: 56rpx;
+	font-weight: 700;
+	color: #e6285f;
+	margin-top: 18rpx;
+	margin-bottom: 16rpx;
+}
+
+.pay-sheet-order {
+	display: block;
+	text-align: center;
+	font-size: 24rpx;
+	color: #999;
+	margin-bottom: 30rpx;
+}
+
+.pay-method-wrap {
+	background: #fafbfc;
+	border-radius: 18rpx;
+	padding: 22rpx 24rpx 10rpx;
+	margin-bottom: 26rpx;
+}
+
+.pay-method-title {
+	display: block;
+	font-size: 26rpx;
+	color: #666;
+	margin-bottom: 12rpx;
+}
+
+.pay-option {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 86rpx;
+	border-bottom: 1rpx solid #efefef;
+}
+
+.pay-option:last-child {
+	border-bottom: none;
+}
+
+.po-name {
+	font-size: 30rpx;
+	color: #333;
+}
+
+.check {
+	color: #07c160;
+	font-size: 34rpx;
+}
+
+.unsel {
+	color: #c8c8c8;
+	font-size: 32rpx;
+}
+
+.sheet-pay-btn {
+	width: 100%;
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: 44rpx;
+	font-size: 30rpx;
+	color: #fff;
+	border: none;
+}
+
+.sheet-pay-btn-hover {
+	opacity: 0.9;
+}
+
+.line1 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 </style>

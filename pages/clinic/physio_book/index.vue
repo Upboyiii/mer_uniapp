@@ -229,6 +229,55 @@
 				</scroll-view>
 			</view>
 		</view>
+
+		<!-- 下单成功且需付款：底部弹出确认支付（医生详情中医预约等） -->
+		<view v-if="showPaySheet" class="pay-sheet-mask" @click="onPaySheetMaskClick">
+			<view class="pay-sheet" @click.stop>
+				<view class="pay-sheet-grabber" />
+				<view class="pay-sheet-head">
+					<text class="pay-sheet-title">确认支付</text>
+					<text class="iconfont icon-ic_close pay-sheet-close" @click="dismissPaySheet(true)"></text>
+				</view>
+				<text class="pay-sheet-amount">¥{{ formatMoney(pendingPayAmount) }}</text>
+				<text v-if="pendingOrderNo" class="pay-sheet-order line1">订单号 {{ pendingOrderNo }}</text>
+				<view class="pay-method-wrap">
+					<text class="pay-method-title">支付方式</text>
+					<view class="pay-option" @click="sheetPayMethod = 'weixin'">
+						<text class="po-name">微信支付</text>
+						<text
+							class="iconfont"
+							:class="
+								sheetPayMethod === 'weixin'
+									? 'icon-a-ic_CompleteSelect check'
+									: 'icon-ic_unselect unsel'
+							"
+						></text>
+					</view>
+					<!-- #ifndef MP -->
+					<view class="pay-option" @click="sheetPayMethod = 'alipay'">
+						<text class="po-name">支付宝支付</text>
+						<text
+							class="iconfont"
+							:class="
+								sheetPayMethod === 'alipay'
+									? 'icon-a-ic_CompleteSelect check'
+									: 'icon-ic_unselect unsel'
+							"
+						></text>
+					</view>
+					<!-- #endif -->
+				</view>
+				<button
+					class="btn-submit pay-sheet-btn-full"
+					hover-class="btn-submit-hover"
+					:disabled="submitting"
+					@click="confirmPayInSheet"
+				>
+					{{ submitting ? '请稍候…' : '立即支付' }}
+				</button>
+				<text class="pay-sheet-cancel" @click="dismissPaySheet(true)">暂不支付，稍后处理</text>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -291,7 +340,17 @@ export default {
 			navTotalPx: 88,
 			showServiceTimeModal: false,
 			/** 弹层中选中的日期 yyyy-mm-dd，仅今天/明天/后天 */
-			tempDatePart: ''
+			tempDatePart: '',
+			/** 下单成功后底部支付面板 */
+			showPaySheet: false,
+			pendingPayId: null,
+			pendingOrderNo: '',
+			pendingPayAmount: 0,
+			/** 支付弹层选择 */
+			sheetPayMethod: 'weixin',
+			// #ifdef H5
+			formContent: ''
+			// #endif
 		};
 	},
 	computed: {
@@ -807,7 +866,18 @@ export default {
 			this.timePart = t;
 			this.showServiceTimeModal = false;
 		},
-		resolvePayChannel() {
+		resolvePayChannel(method) {
+			if (method === 'alipay') {
+				// #ifdef H5
+				return { payChannel: 'alipay', payType: 'alipay' };
+				// #endif
+				// #ifdef APP-PLUS
+				return { payChannel: 'alipayApp', payType: 'alipay' };
+				// #endif
+				// #ifdef MP
+				return { payChannel: 'mini', payType: 'weixin' };
+				// #endif
+			}
 			const payType = 'weixin';
 			let payChannel = 'mini';
 			// #ifdef H5
@@ -857,29 +927,60 @@ export default {
 			} catch (e) {}
 		},
 		/** 预约提交/支付完成后进入统一成功页（含理疗/中医） */
-		goToAppointmentSuccess(appointmentId) {
+		goToAppointmentSuccess(appointmentId, orderNo, paySuccess) {
 			this.notifyPrevPageRefresh();
 			const cat = this.categoryListSource === 'tcm' ? 'tcm' : 'physio';
 			let url = `/pages/clinic/appointment_success/index?category=${cat}`;
 			if (appointmentId != null && appointmentId !== '') {
 				url += `&id=${encodeURIComponent(appointmentId)}`;
 			}
+			if (orderNo != null && String(orderNo).trim()) {
+				url += `&orderNo=${encodeURIComponent(String(orderNo).trim())}`;
+			}
+			if (paySuccess === true) {
+				url += '&paySuccess=1';
+			}
 			uni.redirectTo({ url });
 		},
+		/** 解析下单接口返回的预约 id（interface.md：save 返回 data: { id, orderNo }；id 为 0 视为无效） */
 		parseAppointmentId(inner) {
 			if (inner == null || inner === '') return null;
-			if (typeof inner === 'number' && !isNaN(inner)) return inner;
+			if (typeof inner === 'number' && !isNaN(inner)) return inner > 0 ? inner : null;
 			if (typeof inner === 'string') {
 				const t = inner.trim();
 				if (!t) return null;
-				if (/^\d+$/.test(t)) return parseInt(t, 10);
+				if (/^\d+$/.test(t)) {
+					const n = parseInt(t, 10);
+					return n > 0 ? n : null;
+				}
 				return t;
 			}
 			if (typeof inner === 'object') {
-				if (inner.id != null) return inner.id;
+				if (inner.id != null && inner.id !== '') {
+					const raw = inner.id;
+					if (typeof raw === 'number' && !isNaN(raw)) return raw > 0 ? raw : null;
+					if (typeof raw === 'string') {
+						const t = raw.trim();
+						if (/^\d+$/.test(t)) {
+							const n = parseInt(t, 10);
+							return n > 0 ? n : null;
+						}
+						return t || null;
+					}
+				}
 				if (inner.data != null) return this.parseAppointmentId(inner.data);
 			}
 			return null;
+		},
+		/** 下单接口 data：{ id, orderNo } */
+		parseAppointmentSaveResult(inner) {
+			const id = this.parseAppointmentId(inner);
+			let orderNo = '';
+			if (inner && typeof inner === 'object' && inner.orderNo != null) {
+				const t = String(inner.orderNo).trim();
+				if (t) orderNo = t;
+			}
+			return { id, orderNo };
 		},
 		submit() {
 			if (!this.therapistId) {
@@ -932,10 +1033,17 @@ export default {
 			const saveReq = isTcm ? tcmAppointmentSaveApi(body) : physiotherapyAppointmentSaveApi(body);
 			saveReq
 				.then((res) => {
-					const appointmentId = this.parseAppointmentId(res.data);
+					const { id: appointmentId, orderNo } = this.parseAppointmentSaveResult(res.data);
 					const needPay = !isNaN(feeNum) && feeNum > 0;
-					if (needPay && appointmentId != null && appointmentId !== '') {
-						return this.doPay(appointmentId, feeNum);
+					if (appointmentId != null && appointmentId !== '' && orderNo && String(orderNo).trim()) {
+						uni.hideLoading();
+						this.submitting = false;
+						this.pendingPayId = appointmentId;
+						this.pendingOrderNo = orderNo || '';
+						this.pendingPayAmount = feeNum;
+						this.sheetPayMethod = 'weixin';
+						this.showPaySheet = true;
+						return;
 					}
 					uni.hideLoading();
 					this.submitting = false;
@@ -943,10 +1051,14 @@ export default {
 						this.$util.Tips({
 							title: '创建成功，未返回预约编号，请到「我的预约」中完成支付'
 						});
+					} else if (needPay && (!orderNo || !String(orderNo).trim())) {
+						this.$util.Tips({
+							title: '创建成功，未返回订单号，请到「我的预约」中完成支付'
+						});
 					} else {
 						this.$util.Tips({ title: '预约已提交' });
 					}
-					this.goToAppointmentSuccess(appointmentId);
+					this.goToAppointmentSuccess(appointmentId, orderNo, false);
 				})
 				.catch((err) => {
 					uni.hideLoading();
@@ -954,8 +1066,72 @@ export default {
 					this.$util.Tips({ title: err || '提交失败' });
 				});
 		},
-		doPay(appointmentId, payPrice) {
-			const { payChannel, payType } = this.resolvePayChannel();
+		onPaySheetMaskClick() {
+			this.dismissPaySheet(true);
+		},
+		dismissPaySheet(showTip) {
+			if (!this.showPaySheet) return;
+			this.showPaySheet = false;
+			this.pendingPayId = null;
+			this.pendingOrderNo = '';
+			this.pendingPayAmount = 0;
+			this.sheetPayMethod = 'weixin';
+			if (showTip) {
+				this.$util.Tips({ title: '预约订单创建成功，可以去我的预约查看' });
+			}
+			this.markAppointmentListNeedRefresh();
+		},
+		confirmPayInSheet() {
+			if (this.submitting) return;
+			const appointmentId = this.pendingPayId;
+			const orderNo = this.pendingOrderNo;
+			const feeNum = this.pendingPayAmount;
+			if (appointmentId == null || appointmentId === '') return;
+			// #ifdef MP
+			if (this.sheetPayMethod === 'alipay') {
+				return this.$util.Tips({ title: '小程序暂不支持支付宝，请使用微信支付' });
+			}
+			// #endif
+			this.showPaySheet = false;
+			this.submitting = true;
+			uni.showLoading({ title: '支付中…' });
+			this.doPay(appointmentId, feeNum, orderNo, this.sheetPayMethod);
+		},
+		invokeWeixinPay(jsConfig) {
+			return new Promise((resolve, reject) => {
+				// #ifdef MP
+				uni.requestPayment({
+					timeStamp: jsConfig.timeStamp,
+					nonceStr: jsConfig.nonceStr,
+					package: jsConfig.packages,
+					signType: jsConfig.signType,
+					paySign: jsConfig.paySign,
+					ticket: jsConfig.ticket || null,
+					success: () => resolve(),
+					fail: (e) => reject(e || '支付失败')
+				});
+				// #endif
+				// #ifdef H5
+				if (!this.$wechat.isWeixin()) return reject('请在微信内完成支付');
+				const data = {
+					timestamp: jsConfig.timeStamp,
+					nonceStr: jsConfig.nonceStr,
+					package: jsConfig.packages,
+					signType: jsConfig.signType,
+					paySign: jsConfig.paySign
+				};
+				this.$wechat
+					.pay(data)
+					.then(() => resolve())
+					.catch((e) => reject(e || '支付失败'));
+				// #endif
+				// #ifdef APP-PLUS
+				reject('请在当前端完成支付');
+				// #endif
+			});
+		},
+		doPay(appointmentId, payPrice, saveOrderNo, payMethod) {
+			const { payChannel, payType } = this.resolvePayChannel(payMethod);
 			const payPayload = { id: appointmentId, payChannel, payType, from: '' };
 			const payReq =
 				this.categoryListSource === 'tcm'
@@ -963,24 +1139,47 @@ export default {
 					: physiotherapyAppointmentPayApi(payPayload);
 			payReq
 				.then((payRes) => {
-					uni.hideLoading();
-					this.submitting = false;
-					const d = payRes.data;
+					const d = payRes.data || {};
 					this.markAppointmentListNeedRefresh();
 					const cat = this.categoryListSource === 'tcm' ? 'tcm' : 'physio';
-					const goPages = `/pages/clinic/appointment_success/index?category=${cat}`;
-					if (d && d.jsConfig) {
-						this.weixinPay(
-							d.jsConfig,
-							String(d.payOrderNo || appointmentId),
-							goPages,
-							'normal',
-							''
-						);
-					} else {
-						this.$util.Tips({ title: '预约已提交' });
-						this.goToAppointmentSuccess(appointmentId);
+					const orderNoQ = saveOrderNo != null && String(saveOrderNo).trim()
+						? `&orderNo=${encodeURIComponent(String(saveOrderNo).trim())}`
+						: '';
+					if (d.jsConfig) {
+						this.invokeWeixinPay(d.jsConfig)
+							.then(() => {
+								this.goToAppointmentSuccess(appointmentId, saveOrderNo, true);
+							})
+							.catch((e) => {
+								const msg =
+									(typeof e === 'string' && e) ||
+									(e && e.errMsg) ||
+									'支付未完成，请重试';
+								this.$util.Tips({ title: msg });
+							})
+							.finally(() => {
+								this.submitting = false;
+								uni.hideLoading();
+							});
+						return;
 					}
+					if (d.alipayRequest) {
+						this.submitting = false;
+						uni.hideLoading();
+						this.handleOrderPay(
+							payRes,
+							String(d.payOrderNo != null ? d.payOrderNo : saveOrderNo || appointmentId),
+							'normal',
+							'',
+							'alipay',
+							payPrice
+						);
+						return;
+					}
+					this.submitting = false;
+					uni.hideLoading();
+					this.$util.Tips({ title: '预约已提交' });
+					this.goToAppointmentSuccess(appointmentId, saveOrderNo, false);
 				})
 				.catch((err) => {
 					uni.hideLoading();
@@ -1505,6 +1704,7 @@ $red: #e6285f;
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	overflow: hidden;
 }
 
@@ -1776,6 +1976,152 @@ $red: #e6285f;
 	font-weight: 600;
 	background: #fff5e8;
 	border-color: rgba(255, 106, 0, 0.45);
+}
+
+/* 底部支付弹层 */
+.pay-sheet-mask {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 1200;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.pay-sheet {
+	width: 100%;
+	box-sizing: border-box;
+	background: #fff;
+	border-radius: 24rpx 24rpx 0 0;
+	padding: 24rpx 40rpx 48rpx;
+	padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+	height: 45vh;
+	max-height: 45vh;
+	box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.08);
+	animation: paySheetUp 0.2s ease-out;
+	overflow-y: auto;
+}
+
+@keyframes paySheetUp {
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
+}
+
+.pay-sheet-grabber {
+	width: 72rpx;
+	height: 8rpx;
+	background: #e8e8e8;
+	border-radius: 4rpx;
+	margin: 0 auto 28rpx;
+}
+
+.pay-sheet-head {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10rpx;
+}
+
+.pay-sheet-close {
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 38rpx;
+	color: #b5b5b5;
+	padding: 8rpx;
+}
+
+.pay-sheet-title {
+	display: block;
+	text-align: center;
+	font-size: 34rpx;
+	font-weight: 600;
+	color: #333;
+	line-height: 1.2;
+	padding-right: 10rpx;
+}
+
+.pay-sheet-amount {
+	display: block;
+	text-align: center;
+	font-size: 60rpx;
+	font-weight: 700;
+	color: #e6285f;
+	margin-top: 18rpx;
+	margin-bottom: 18rpx;
+	line-height: 1.1;
+}
+
+.pay-sheet-order {
+	display: block;
+	text-align: center;
+	font-size: 26rpx;
+	color: #999;
+	margin-bottom: 42rpx;
+}
+
+.pay-method-wrap {
+	background: #fafbfc;
+	border-radius: 18rpx;
+	padding: 22rpx 24rpx 10rpx;
+	margin-bottom: 30rpx;
+}
+
+.pay-method-title {
+	display: block;
+	font-size: 26rpx;
+	color: #666;
+	margin-bottom: 12rpx;
+}
+
+.pay-option {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 90rpx;
+	border-bottom: 1rpx solid #efefef;
+}
+
+.pay-option:last-child {
+	border-bottom: none;
+}
+
+.po-name {
+	font-size: 30rpx;
+	color: #333;
+}
+
+.check {
+	color: #07c160;
+	font-size: 34rpx;
+}
+
+.unsel {
+	color: #c8c8c8;
+	font-size: 32rpx;
+}
+
+.pay-sheet-btn-full {
+	width: 100%;
+	margin-bottom: 24rpx;
+}
+
+.pay-sheet-cancel {
+	display: block;
+	text-align: center;
+	font-size: 28rpx;
+	color: #999;
+	padding: 12rpx 0;
 }
 </style>
 

@@ -1177,6 +1177,7 @@
 
 
 
+
 ## 新增
 
 
@@ -1232,7 +1233,7 @@
 
 | 状态码 | 说明 | schema |
 | -------- | -------- | ----- | 
-|200|OK|CommonResult«string»|
+|200|OK|CommonResult«PhysiotherapyAppointmentSaveResponse对象»|
 |201|Created||
 |401|Unauthorized||
 |403|Forbidden||
@@ -1245,7 +1246,9 @@
 | 参数名称 | 参数说明 | 类型 | schema |
 | -------- | -------- | ----- |----- | 
 |code||integer(int64)|integer(int64)|
-|data||string||
+|data||PhysiotherapyAppointmentSaveResponse对象|PhysiotherapyAppointmentSaveResponse对象|
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;orderNo|订单号|string||
 |message||string||
 
 
@@ -1253,7 +1256,10 @@
 ```javascript
 {
 	"code": 0,
-	"data": "",
+	"data": {
+		"id": 0,
+		"orderNo": ""
+	},
 	"message": ""
 }
 ```
@@ -3403,6 +3409,7 @@
 
 
 
+
 ## 新增中医预约
 
 
@@ -3458,7 +3465,7 @@
 
 | 状态码 | 说明 | schema |
 | -------- | -------- | ----- | 
-|200|OK|CommonResult«string»|
+|200|OK|CommonResult«TcmAppointmentSaveResponse对象»|
 |201|Created||
 |401|Unauthorized||
 |403|Forbidden||
@@ -3471,7 +3478,9 @@
 | 参数名称 | 参数说明 | 类型 | schema |
 | -------- | -------- | ----- |----- | 
 |code||integer(int64)|integer(int64)|
-|data||string||
+|data||TcmAppointmentSaveResponse对象|TcmAppointmentSaveResponse对象|
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;orderNo|订单号|string||
 |message||string||
 
 
@@ -3479,7 +3488,10 @@
 ```javascript
 {
 	"code": 0,
-	"data": "",
+	"data": {
+		"id": 0,
+		"orderNo": ""
+	},
 	"message": ""
 }
 ```

@@ -428,17 +428,32 @@ export default {
 		onDiscountTap() {
 			this.$util.Tips({ title: '暂无可用优惠券' });
 		},
+		/** 与 interface.md 下单 data: { id, orderNo } 对齐；id 为 0 视为无效 */
 		parseConsultationId(inner) {
 			if (inner == null || inner === '') return null;
-			if (typeof inner === 'number' && !isNaN(inner)) return inner;
+			if (typeof inner === 'number' && !isNaN(inner)) return inner > 0 ? inner : null;
 			if (typeof inner === 'string') {
 				const t = inner.trim();
 				if (!t) return null;
-				if (/^\d+$/.test(t)) return parseInt(t, 10);
+				if (/^\d+$/.test(t)) {
+					const n = parseInt(t, 10);
+					return n > 0 ? n : null;
+				}
 				return t;
 			}
 			if (typeof inner === 'object') {
-				if (inner.id != null) return inner.id;
+				if (inner.id != null && inner.id !== '') {
+					const raw = inner.id;
+					if (typeof raw === 'number' && !isNaN(raw)) return raw > 0 ? raw : null;
+					if (typeof raw === 'string') {
+						const s = raw.trim();
+						if (/^\d+$/.test(s)) {
+							const n = parseInt(s, 10);
+							return n > 0 ? n : null;
+						}
+						return s || null;
+					}
+				}
 				if (inner.data != null) return this.parseConsultationId(inner.data);
 			}
 			return null;
@@ -495,6 +510,7 @@ export default {
 			return { payChannel, payType };
 		},
 		submitPay() {
+			if (this.submitting) return;
 			if (!this.doctorId || !this.selectedPatientId) {
 				return this.$util.Tips({ title: '信息不完整' });
 			}
@@ -527,8 +543,6 @@ export default {
 				from: ''
 			})
 				.then((payRes) => {
-					uni.hideLoading();
-					this.submitting = false;
 					const d = payRes.data || {};
 					const goPages = '/pages/clinic/consultation_pay_success/index';
 					if (d.jsConfig) {
@@ -542,6 +556,8 @@ export default {
 						return;
 					}
 					if (d.alipayRequest) {
+						uni.hideLoading();
+						this.submitting = false;
 						this.handleOrderPay(
 							payRes,
 							String(d.payOrderNo != null ? d.payOrderNo : consultationId),
@@ -552,6 +568,8 @@ export default {
 						);
 						return;
 					}
+					uni.hideLoading();
+					this.submitting = false;
 					this.$util.Tips({ title: '支付已处理' });
 					uni.reLaunch({ url: goPages });
 				})
