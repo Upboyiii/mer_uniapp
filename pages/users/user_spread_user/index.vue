@@ -39,7 +39,7 @@
 				</view> -->
 			</view>
 			<view class='list acea-row flex-center'>
-				<navigator url='/pages/users/user_spread_code/index' hover-class="none"
+				<navigator v-if="isPromoter" url='/pages/users/user_spread_code/index' hover-class="none"
 					class='item acea-row row-center-wrapper row-column'>
 					<text class='iconfont icon-ic_QRcode2'></text>
 					<view>推广名片</view>
@@ -86,7 +86,8 @@
 	// | Author: CRMEB Team <admin@crmeb.com>
 	// +----------------------------------------------------------------------
 	import {
-		myPromotion
+		myPromotion,
+		userCenterInfoMenu
 	} from '@/api/user.js';
 	import {
 		openExtrctSubscribe
@@ -105,6 +106,8 @@
 		data() {
 			return {
 				promotionInfo: {},
+				/** 后台 user/center/info/menu 的 isPromoter，非推广员不展示推广名片（二维码） */
+				isPromoter: false,
 				theme: app.globalData.theme,
 				bgColor: 'var(--view-theme)'
 			};
@@ -115,6 +118,7 @@
 				handler: function(newV, oldV) {
 					if (newV) {
 						this.getMyPromotion();
+						this.refreshPromoterFlag();
 					}
 				},
 				deep: true
@@ -130,11 +134,19 @@
 
 			if (this.isLogin) {
 				this.getMyPromotion();
+				this.refreshPromoterFlag();
 			} else {
 				toLogin();
 			}
 		},
 		methods: {
+			refreshPromoterFlag() {
+				userCenterInfoMenu().then(res => {
+					if (res.code === 200 && res.data) {
+						this.isPromoter = res.data.isPromoter === true;
+					}
+				}).catch(() => {});
+			},
 			openSubscribe: function(page) {
 				uni.navigateTo({
 					url: page,

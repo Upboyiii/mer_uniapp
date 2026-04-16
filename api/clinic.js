@@ -157,7 +157,7 @@ export function getTcmCategoryListApi(data) {
 // ========== interface.md：理疗预约 / 问诊 / 取消预约（与 /api/front 文档对应） ==========
 // 注意：以下为「理疗预约单」资源；therapist/page/list 是「理疗师人员」列表，路径与语义均不同。
 
-/** GET /api/front/therapist/physiotherapy-appointment/list — 当前用户的理疗预约分页（需登录；query: page,limit,mchId,status） */
+/** GET /api/front/therapist/physiotherapy-appointment/list — 当前用户的理疗预约分页（需登录；query: page,limit,mchId,status；status：0待确认 1已确认 2已完成 3已取消） */
 export function getPhysiotherapyAppointmentListApi(data) {
   return request.get('therapist/physiotherapy-appointment/list', data);
 }
@@ -214,6 +214,67 @@ export function tcmAppointmentCancelApi(data) {
 /** POST /api/front/doctor/tcm-appointment/save 新增中医预约 */
 export function tcmAppointmentSaveApi(data) {
   return request.post('doctor/tcm-appointment/save', data);
+}
+
+/**
+ * GET /api/front/doctor/tcm-appointment-reply/doctor-list
+ * 中医师评价列表（公开）
+ */
+export function getDoctorReplyListApi(data) {
+  return request.get('doctor/tcm-appointment-reply/doctor-list', data, { noAuth: true });
+}
+
+/**
+ * GET /api/front/doctor/tcm-appointment-reply/doctor-stat
+ * 中医师评价统计（公开）
+ */
+export function getDoctorReplyStatApi(data) {
+  return request.get('doctor/tcm-appointment-reply/doctor-stat', data, { noAuth: true });
+}
+
+/**
+ * GET /api/front/doctor/physiotherapy-appointment-reply/therapist-list
+ * 理疗师评价列表（公开）
+ */
+export function getTherapistReplyListApi(data) {
+  return request.get('doctor/physiotherapy-appointment-reply/therapist-list', data, { noAuth: true });
+}
+
+/**
+ * GET /api/front/doctor/physiotherapy-appointment-reply/therapist-stat
+ * 理疗师评价统计（公开）
+ */
+export function getTherapistReplyStatApi(data) {
+  return request.get('doctor/physiotherapy-appointment-reply/therapist-stat', data, { noAuth: true });
+}
+
+/** POST /api/front/doctor/physiotherapy-appointment-reply/save 提交理疗预约评价 */
+export function physiotherapyAppointmentReplySaveApi(data) {
+  return request.post('doctor/physiotherapy-appointment-reply/save', data);
+}
+
+/**
+ * GET /api/front/doctor/physiotherapy-appointment-reply/my-list
+ * 我的理疗预约评价列表（需登录；query：page、limit）
+ */
+export function getPhysiotherapyReplyMyListApi(data) {
+  return request.get('doctor/physiotherapy-appointment-reply/my-list', data);
+}
+
+/**
+ * GET /api/front/doctor/tcm-appointment-reply/my-list
+ * 我的中医预约评价列表（需登录；query：page、limit；与理疗 my-list 对称）
+ */
+export function getTcmReplyMyListApi(data) {
+  return request.get('doctor/tcm-appointment-reply/my-list', data);
+}
+
+/**
+ * POST /api/front/doctor/tcm-appointment-reply/save 提交中医预约评价
+ * （字段与中医评价展示对象一致：star、effectStar、environmentStar、professionalStar、serviceStar 等）
+ */
+export function tcmAppointmentReplySaveApi(data) {
+  return request.post('doctor/tcm-appointment-reply/save', data);
 }
 
 /** GET /api/front/doctor/consultation/info 问诊详情 */

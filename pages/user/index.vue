@@ -134,12 +134,13 @@
 						<view class="user-menus mt20 borRadius14" @click.native="bindEdit('userMenus')">
 							<view class="menu-title">我的服务</view>
 							<view class="list-box">
-								<block v-for="(item,index) in filteredCenterMenu" :key="index">
-									<view class="item tui-skeleton-rect" @click="onMyServiceItemClick(item)" v-if="item.url">
+								<block v-for="(item,index) in serviceMenuList" :key="'svc-' + index">
+									<view class="item tui-skeleton-rect" @click="onMyServiceItemClick(item)">
 										<view class="menu-icon-wrap icon-service-wrap">
-											<text class="iconfont" :class="item.icon"></text>
+											<image v-if="item.pic" class="menu-service-icon-img" :src="item.pic" mode="aspectFit" />
+											<text v-else class="iconfont" :class="item.icon || 'icon-ic_menu'"></text>
 										</view>
-										<text>{{item.name}}</text>
+										<text>{{ item.name || item.title || '菜单' }}</text>
 									</view>
 								</block>
 								<!-- #ifndef MP -->
@@ -288,15 +289,16 @@
 			...mapGetters(['isLogin', 'chatUrl', 'uid', 'globalData', 'bottomNavigationIsCustom',
 				'merchantEmployeeList', 'isEmployee', 'selectMerId'
 			]),
-			filteredCenterMenu() {
-				return [
-					{ name: '购物车', url: '/pages/order_addcart/order_addcart', icon: 'icon-ic_ShoppingCart' },
-					{ name: '门店入驻', url: '/pages/users/settled/index', icon: 'icon-ic_store3' },
-					{ name: '我的团队', url: '/pages/users/user_spread_user/index', icon: 'icon-ic_friends' },
-					{ name: '我的评价', url: '/pages/goods/evaluation_list/index', icon: 'icon-ic_pencil' },
-					{ name: '地址管理', url: '/pages/address/user_address_list/index', icon: 'icon-ic_location' },
-					{ name: '申诉', url: '', icon: 'icon-ic_edit' },
-				];
+			/** 我的服务：user/center/info/menu 的 centerMenu；仅展示有跳转地址的项 */
+			serviceMenuList() {
+				const raw = Array.isArray(this.centerMenu) ? this.centerMenu : [];
+				return raw
+					.map((item) => {
+						const url = (item.url || item.link || item.wap_url || '').trim();
+						const name = item.name || item.title || item.menuName || '';
+						return { ...item, url, name };
+					})
+					.filter((item) => item.url);
 			}
 		},
 		data() {
@@ -553,7 +555,7 @@
 					this.$util.navigateTo(url);
 				}
 			},
-			/** 「我的服务」：有 url 则正常跳转；无 url 时提示开发中 */
+			/** 「我的服务」：接口项已过滤为必有 url */
 			onMyServiceItemClick(item) {
 				if (!item.url) {
 					this.myServiceDeveloping();
@@ -613,7 +615,7 @@
 					data
 				} = await userCenterInfoMenu()
 				if (code === 200) {
-					this.centerMenu = data.centerMenu;
+					this.centerMenu = data.centerMenu || [];
 					this.isPromoter = data.isPromoter;
 					this.isEmployeeUse = data.isEmployee;
 					this.isServiceStaff = data.isServiceStaff
@@ -1009,6 +1011,8 @@
 			.list-box {
 				display: flex;
 				flex-wrap: wrap;
+				justify-content: flex-start;
+				align-content: flex-start;
 				padding: 0;
 			}
 
@@ -1075,7 +1079,20 @@
 			}
 
 			.icon-service-wrap {
-				background: var(--view-theme);
+				background: #fff;
+				border: 1rpx solid #f0f0f0;
+				box-sizing: border-box;
+
+				.iconfont {
+					color: var(--view-theme);
+				}
+
+				.menu-service-icon-img {
+					width: 52rpx;
+					height: 52rpx;
+					margin-bottom: 0;
+					border-radius: 8rpx;
+				}
 			}
 		}
 

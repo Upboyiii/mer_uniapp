@@ -3495,3 +3495,792 @@
 	"message": ""
 }
 ```
+
+
+
+
+## 中医师评价列表
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment-reply/doctor-list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|doctorId|doctorId|query|true|integer(int32)||
+|limit|每页数量|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«TcmAppointmentReplyResponse对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«TcmAppointmentReplyResponse对象»|CommonPage«TcmAppointmentReplyResponse对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|TcmAppointmentReplyResponse对象|
+|&emsp;&emsp;&emsp;&emsp;appointmentId|预约单ID|integer||
+|&emsp;&emsp;&emsp;&emsp;avatar|用户头像|string||
+|&emsp;&emsp;&emsp;&emsp;categoryName|中医项目名称|string||
+|&emsp;&emsp;&emsp;&emsp;comment|评价内容|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;doctorAvatar|中医师头像|string||
+|&emsp;&emsp;&emsp;&emsp;doctorId|中医师ID|integer||
+|&emsp;&emsp;&emsp;&emsp;doctorName|中医师姓名|string||
+|&emsp;&emsp;&emsp;&emsp;effectStar|疗效评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;environmentStar|环境评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;id|评价ID|integer||
+|&emsp;&emsp;&emsp;&emsp;isAnonymous|是否匿名评价|boolean||
+|&emsp;&emsp;&emsp;&emsp;isReply|是否已回复|boolean||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyContent|商家/中医师回复内容|string||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyTime|商家/中医师回复时间|string||
+|&emsp;&emsp;&emsp;&emsp;nickname|用户昵称|string||
+|&emsp;&emsp;&emsp;&emsp;orderNo|预约订单号|string||
+|&emsp;&emsp;&emsp;&emsp;pics|评价图片列表|string||
+|&emsp;&emsp;&emsp;&emsp;professionalStar|专业水平评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;serviceStar|服务态度评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;star|总体星级评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;uid|用户ID|integer||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"appointmentId": 0,
+				"avatar": "",
+				"categoryName": "",
+				"comment": "",
+				"createTime": "",
+				"doctorAvatar": "",
+				"doctorId": 0,
+				"doctorName": "",
+				"effectStar": 0,
+				"environmentStar": 0,
+				"id": 0,
+				"isAnonymous": true,
+				"isReply": true,
+				"merchantReplyContent": "",
+				"merchantReplyTime": "",
+				"nickname": "",
+				"orderNo": "",
+				"pics": "",
+				"professionalStar": 0,
+				"serviceStar": 0,
+				"star": 0,
+				"uid": 0
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+
+## 中医师评价统计
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment-reply/doctor-stat`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|doctorId|doctorId|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«TcmAppointmentReplyStatResponse对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||TcmAppointmentReplyStatResponse对象|TcmAppointmentReplyStatResponse对象|
+|&emsp;&emsp;avgEffectStar|平均疗效评分|number||
+|&emsp;&emsp;avgEnvironmentStar|平均环境评分|number||
+|&emsp;&emsp;avgProfessionalStar|平均专业水平评分|number||
+|&emsp;&emsp;avgServiceStar|平均服务态度评分|number||
+|&emsp;&emsp;avgStar|平均总体评分|number||
+|&emsp;&emsp;positiveRate|好评率(百分比)|number||
+|&emsp;&emsp;star1Count|1星评价数量|integer||
+|&emsp;&emsp;star2Count|2星评价数量|integer||
+|&emsp;&emsp;star3Count|3星评价数量|integer||
+|&emsp;&emsp;star4Count|4星评价数量|integer||
+|&emsp;&emsp;star5Count|5星评价数量|integer||
+|&emsp;&emsp;totalCount|评价总数|integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"avgEffectStar": 0,
+		"avgEnvironmentStar": 0,
+		"avgProfessionalStar": 0,
+		"avgServiceStar": 0,
+		"avgStar": 0,
+		"positiveRate": 0,
+		"star1Count": 0,
+		"star2Count": 0,
+		"star3Count": 0,
+		"star4Count": 0,
+		"star5Count": 0,
+		"totalCount": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 中医师评价统计
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment-reply/doctor-stat`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|doctorId|doctorId|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«TcmAppointmentReplyStatResponse对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||TcmAppointmentReplyStatResponse对象|TcmAppointmentReplyStatResponse对象|
+|&emsp;&emsp;avgEffectStar|平均疗效评分|number||
+|&emsp;&emsp;avgEnvironmentStar|平均环境评分|number||
+|&emsp;&emsp;avgProfessionalStar|平均专业水平评分|number||
+|&emsp;&emsp;avgServiceStar|平均服务态度评分|number||
+|&emsp;&emsp;avgStar|平均总体评分|number||
+|&emsp;&emsp;positiveRate|好评率(百分比)|number||
+|&emsp;&emsp;star1Count|1星评价数量|integer||
+|&emsp;&emsp;star2Count|2星评价数量|integer||
+|&emsp;&emsp;star3Count|3星评价数量|integer||
+|&emsp;&emsp;star4Count|4星评价数量|integer||
+|&emsp;&emsp;star5Count|5星评价数量|integer||
+|&emsp;&emsp;totalCount|评价总数|integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"avgEffectStar": 0,
+		"avgEnvironmentStar": 0,
+		"avgProfessionalStar": 0,
+		"avgServiceStar": 0,
+		"avgStar": 0,
+		"positiveRate": 0,
+		"star1Count": 0,
+		"star2Count": 0,
+		"star3Count": 0,
+		"star4Count": 0,
+		"star5Count": 0,
+		"totalCount": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 中医师评价统计
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment-reply/doctor-stat`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|doctorId|doctorId|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«TcmAppointmentReplyStatResponse对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||TcmAppointmentReplyStatResponse对象|TcmAppointmentReplyStatResponse对象|
+|&emsp;&emsp;avgEffectStar|平均疗效评分|number||
+|&emsp;&emsp;avgEnvironmentStar|平均环境评分|number||
+|&emsp;&emsp;avgProfessionalStar|平均专业水平评分|number||
+|&emsp;&emsp;avgServiceStar|平均服务态度评分|number||
+|&emsp;&emsp;avgStar|平均总体评分|number||
+|&emsp;&emsp;positiveRate|好评率(百分比)|number||
+|&emsp;&emsp;star1Count|1星评价数量|integer||
+|&emsp;&emsp;star2Count|2星评价数量|integer||
+|&emsp;&emsp;star3Count|3星评价数量|integer||
+|&emsp;&emsp;star4Count|4星评价数量|integer||
+|&emsp;&emsp;star5Count|5星评价数量|integer||
+|&emsp;&emsp;totalCount|评价总数|integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"avgEffectStar": 0,
+		"avgEnvironmentStar": 0,
+		"avgProfessionalStar": 0,
+		"avgServiceStar": 0,
+		"avgStar": 0,
+		"positiveRate": 0,
+		"star1Count": 0,
+		"star2Count": 0,
+		"star3Count": 0,
+		"star4Count": 0,
+		"star5Count": 0,
+		"totalCount": 0
+	},
+	"message": ""
+}
+```
+
+
+# 理疗师
+## 我的评价列表
+
+
+**接口地址**:`/api/front/doctor/physiotherapy-appointment-reply/my-list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|limit|每页数量|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«PhysiotherapyAppointmentReplyResponse对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«PhysiotherapyAppointmentReplyResponse对象»|CommonPage«PhysiotherapyAppointmentReplyResponse对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|PhysiotherapyAppointmentReplyResponse对象|
+|&emsp;&emsp;&emsp;&emsp;appointmentId|预约单ID|integer||
+|&emsp;&emsp;&emsp;&emsp;avatar|用户头像|string||
+|&emsp;&emsp;&emsp;&emsp;categoryName|理疗项目名称|string||
+|&emsp;&emsp;&emsp;&emsp;comment|评价内容|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;environmentStar|环境评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;id|评价ID|integer||
+|&emsp;&emsp;&emsp;&emsp;isAnonymous|是否匿名评价|boolean||
+|&emsp;&emsp;&emsp;&emsp;isReply|是否已回复|boolean||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyContent|商家/理疗师回复内容|string||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyTime|商家/理疗师回复时间|string||
+|&emsp;&emsp;&emsp;&emsp;nickname|用户昵称|string||
+|&emsp;&emsp;&emsp;&emsp;orderNo|预约订单号|string||
+|&emsp;&emsp;&emsp;&emsp;pics|评价图片列表|string||
+|&emsp;&emsp;&emsp;&emsp;professionalStar|专业水平评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;serviceStar|服务态度评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;star|总体星级评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;therapistAvatar|理疗师头像|string||
+|&emsp;&emsp;&emsp;&emsp;therapistId|理疗师ID|integer||
+|&emsp;&emsp;&emsp;&emsp;therapistName|理疗师姓名|string||
+|&emsp;&emsp;&emsp;&emsp;uid|用户ID|integer||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"appointmentId": 0,
+				"avatar": "",
+				"categoryName": "",
+				"comment": "",
+				"createTime": "",
+				"environmentStar": 0,
+				"id": 0,
+				"isAnonymous": true,
+				"isReply": true,
+				"merchantReplyContent": "",
+				"merchantReplyTime": "",
+				"nickname": "",
+				"orderNo": "",
+				"pics": "",
+				"professionalStar": 0,
+				"serviceStar": 0,
+				"star": 0,
+				"therapistAvatar": "",
+				"therapistId": 0,
+				"therapistName": "",
+				"uid": 0
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 提交评价
+
+
+**接口地址**:`/api/front/doctor/physiotherapy-appointment-reply/save`
+
+
+**请求方式**:`POST`
+
+
+**请求数据类型**:`application/json`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求示例**:
+
+
+```javascript
+{
+  "appointmentId": 0,
+  "comment": "",
+  "environmentStar": 0,
+  "isAnonymous": true,
+  "pics": "",
+  "professionalStar": 0,
+  "serviceStar": 0,
+  "star": 0
+}
+```
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|request|理疗预约评价请求对象|body|true|PhysiotherapyAppointmentReplyRequest对象|PhysiotherapyAppointmentReplyRequest对象|
+|&emsp;&emsp;appointmentId|预约单ID||true|integer||
+|&emsp;&emsp;comment|评价内容||false|string||
+|&emsp;&emsp;environmentStar|环境评分(1-5星),仅到店服务||false|integer||
+|&emsp;&emsp;isAnonymous|是否匿名评价:0-否,1-是||false|boolean||
+|&emsp;&emsp;pics|评价图片,多张图片用逗号分隔||false|string||
+|&emsp;&emsp;professionalStar|专业水平评分(1-5星)||true|integer||
+|&emsp;&emsp;serviceStar|服务态度评分(1-5星)||true|integer||
+|&emsp;&emsp;star|总体星级评分(1-5星)||true|integer||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«string»|
+|201|Created||
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": "",
+	"message": ""
+}
+```
+
+
+
+## 理疗师评价列表
+
+
+**接口地址**:`/api/front/doctor/physiotherapy-appointment-reply/therapist-list`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|therapistId|therapistId|query|true|integer(int32)||
+|limit|每页数量|query|false|integer(int32)||
+|page|页码|query|false|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«CommonPage«PhysiotherapyAppointmentReplyResponse对象»»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||CommonPage«PhysiotherapyAppointmentReplyResponse对象»|CommonPage«PhysiotherapyAppointmentReplyResponse对象»|
+|&emsp;&emsp;limit||integer||
+|&emsp;&emsp;list||array|PhysiotherapyAppointmentReplyResponse对象|
+|&emsp;&emsp;&emsp;&emsp;appointmentId|预约单ID|integer||
+|&emsp;&emsp;&emsp;&emsp;avatar|用户头像|string||
+|&emsp;&emsp;&emsp;&emsp;categoryName|理疗项目名称|string||
+|&emsp;&emsp;&emsp;&emsp;comment|评价内容|string||
+|&emsp;&emsp;&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;&emsp;&emsp;environmentStar|环境评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;id|评价ID|integer||
+|&emsp;&emsp;&emsp;&emsp;isAnonymous|是否匿名评价|boolean||
+|&emsp;&emsp;&emsp;&emsp;isReply|是否已回复|boolean||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyContent|商家/理疗师回复内容|string||
+|&emsp;&emsp;&emsp;&emsp;merchantReplyTime|商家/理疗师回复时间|string||
+|&emsp;&emsp;&emsp;&emsp;nickname|用户昵称|string||
+|&emsp;&emsp;&emsp;&emsp;orderNo|预约订单号|string||
+|&emsp;&emsp;&emsp;&emsp;pics|评价图片列表|string||
+|&emsp;&emsp;&emsp;&emsp;professionalStar|专业水平评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;serviceStar|服务态度评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;star|总体星级评分(1-5星)|integer||
+|&emsp;&emsp;&emsp;&emsp;therapistAvatar|理疗师头像|string||
+|&emsp;&emsp;&emsp;&emsp;therapistId|理疗师ID|integer||
+|&emsp;&emsp;&emsp;&emsp;therapistName|理疗师姓名|string||
+|&emsp;&emsp;&emsp;&emsp;uid|用户ID|integer||
+|&emsp;&emsp;page||integer||
+|&emsp;&emsp;total||integer||
+|&emsp;&emsp;totalPage||integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"limit": 0,
+		"list": [
+			{
+				"appointmentId": 0,
+				"avatar": "",
+				"categoryName": "",
+				"comment": "",
+				"createTime": "",
+				"environmentStar": 0,
+				"id": 0,
+				"isAnonymous": true,
+				"isReply": true,
+				"merchantReplyContent": "",
+				"merchantReplyTime": "",
+				"nickname": "",
+				"orderNo": "",
+				"pics": "",
+				"professionalStar": 0,
+				"serviceStar": 0,
+				"star": 0,
+				"therapistAvatar": "",
+				"therapistId": 0,
+				"therapistName": "",
+				"uid": 0
+			}
+		],
+		"page": 0,
+		"total": 0,
+		"totalPage": 0
+	},
+	"message": ""
+}
+```
+
+
+
+## 理疗师评价统计
+
+
+**接口地址**:`/api/front/doctor/physiotherapy-appointment-reply/therapist-stat`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|therapistId|therapistId|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«PhysiotherapyAppointmentReplyStatResponse对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||PhysiotherapyAppointmentReplyStatResponse对象|PhysiotherapyAppointmentReplyStatResponse对象|
+|&emsp;&emsp;avgEnvironmentStar|平均环境评分|number||
+|&emsp;&emsp;avgProfessionalStar|平均专业水平评分|number||
+|&emsp;&emsp;avgServiceStar|平均服务态度评分|number||
+|&emsp;&emsp;avgStar|平均总体评分|number||
+|&emsp;&emsp;positiveRate|好评率(百分比)|number||
+|&emsp;&emsp;star1Count|1星评价数量|integer||
+|&emsp;&emsp;star2Count|2星评价数量|integer||
+|&emsp;&emsp;star3Count|3星评价数量|integer||
+|&emsp;&emsp;star4Count|4星评价数量|integer||
+|&emsp;&emsp;star5Count|5星评价数量|integer||
+|&emsp;&emsp;totalCount|评价总数|integer||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"avgEnvironmentStar": 0,
+		"avgProfessionalStar": 0,
+		"avgServiceStar": 0,
+		"avgStar": 0,
+		"positiveRate": 0,
+		"star1Count": 0,
+		"star2Count": 0,
+		"star3Count": 0,
+		"star4Count": 0,
+		"star5Count": 0,
+		"totalCount": 0
+	},
+	"message": ""
+}
+```

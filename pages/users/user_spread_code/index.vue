@@ -48,7 +48,8 @@
 	} from '@/config/app.js';
 	// #endif
 	import {
-		spreadBanner
+		spreadBanner,
+		userCenterInfoMenu
 	} from '@/api/user.js';
 	import {
 		toLogin
@@ -94,7 +95,11 @@
 			isLogin: {
 				handler: function(newV, oldV) {
 					if (newV) {
-						this.userSpreadBannerList();
+						userCenterInfoMenu().then(res => {
+							if (res.code === 200 && res.data && res.data.isPromoter === true) {
+								this.bootstrapSpreadPoster();
+							}
+						});
 					}
 				},
 				deep: true
@@ -102,17 +107,32 @@
 		},
 		onLoad() {
 			this.bgColor = setThemeColor();
-			if (this.isLogin) {
-				// #ifdef MP
-				this.PromotionCode = this.$Cache.get('wechatQRcode')
-				// #endif
-				// #ifndef MP
-				this.make();
-				// #endif
-				this.userSpreadBannerList();
-			} else {
+			if (!this.isLogin) {
 				toLogin();
+				return;
 			}
+			userCenterInfoMenu().then(res => {
+				if (res.code !== 200 || !res.data || res.data.isPromoter !== true) {
+					this.$util.Tips({
+						title: '您还不是推广员'
+					});
+					setTimeout(() => {
+						uni.navigateBack({
+							fail: () => {
+								uni.switchTab({
+									url: '/pages/index/index'
+								});
+							}
+						});
+					}, 500);
+					return;
+				}
+				this.bootstrapSpreadPoster();
+			}).catch(() => {
+				uni.navigateBack({
+					fail: () => {}
+				});
+			});
 		},
 
 		// #ifdef MP
@@ -129,6 +149,16 @@
 		// #endif
 		onReady() {},
 		methods: {
+			/** 校验通过后再拉海报与生成二维码 */
+			bootstrapSpreadPoster() {
+				// #ifdef MP
+				this.PromotionCode = this.$Cache.get('wechatQRcode')
+				// #endif
+				// #ifndef MP
+				this.make();
+				// #endif
+				this.userSpreadBannerList();
+			},
 			userSpreadBannerList: function() {
 				let that = this;
 				uni.showLoading({

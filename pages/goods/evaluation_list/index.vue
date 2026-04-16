@@ -1,7 +1,28 @@
  <template>
-	<view :data-theme="theme">
+	<view :data-theme="theme" class="eval-page">
+		<!-- 与 pages/clinic/appointment/index 一致的顶部分类 Tab -->
+		<view class="category-tabs-row">
+			<view
+				class="cat-tab"
+				:class="{ active: activeTab === 'physio' }"
+				@click="switchTab('physio')"
+			>
+				<text>理疗预约</text>
+				<view v-if="activeTab === 'physio'" class="cat-tab-line"></view>
+			</view>
+			<view
+				class="cat-tab"
+				:class="{ active: activeTab === 'tcm' }"
+				@click="switchTab('tcm')"
+			>
+				<text>中医预约</text>
+				<view v-if="activeTab === 'tcm'" class="cat-tab-line"></view>
+			</view>
+		</view>
+
 		<view class="my-order borderPad">
-			<view class='list'>
+			<!-- 商城订单待评价 order/reply/list（暂不下发）
+			<view class='list' v-show="activeTab === 'order'">
 				<view class='item borRadius14' v-for="(item,index) in replyList" :key="index">
 					<view class='title acea-row row-between-wrapper'>
 						<navigator :url="`/pages/merchant/home/index?merId=${item.merId}`" hover-class="none">
@@ -35,6 +56,115 @@
 				</view>
 				<emptyPage v-if="replyList.length == 0 && !loading" title="暂无评论~" :imgSrc="urlDomain+'crmebimage/presets/noEvaluate.png'"></emptyPage>
 			</view>
+			-->
+
+			<!-- 理疗预约我的评价（physiotherapy-appointment-reply/my-list） -->
+			<view class="list physio-list" v-show="activeTab === 'physio'">
+				<view
+					class="item borRadius14 physio-item"
+					v-for="(item, index) in physioList"
+					:key="'ph-' + (item.id != null ? item.id : index)"
+					@click="goPhysioAppointment(item)"
+				>
+					<view class="physio-head acea-row row-between-wrapper">
+						<view class="acea-row row-middle">
+							<image
+								class="physio-avatar"
+								:src="resolveImgUrl(item.therapistAvatar) || '/static/images/f.png'"
+								mode="aspectFill"
+							/>
+							<view class="physio-meta">
+								<text class="physio-name">{{ item.therapistName || '理疗师' }}</text>
+								<text class="physio-cate line1" v-if="item.categoryName">{{ item.categoryName }}</text>
+							</view>
+						</view>
+						<text class="physio-time">{{ item.createTime || '' }}</text>
+					</view>
+					<view class="physio-stars acea-row row-middle">
+						<text class="star-text">{{ starLine(item.star) }}</text>
+						<text class="star-detail" v-if="item.star != null">
+							综合{{ item.star }}星 · 专业{{ item.professionalStar != null ? item.professionalStar : '—' }} · 服务{{ item.serviceStar != null ? item.serviceStar : '—' }}
+						</text>
+					</view>
+					<view class="physio-comment line2" v-if="item.comment">{{ item.comment }}</view>
+					<view class="physio-pics acea-row" v-if="parsePics(item.pics).length">
+						<image
+							v-for="(pic, pi) in parsePics(item.pics).slice(0, 3)"
+							:key="pi"
+							class="physio-pic"
+							:src="pic"
+							mode="aspectFill"
+						/>
+					</view>
+					<view class="physio-foot acea-row row-right">
+						<text class="physio-tip">查看预约</text>
+						<text class="iconfont f-s-28 icon-ic_rightarrow text-999"></text>
+					</view>
+				</view>
+				<view class="loadingicon acea-row row-center-wrapper 3cfea756">
+					<text class="loading iconfont icon-jiazai" :hidden="physioLoading === false"></text>
+					{{ physioList.length > 0 ? physioLoadTitle : '' }}
+				</view>
+				<emptyPage
+					v-if="physioList.length === 0 && !physioLoading"
+					title="暂无理疗评价~"
+					:imgSrc="urlDomain + 'crmebimage/presets/noEvaluate.png'"
+				></emptyPage>
+			</view>
+
+			<!-- 中医预约我的评价（tcm-appointment-reply/my-list） -->
+			<view class="list physio-list" v-show="activeTab === 'tcm'">
+				<view
+					class="item borRadius14 physio-item"
+					v-for="(item, index) in tcmList"
+					:key="'tcm-' + (item.id != null ? item.id : index)"
+					@click="goTcmAppointment(item)"
+				>
+					<view class="physio-head acea-row row-between-wrapper">
+						<view class="acea-row row-middle">
+							<image
+								class="physio-avatar"
+								:src="resolveImgUrl(item.doctorAvatar) || '/static/images/f.png'"
+								mode="aspectFill"
+							/>
+							<view class="physio-meta">
+								<text class="physio-name">{{ item.doctorName || '中医师' }}</text>
+								<text class="physio-cate line1" v-if="item.categoryName">{{ item.categoryName }}</text>
+							</view>
+						</view>
+						<text class="physio-time">{{ item.createTime || '' }}</text>
+					</view>
+					<view class="physio-stars acea-row row-middle">
+						<text class="star-text">{{ starLine(item.star) }}</text>
+						<text class="star-detail tcm-star-detail" v-if="item.star != null">
+							综合{{ item.star }}星 · 疗效{{ tcmStar(item.effectStar) }} · 专业{{ tcmStar(item.professionalStar) }} · 服务{{ tcmStar(item.serviceStar) }} · 环境{{ tcmStar(item.environmentStar) }}
+						</text>
+					</view>
+					<view class="physio-comment line2" v-if="item.comment">{{ item.comment }}</view>
+					<view class="physio-pics acea-row" v-if="parsePics(item.pics).length">
+						<image
+							v-for="(pic, pi) in parsePics(item.pics).slice(0, 3)"
+							:key="pi"
+							class="physio-pic"
+							:src="pic"
+							mode="aspectFill"
+						/>
+					</view>
+					<view class="physio-foot acea-row row-right">
+						<text class="physio-tip">查看预约</text>
+						<text class="iconfont f-s-28 icon-ic_rightarrow text-999"></text>
+					</view>
+				</view>
+				<view class="loadingicon acea-row row-center-wrapper 3cfea756">
+					<text class="loading iconfont icon-jiazai" :hidden="tcmLoading === false"></text>
+					{{ tcmList.length > 0 ? tcmLoadTitle : '' }}
+				</view>
+				<emptyPage
+					v-if="tcmList.length === 0 && !tcmLoading"
+					title="暂无中医评价~"
+					:imgSrc="urlDomain + 'crmebimage/presets/noEvaluate.png'"
+				></emptyPage>
+			</view>
 		</view>
 	</view>
 </template>
@@ -49,33 +179,54 @@
 	// +----------------------------------------------------------------------
 	// | Author: CRMEB Team <admin@crmeb.com>
 	// +----------------------------------------------------------------------
+	/* 商城待评 order/reply/list
 	import {
 		orderReplyList
 	} from '@/api/order.js';
+	*/
+	import {
+		getPhysiotherapyReplyMyListApi,
+		getTcmReplyMyListApi
+	} from '@/api/clinic.js';
 	import {toLogin} from '@/libs/login.js';
 	import {mapGetters} from "vuex";
 	import emptyPage from '@/components/emptyPage.vue'
-	import easyLoadimage from '@/components/base/easy-loadimage.vue';
-    import {goProductDetail} from "../../../libs/order";
+	/* import easyLoadimage from '@/components/base/easy-loadimage.vue';
+	import { goProductDetail } from '../../../libs/order'; */
 	const app = getApp();
 	export default {
 		data() {
 			return {
         urlDomain: this.$Cache.get("imgHost"),
-				loading: false, //是否加载中
-				loadend: false, //是否加载完毕
-				loadTitle: '显示更多', //提示语
-				replyList: [], //订单数组
+				/** physio | tcm */
+				activeTab: 'physio',
+				/* 商城待评
+				loading: false,
+				loadend: false,
+				loadTitle: '显示更多',
+				replyList: [],
 				page: 1,
-				limit: 20,
 				isShow: false,
-				theme: app.globalData.theme
+				*/
+				limit: 20,
+				theme: app.globalData.theme,
+				/** 理疗预约评价 my-list */
+				physioList: [],
+				physioPage: 1,
+				physioLoadend: false,
+				physioLoading: false,
+				physioLoadTitle: '显示更多',
+				/** 中医预约评价 my-list */
+				tcmList: [],
+				tcmPage: 1,
+				tcmLoadend: false,
+				tcmLoading: false,
+				tcmLoadTitle: '显示更多'
 			};
 		},
 		computed: mapGetters(['isLogin']),
 		components: {
-			emptyPage,
-			easyLoadimage
+			emptyPage
 		},
 		// 滚动监听
 		onPageScroll(e) {
@@ -84,36 +235,145 @@
 		},
 		onShow() {
 			uni.setNavigationBarTitle({
-				title: '评价列表'
+				title: '我的评价'
 			})
 			let that = this;
 			if (this.isLogin) {
-				this.loadend = false;
-				this.page = 1;
-				this.$set(this, 'replyList', []);
-				this.getReplyList();
+				if (this.activeTab === 'physio') {
+					this.physioLoadend = false;
+					this.physioPage = 1;
+					this.$set(this, 'physioList', []);
+					this.getPhysioReplyList();
+				} else {
+					this.tcmLoadend = false;
+					this.tcmPage = 1;
+					this.$set(this, 'tcmList', []);
+					this.getTcmReplyList();
+				}
 			} else {
 				toLogin();
 			}
 		},
 		methods: {
+			switchTab(tab) {
+				if (this.activeTab === tab) return;
+				this.activeTab = tab;
+				if (tab === 'physio' && !this.physioList.length && !this.physioLoadend && !this.physioLoading) {
+					this.physioPage = 1;
+					this.physioLoadend = false;
+					this.getPhysioReplyList();
+				}
+				if (tab === 'tcm' && !this.tcmList.length && !this.tcmLoadend && !this.tcmLoading) {
+					this.tcmPage = 1;
+					this.tcmLoadend = false;
+					this.getTcmReplyList();
+				}
+			},
+			tcmStar(v) {
+				if (v == null || v === '') return '—';
+				return v;
+			},
+			resolveImgUrl(path) {
+				if (!path || !String(path).trim()) return '';
+				const p = String(path).trim();
+				if (/^https?:\/\//i.test(p)) return p;
+				const base = (this.$Cache.get('imgHost') || '').replace(/\/?$/, '');
+				if (!base) return p;
+				return p.startsWith('/') ? base + p : `${base}/${p}`;
+			},
+			parsePics(pics) {
+				if (!pics) return [];
+				if (Array.isArray(pics)) {
+					return pics.map((x) => this.resolveImgUrl(x)).filter(Boolean);
+				}
+				return String(pics)
+					.split(',')
+					.map((s) => this.resolveImgUrl(s.trim()))
+					.filter(Boolean);
+			},
+			starLine(star) {
+				const n = Math.min(5, Math.max(0, parseInt(star, 10) || 0));
+				if (!n) return '—';
+				return '★'.repeat(n) + '☆'.repeat(5 - n);
+			},
+			goPhysioAppointment(item) {
+				const id = item && item.appointmentId;
+				if (!id) {
+					return this.$util.Tips({ title: '无关联预约' });
+				}
+				this.$util.navigateTo(`/pages/clinic/physio_appointment_detail/index?id=${id}`);
+			},
+			goTcmAppointment(item) {
+				const id = item && item.appointmentId;
+				if (!id) {
+					return this.$util.Tips({ title: '无关联预约' });
+				}
+				this.$util.navigateTo(
+					`/pages/clinic/physio_appointment_detail/index?id=${id}&tcm=1`
+				);
+			},
+			getTcmReplyList() {
+				let that = this;
+				if (that.tcmLoadend) return;
+				if (that.tcmLoading) return;
+				that.tcmLoading = true;
+				that.tcmLoadTitle = '加载中';
+				getTcmReplyMyListApi({
+					page: that.tcmPage,
+					limit: that.limit
+				})
+					.then((res) => {
+						let list = (res.data && res.data.list) || [];
+						let loadend = list.length < that.limit;
+						that.tcmList = that.$util.SplitArray(list, that.tcmList);
+						that.$set(that, 'tcmList', that.tcmList);
+						that.tcmLoadend = loadend;
+						that.tcmLoading = false;
+						that.tcmLoadTitle = loadend ? '' : '显示更多';
+						that.tcmPage = that.tcmPage + 1;
+					})
+					.catch(() => {
+						that.tcmLoading = false;
+						that.tcmLoadTitle = '显示更多';
+					});
+			},
+			getPhysioReplyList() {
+				let that = this;
+				if (that.physioLoadend) return;
+				if (that.physioLoading) return;
+				that.physioLoading = true;
+				that.physioLoadTitle = '加载中';
+				getPhysiotherapyReplyMyListApi({
+					page: that.physioPage,
+					limit: that.limit
+				})
+					.then((res) => {
+						let list = (res.data && res.data.list) || [];
+						let loadend = list.length < that.limit;
+						that.physioList = that.$util.SplitArray(list, that.physioList);
+						that.$set(that, 'physioList', that.physioList);
+						that.physioLoadend = loadend;
+						that.physioLoading = false;
+						that.physioLoadTitle = loadend ? '' : '显示更多';
+						that.physioPage = that.physioPage + 1;
+					})
+					.catch(() => {
+						that.physioLoading = false;
+						that.physioLoadTitle = '显示更多';
+					});
+			},
 			returns(){
 				uni.navigateBack()
 			},
+			/* 商城待评
 			evaluateTap(item) {
 				uni.navigateTo({
 					url: "/pages/goods/goods_comment_con/index?orderNo=" + item.orderNo + "&id=" + item.id
 				})
 			},
-			/**
-			 * 去商品详情productType，商品类型:0-普通，1-秒杀，2-砍价，3-拼团，4-视频号
-			 */
 			goProDetails: function(item) {
                goProductDetail(item.productId, 0, `&typeNum=${item.productType}`)
 			},
-			/**
-			 * 获取订单列表
-			 */
 			getReplyList: function() {
 				let that = this;
 				if (that.loadend) return;
@@ -138,14 +398,142 @@
 					that.loadTitle = '显示更多';
 				})
 			},
+			*/
 		},
 		onReachBottom: function() {
-			this.getReplyList();
+			if (this.activeTab === 'physio') {
+				this.getPhysioReplyList();
+			} else if (this.activeTab === 'tcm') {
+				this.getTcmReplyList();
+			}
 		}
 	}
 </script>
 
 <style scoped lang="scss">
+	.eval-page {
+		min-height: 100vh;
+		background-color: #f5f5f5;
+	}
+
+	/* 与 clinic/appointment/index .category-tabs-row 一致 */
+	.category-tabs-row {
+		display: flex;
+		background: #fff;
+		border-bottom: 1px solid #f0f0f0;
+	}
+	.cat-tab {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 28rpx 16rpx 22rpx;
+		font-size: 30rpx;
+		color: #666;
+		position: relative;
+		&.active {
+			color: #282828;
+			font-weight: 600;
+		}
+	}
+	.cat-tab-line {
+		position: absolute;
+		bottom: 0;
+		width: 56rpx;
+		height: 6rpx;
+		background: var(--view-theme);
+		border-radius: 3rpx;
+	}
+	.physio-list .physio-item {
+		padding-bottom: 8rpx;
+	}
+	.physio-head {
+		padding: 24rpx 24rpx 0;
+	}
+	.physio-avatar {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		background: #f5f5f5;
+	}
+	.physio-meta {
+		margin-left: 20rpx;
+		display: flex;
+		flex-direction: column;
+		max-width: 420rpx;
+	}
+	.physio-name {
+		font-size: 30rpx;
+		color: #282828;
+		font-weight: 600;
+	}
+	.physio-cate {
+		font-size: 24rpx;
+		color: #999;
+		margin-top: 8rpx;
+	}
+	.line1 {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.physio-time {
+		font-size: 24rpx;
+		color: #999;
+		flex-shrink: 0;
+	}
+	.physio-stars {
+		padding: 16rpx 24rpx 0;
+		flex-wrap: wrap;
+	}
+	.star-text {
+		font-size: 28rpx;
+		color: #ff6b35;
+		letter-spacing: 2rpx;
+		margin-right: 16rpx;
+	}
+	.star-detail {
+		font-size: 22rpx;
+		color: #bbb;
+	}
+	.tcm-star-detail {
+		flex: 1;
+		min-width: 0;
+		white-space: normal;
+		line-height: 1.4;
+	}
+	.line2 {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+	}
+	.physio-comment {
+		padding: 16rpx 24rpx 0;
+		font-size: 28rpx;
+		color: #666;
+		line-height: 1.5;
+	}
+	.physio-pics {
+		padding: 16rpx 24rpx 0;
+		flex-wrap: wrap;
+		gap: 12rpx;
+	}
+	.physio-pic {
+		width: 160rpx;
+		height: 160rpx;
+		border-radius: 12rpx;
+		background: #f5f5f5;
+	}
+	.physio-foot {
+		padding: 20rpx 24rpx 24rpx;
+		border-top: 1rpx solid #f5f5f5;
+		margin-top: 16rpx;
+	}
+	.physio-tip {
+		font-size: 26rpx;
+		color: #999;
+	}
 	.sku{
 		font-size: 24rpx;
 		color: #999999;

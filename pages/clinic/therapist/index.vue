@@ -134,7 +134,7 @@ export default {
   components: { emptyPage, physioCancelReasonPopup },
   filters: {
     physioRowStatusFilter(status) {
-      const map = { 0: '待服务', 1: '已完成', 2: '已取消', 3: '已取消' };
+      const map = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' };
       return map[status] != null ? map[status] : '未知';
     },
     payStatusFilter(ps) {
@@ -156,9 +156,10 @@ export default {
       mchId: 0,
       statusList: [
         { label: '全部', value: -1 },
-        { label: '待服务', value: 0 },
-        { label: '已完成', value: 1 },
-        { label: '已取消', value: 2 }
+        { label: '待确认', value: 0 },
+        { label: '已确认', value: 1 },
+        { label: '已完成', value: 2 },
+        { label: '已取消', value: 3 }
       ],
       currentStatus: -1,
       appointmentList: [],
@@ -277,14 +278,14 @@ export default {
     },
     statusBadgeClass(status) {
       const s = Number(status);
-      if (s === 1) return 'badge-done';
-      if (s === 2 || s === 3) return 'badge-off';
+      if (s === 2) return 'badge-done';
+      if (s === 3) return 'badge-off';
       return 'badge-wait';
     },
     canCancel(item) {
       if (!item) return false;
       const s = item.status;
-      if (s === 1 || s === 2 || s === 3) return false;
+      if (s === 2 || s === 3) return false;
       const ps = item.payStatus;
       if (ps === 2 || ps === '2') return false;
       return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;

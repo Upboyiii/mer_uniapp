@@ -130,13 +130,6 @@
 			</view>
 
 			<view class="actions">
-				<!-- <button
-					v-if="detail.payOrderNo"
-					class="btn-order plain"
-					@click="goOrderDetail"
-				>
-					查看商品订单
-				</button> -->
 				<button
 					v-if="canCancel"
 					class="btn-cancel plain"
@@ -144,6 +137,14 @@
 				>
 					取消预约
 				</button>
+				<button
+					v-if="canReviewOrder"
+					class="btn-review bg-color"
+					@click="goReview"
+				>
+					评价
+				</button>
+				<view v-if="reviewSubmitted && !canReviewOrder" class="reviewed-hint">已评价</view>
 			</view>
 		</view>
 
@@ -231,6 +232,10 @@ import {
 	tcmAppointmentCancelApi
 } from '@/api/clinic.js';
 import { consumePhysioAppointmentDetailNav } from '@/utils/physioAppointmentDetailNav.js';
+import {
+	isAppointmentReviewSubmitted,
+	canSubmitAppointmentReview
+} from '@/utils/appointmentReview.js';
 import physioCancelReasonPopup from '@/components/physioCancelReasonPopup/index.vue';
 
 let app = getApp();
@@ -357,11 +362,8 @@ export default {
 			const d = this.detail;
 			if (!d) return false;
 			const s = Number(d.status);
-			if (this.isTcm) {
-				if (s === 2 || s === 3) return false;
-			} else {
-				if (s === 1 || s === 2 || s === 3) return false;
-			}
+			/** 理疗/中医：0待确认 1已确认 2已完成 3已取消 */
+			if (s === 2 || s === 3) return false;
 			const fee = this.detailFeeDisplay;
 			if (isNaN(fee) || fee <= 0) return false;
 			const ps = d.payStatus;
@@ -370,19 +372,37 @@ export default {
 			if (ps == null || ps === '') return true;
 			return Number(ps) === 0;
 		},
-		/** 仅已支付且待服务可取消；未支付 / 已退款 / 已结束不可 */
+		/** 已支付且未完成/未取消时可取消 */
 		canCancel() {
 			const d = this.detail;
 			if (!d) return false;
 			const s = Number(d.status);
-			if (this.isTcm) {
-				if (s === 2 || s === 3) return false;
-			} else {
-				if (s === 1 || s === 2 || s === 3) return false;
-			}
+			if (s === 2 || s === 3) return false;
 			const ps = d.payStatus;
 			if (ps === 2 || ps === '2') return false;
 			return ps === 1 || ps === '1' || ps === true || Number(ps) === 1;
+		},
+		reviewSubmitted() {
+			const d = this.detail;
+			if (!d) return false;
+			const cat = this.isTcm ? 'tcm' : 'physio';
+			const id = d.id != null ? d.id : d.appointmentId;
+			return isAppointmentReviewSubmitted(cat, id, d);
+		},
+		canReviewOrder() {
+			const d = this.detail;
+			if (!d) return false;
+			const cat = this.isTcm ? 'tcm' : 'physio';
+			return canSubmitAppointmentReview(cat, d);
+		}
+	},
+	onShow() {
+		const g = getApp();
+		if (g.globalData && g.globalData.appointmentReviewNeedRefresh) {
+			g.globalData.appointmentReviewNeedRefresh = false;
+			if (this.appointmentId) {
+				this.loadDetail();
+			}
 		}
 	},
 	onLoad(options) {
@@ -430,22 +450,13 @@ export default {
 			return isNaN(n) ? v : n;
 		},
 		detailStatusLabel(status) {
-			if (this.isTcm) {
-				const map = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' };
-				return map[status] != null ? map[status] : '未知';
-			}
-			const map = { 0: '待服务', 1: '已完成', 2: '已取消', 3: '已取消' };
+			const map = { 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' };
 			return map[status] != null ? map[status] : '未知';
 		},
 		statusBadgeClass(status) {
 			const s = Number(status);
-			if (this.isTcm) {
-				if (s === 2) return 'badge-done';
-				if (s === 3) return 'badge-off';
-				return 'badge-wait';
-			}
-			if (s === 1) return 'badge-done';
-			if (s === 2 || s === 3) return 'badge-off';
+			if (s === 2) return 'badge-done';
+			if (s === 3) return 'badge-off';
 			return 'badge-wait';
 		},
 		loadDetail() {
@@ -462,6 +473,15 @@ export default {
 					this.loading = false;
 					this.$util.Tips({ title: err || '加载失败' });
 				});
+		},
+		goReview() {
+			if (!this.canReviewOrder || !this.detail) return;
+			const id = this.detail.id != null ? this.detail.id : this.detail.appointmentId;
+			if (id == null || id === '') {
+				return this.$util.Tips({ title: '缺少预约编号' });
+			}
+			const cat = this.isTcm ? 'tcm' : 'physio';
+			this.$util.navigateTo(`/pages/clinic/appointment_review/index?id=${id}&category=${cat}`);
 		},
 		resolvePayChannel() {
 			if (this.sheetPayMethod === 'alipay') {
@@ -886,6 +906,28 @@ export default {
 .btn-cancel {
 	color: #e54d42;
 	border-color: #f5c4c1;
+}
+
+.btn-review {
+	width: 100%;
+	height: 80rpx;
+	line-height: 80rpx;
+	border-radius: 40rpx;
+	font-size: 28rpx;
+	color: #fff;
+	border: none;
+	margin-bottom: 20rpx;
+}
+
+.btn-review::after {
+	border: none;
+}
+
+.reviewed-hint {
+	text-align: center;
+	font-size: 26rpx;
+	color: #999;
+	padding: 16rpx 0 24rpx;
 }
 
 .pay-sheet-mask {

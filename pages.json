@@ -1834,6 +1834,17 @@
 				}
 			},
 			{
+				"path": "therapist/reviews/index",
+				"style": {
+					"navigationBarTitleText": "用户评价",
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
 				"path": "physio_book/index",
 				"style": {
 					"navigationStyle": "custom",
@@ -1889,6 +1900,17 @@
 				"style": {
 					"navigationBarTitleText": "我的预约",
 					"enablePullDownRefresh": true,
+					"app-plus": {
+						"titleNView": {
+							"type": "default"
+						}
+					}
+				}
+			},
+			{
+				"path": "appointment_review/index",
+				"style": {
+					"navigationBarTitleText": "评价",
 					"app-plus": {
 						"titleNView": {
 							"type": "default"
