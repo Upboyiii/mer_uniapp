@@ -3,7 +3,7 @@
 		<view v-if="loading && page === 1 && !mergedRaw.length" class="state-wrap">
 			<text>加载中...</text>
 		</view>
-		<view v-else-if="!therapistId" class="state-wrap">
+		<view v-else-if="!therapistId && !doctorId" class="state-wrap">
 			<text>参数错误</text>
 		</view>
 		<block v-else>
@@ -73,7 +73,7 @@
 							<view class="review-user-sub">
 								<text>{{ item.createTimeDate }}</text>
 								<text class="sub-split">|</text>
-								<text>{{ item.categoryName || '理疗服务' }}</text>
+								<text>{{ item.categoryName || (doctorId ? '中医服务' : '理疗服务') }}</text>
 							</view>
 						</view>
 					</view>
@@ -113,7 +113,7 @@
 							:src="therapistAvatarSrc(item)"
 							mode="aspectFill"
 						/>
-						<text class="t-tag-name">{{ item.therapistName || therapistNameHint }}</text>
+						<text class="t-tag-name">{{ doctorId ? (item.doctorName || therapistNameHint) : (item.therapistName || therapistNameHint) }}</text>
 						<view class="t-tag-btn">约Ta ></view>
 					</view>
 
@@ -141,10 +141,15 @@
 
 <script>
 import {
+	getDoctorReplyListApi,
+	getDoctorReplyStatApi,
 	getTherapistReplyListApi,
 	getTherapistReplyStatApi
 } from '@/api/clinic.js';
-import { mapPhysioReplyToRow } from '@/utils/physioTherapistReviewDisplay.js';
+import {
+	mapDoctorTcmReplyToRow,
+	mapPhysioReplyToRow
+} from '@/utils/physioTherapistReviewDisplay.js';
 
 const PAGE_SIZE = 10;
 
@@ -153,6 +158,7 @@ export default {
 		return {
 			theme: this.$Cache.get('theme') || getApp().globalData.theme,
 			therapistId: 0,
+			doctorId: 0,
 			mchId: 0,
 			therapistNameHint: '',
 			loading: true,
@@ -186,11 +192,17 @@ export default {
 		},
 		dimRows() {
 			const s = this.stat || {};
-			const rows = [
-				{ key: 'avgStar', name: '总体' },
-				{ key: 'avgProfessionalStar', name: '手法' },
-				{ key: 'avgServiceStar', name: '服务' }
-			];
+			const rows = this.doctorId
+				? [
+						{ key: 'avgStar', name: '总体' },
+						{ key: 'avgEffectStar', name: '疗效' },
+						{ key: 'avgServiceStar', name: '服务' }
+				  ]
+				: [
+						{ key: 'avgStar', name: '总体' },
+						{ key: 'avgProfessionalStar', name: '手法' },
+						{ key: 'avgServiceStar', name: '服务' }
+				  ];
 			return rows.map((r) => {
 				const v = Number(s[r.key]);
 				const num = Number.isFinite(v) && v > 0 ? v.toFixed(1) : '5.0';
@@ -218,9 +230,12 @@ export default {
 			];
 		},
 		mappedRows() {
-			return this.mergedRaw.map((raw) =>
-				mapPhysioReplyToRow(raw, (p) => this.resolveImgUrl(p), this.defaultAvatar)
-			);
+			const mapOne = this.doctorId
+				? (raw) =>
+						mapDoctorTcmReplyToRow(raw, (p) => this.resolveImgUrl(p), this.defaultAvatar)
+				: (raw) =>
+						mapPhysioReplyToRow(raw, (p) => this.resolveImgUrl(p), this.defaultAvatar);
+			return this.mergedRaw.map(mapOne);
 		},
 		displayList() {
 			let list = this.mappedRows.slice();
@@ -242,7 +257,9 @@ export default {
 			return list;
 		},
 		keywordTags() {
-			const preset = ['准时到达', '体验很棒', '技师专业', '态度好', '耐心', '高大上'];
+			const preset = this.doctorId
+				? ['疗效好', '医生专业', '态度好', '耐心', '高大上']
+				: ['准时到达', '体验很棒', '技师专业', '态度好', '耐心', '高大上'];
 			const map = {};
 			preset.forEach((p) => {
 				map[p] = 0;
@@ -264,7 +281,12 @@ export default {
 		}
 	},
 	onLoad(options) {
-		this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
+		this.doctorId = options.doctorId ? parseInt(options.doctorId, 10) : 0;
+		if (this.doctorId) {
+			this.therapistId = 0;
+		} else {
+			this.therapistId = options.therapistId ? parseInt(options.therapistId, 10) : 0;
+		}
 		this.mchId = options.mchId ? parseInt(options.mchId, 10) : 0;
 		this.therapistNameHint = options.name ? decodeURIComponent(options.name) : '';
 		uni.setNavigationBarTitle({ title: '用户评价' });
@@ -289,6 +311,11 @@ export default {
 			return String(pics).trim().length > 0;
 		},
 		therapistAvatarSrc(item) {
+			if (this.doctorId) {
+				const p = item && item.doctorAvatar;
+				if (p && String(p).trim()) return this.resolveImgUrl(String(p).trim());
+				return this.defaultAvatar;
+			}
 			const p = item && item.therapistAvatar;
 			if (p && String(p).trim()) return this.resolveImgUrl(String(p).trim());
 			return this.defaultAvatar;
@@ -303,24 +330,37 @@ export default {
 			uni.previewImage({ urls, current: index });
 		},
 		onYueTa() {
-			const tid = this.therapistId;
 			const mid = this.mchId || '';
+			if (this.doctorId) {
+				uni.navigateTo({
+					url: `/pages/clinic/doctor/detail?id=${this.doctorId}&mchId=${mid}`
+				});
+				return;
+			}
+			const tid = this.therapistId;
 			if (!tid) return;
 			uni.navigateTo({
 				url: `/pages/clinic/therapist/detail?therapistId=${tid}&mchId=${mid}&openBook=1`
 			});
 		},
 		async bootstrap() {
-			if (!this.therapistId) {
+			if (!this.therapistId && !this.doctorId) {
 				this.loading = false;
 				return;
 			}
 			this.loading = true;
 			try {
-				const statRes = await getTherapistReplyStatApi({
-					therapistId: this.therapistId
-				}).catch(() => null);
-				this.stat = statRes && statRes.data ? statRes.data : null;
+				if (this.doctorId) {
+					const statRes = await getDoctorReplyStatApi({
+						doctorId: this.doctorId
+					}).catch(() => null);
+					this.stat = statRes && statRes.data ? statRes.data : null;
+				} else {
+					const statRes = await getTherapistReplyStatApi({
+						therapistId: this.therapistId
+					}).catch(() => null);
+					this.stat = statRes && statRes.data ? statRes.data : null;
+				}
 			} finally {
 				this.loading = false;
 			}
@@ -330,15 +370,21 @@ export default {
 			await this.fetchPage(true);
 		},
 		async fetchPage(isFirst) {
-			if (!this.therapistId || this.finished) return;
+			if ((!this.therapistId && !this.doctorId) || this.finished) return;
 			if (this.listLoading) return;
 			this.listLoading = true;
 			try {
-				const res = await getTherapistReplyListApi({
-					therapistId: this.therapistId,
-					page: this.page,
-					limit: PAGE_SIZE
-				}).catch(() => null);
+				const res = this.doctorId
+					? await getDoctorReplyListApi({
+							doctorId: this.doctorId,
+							page: this.page,
+							limit: PAGE_SIZE
+					  }).catch(() => null)
+					: await getTherapistReplyListApi({
+							therapistId: this.therapistId,
+							page: this.page,
+							limit: PAGE_SIZE
+					  }).catch(() => null);
 				const data = res && res.data;
 				const list = (data && Array.isArray(data.list) && data.list) || [];
 				if (data && data.total != null) this.total = Number(data.total);

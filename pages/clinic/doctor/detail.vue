@@ -688,7 +688,14 @@ export default {
 			return n.toFixed(1);
 		},
 		onViewAllReviews() {
-			this.$util.Tips({ title: '全部评价页即将开放' });
+			const did = this.doctorId;
+			const mid = this.resolvedMchId || this.mchId || '';
+			const name = (this.doctor && this.doctor.name) || '';
+			if (!did) {
+				return this.$util.Tips({ title: '缺少医生信息' });
+			}
+			const q = `doctorId=${did}&mchId=${mid}&name=${encodeURIComponent(name)}`;
+			this.$util.navigateTo(`/pages/clinic/therapist/reviews/index?${q}`);
 		},
 		previewImage(urls, index) {
 			uni.previewImage({

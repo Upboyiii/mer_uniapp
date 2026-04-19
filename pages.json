@@ -106,6 +106,20 @@
 			}
 		},
 		{
+			"path": "pages/clinic/health_mall/index",
+			"style": {
+				"navigationBarTitleText": "健康商城",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
 			"path": "pages/clinic/therapist/detail",
 			"style": {
 				"navigationBarTitleText": "理疗师详情",

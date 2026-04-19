@@ -713,7 +713,7 @@ export default {
 		},
 
 		goStoreTab() {
-			uni.switchTab({ url: '/pages/clinic/home/index' });
+			this.$util.navigateTo('/pages/clinic/health_mall/index');
 		},
 
 		goClinicDetail(item) {
