@@ -97,6 +97,20 @@
 		{
 			"path": "pages/clinic/home/index",
 			"style": {
+				"navigationBarTitleText": "门店",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true,
+				"app-plus": {
+					"titleNView": {
+						"type": "default"
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/clinic/health_mall/index",
+			"style": {
 				"navigationBarTitleText": "",
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true,
@@ -106,7 +120,7 @@
 			}
 		},
 		{
-			"path": "pages/clinic/health_mall/index",
+			"path": "pages/clinic/platform_mall/index",
 			"style": {
 				"navigationBarTitleText": "健康商城",
 				"navigationBarBackgroundColor": "#ffffff",

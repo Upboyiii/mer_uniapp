@@ -32,7 +32,7 @@
 				<!-- 占位高度：状态栏 + 导航内容区（约 80～90px 整体更紧凑） -->
 				<view :style="{ height: (statusBarHeight + navBarContentPx) + 'px' }"></view>
 
-				<!-- Banner区域：左舌诊 / 右健康商城→门店 tab；肾经已注释 -->
+				<!-- Banner区域：左舌诊 / 右健康商城→平台商品页 platform_mall；肾经已注释 -->
 				<view class="banner-section">
 					<!--
 					<view class="banner-card banner-card-left" @click="goMeridian">
@@ -340,6 +340,7 @@ import { getTemlIds } from '@/api/api.js';
 // #endif
 import { mapGetters } from "vuex";
 import { silenceBindingSpread } from '@/utils/index.js';
+import { toLogin } from '@/libs/login.js';
 import animationType from '@/utils/animationType.js';
 import { formatDoctorScoreDisplay } from '@/utils/doctorScoreDisplay.js';
 import { setTherapistDetailPrefill } from '@/utils/therapistDetailPrefill.js';
@@ -713,7 +714,7 @@ export default {
 		},
 
 		goStoreTab() {
-			this.$util.navigateTo('/pages/clinic/health_mall/index');
+			this.$util.navigateTo('/pages/clinic/platform_mall/index');
 		},
 
 		goClinicDetail(item) {
@@ -841,15 +842,40 @@ export default {
 		},
 
 		getOptionData(options) {
-			if (options.hasOwnProperty('id') || options.scene) {
-				if (options.scene) {
-					let value = this.$util.getUrlParams(decodeURIComponent(options.scene));
-					if (value.sd) this.$store.commit('Change_Spread', value.sd);
-					silenceBindingSpread(this.isLogin, value.sd);
-				} else {
-					if (options.sd) this.$store.commit('Change_Spread', options.sd);
-					silenceBindingSpread(this.isLogin, options.sd);
+			// #ifdef H5
+			if (typeof location !== 'undefined' && location.hash && (!options.sd && options.sd !== 0)) {
+				const hash = location.hash.slice(1);
+				const qIdx = hash.indexOf('?');
+				if (qIdx !== -1) {
+					const qs = hash.slice(qIdx + 1);
+					const m = qs.match(/(?:^|&)sd=([^&]*)/);
+					if (m && m[1] !== '') {
+						try {
+							options.sd = decodeURIComponent(m[1]);
+						} catch (e) {
+							options.sd = m[1];
+						}
+					}
 				}
+			}
+			// #endif
+			let sd = null;
+			if (options.scene) {
+				let value = this.$util.getUrlParams(decodeURIComponent(options.scene));
+				if (value.sd) {
+					sd = value.sd;
+					this.$store.commit('Change_Spread', value.sd);
+					silenceBindingSpread(this.isLogin, value.sd);
+				}
+			} else if (options.sd !== undefined && options.sd !== null && options.sd !== '') {
+				// 海报仅带 ?sd= 时也要写入（原逻辑只在有 id 或 scene 时处理）
+				sd = options.sd;
+				this.$store.commit('Change_Spread', options.sd);
+				silenceBindingSpread(this.isLogin, options.sd);
+			}
+			// 带分销码且未登录：跳转登录，登录接口通过 Cache「spread」带上级
+			if (sd && !this.isLogin) {
+				toLogin();
 			}
 		},
 

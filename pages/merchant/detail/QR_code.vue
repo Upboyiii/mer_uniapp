@@ -113,7 +113,7 @@
 			},
 			// 生成二维码；
 			makeQRCode() {
-				let link = `${this.globalData.frontDomain}/pages/merchant/home/index?merId=${this.merId}&sd=${this.uid}`
+				let link = `${this.globalData.frontDomain}/#/pages/merchant/home/index?merId=${this.merId}&sd=${this.uid}`
 				this.$util.makeSpreadQRCode(link, 'qrcode', this.qrSize)
 					.then(res => {
 						this.merQRCode = res;

@@ -48,6 +48,10 @@
 	} from '@/config/app.js';
 	// #endif
 	import {
+		H5_SPREAD_QR_BASE,
+		H5_FRONT_URL
+	} from '@/config/app.js';
+	import {
 		spreadBanner,
 		userCenterInfoMenu
 	} from '@/api/user.js';
@@ -222,9 +226,19 @@
 						.nickname, index)
 				})
 			},
+			/** 分销邀请 H5 完整链接：hash 路由须带 #，直开才不会 404 */
+			spreadInviteH5Url() {
+				const base = (H5_SPREAD_QR_BASE || H5_FRONT_URL || '')
+					.replace(/\/+$/, '');
+				const path = `/pages/index/index?sd=${this.uid}`;
+				if (!base) {
+					return path;
+				}
+				return `${base}/#${path}`;
+			},
 			// 生成二维码；
 			make() {
-        let link = `${this.globalData.frontDomain}/pages/index/index?sd=${this.uid}`
+				let link = this.spreadInviteH5Url();
 				this.$util.makeSpreadQRCode(link, 'qrcode', this.qrcodeSize)
 					.then(res => {
             this.PromotionCode = res;
@@ -313,7 +327,7 @@
 					let configAppMessage = {
 						desc: '分销海报',
 						title: this.userInfo.nickname + '-分销海报',
-						link: '/pages/index/index?sd=' + this.uid,
+						link: this.spreadInviteH5Url(),
 						imgUrl: this.spreadList[0].pic
 					};
 					this.$wechat.wechatEvevt(["updateAppMessageShareData", "updateTimelineShareData"],

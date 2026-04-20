@@ -274,7 +274,7 @@ export default {
             }
             let pages = getCurrentPages();
             let prevPage = pages[pages.length - 2];
-            if (prevPage) {
+            if (prevPage && prevPage.$vm) {
               prevPage.$vm.merId = item.id;
               prevPage.$vm.getClinicInfo && prevPage.$vm.getClinicInfo();
               prevPage.$vm.productList = [];

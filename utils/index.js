@@ -48,8 +48,9 @@ export function getUserSpread(options){
  * @param sd
  */
 export function silenceBindingSpread(islogin,sd) {
-	if (islogin && sd !== undefined && sd !== null && sd > 0) {
-		spreadApi(sd).then(res => {
+	const sid = sd === undefined || sd === null || sd === '' ? 0 : Number(sd);
+	if (islogin && !isNaN(sid) && sid > 0) {
+		spreadApi(sid).then(res => {
 			//#ifdef MP
 			getApp().globalData.spread = 0;
 			//#endif

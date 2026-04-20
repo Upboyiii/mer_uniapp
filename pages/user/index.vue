@@ -26,11 +26,16 @@
 											请点击登录
 										</view>
 										<view class="name" v-if="userInfo && uid">
-											<view @click="goEdit()">
+											<view class="name-text line1" @click="goEdit()">
 												{{userInfo && userInfo.nickname && uid ? userInfo.nickname : ''}}
 											</view>
-											<view class="vip" v-if="userInfo.vipIcon" @click="goEdit()">
-												<image :src="userInfo.vipIcon" alt=""></image>
+											<view class="vip" v-if="userInfo.vipIcon" @click.stop="goEdit()">
+												<image
+													class="vip-img"
+													:src="userInfo.vipIcon"
+													mode="aspectFit"
+													:lazy-load="false"
+												></image>
 											</view>
 										<!-- 入口关闭：付费会员角标跳转 SVIP
 										<view class="vip" v-if="userInfo.isPaidMember"
@@ -842,21 +847,30 @@
 						.name {
 							display: flex;
 							align-items: center;
+							gap: 6rpx;
+							min-width: 0;
 							color: #fff;
 							font-size: 31rpx;
 
-							.vip {
-								display: flex;
-								align-items: center;
-								border-radius: 18px;
-								font-size: 20rpx;
-								margin-left: 14rpx;
+							.name-text {
+								flex: 0 1 auto;
+								min-width: 0;
+								max-width: calc(100% - 56rpx - 6rpx);
+								overflow: hidden;
+								text-overflow: ellipsis;
+								white-space: nowrap;
+							}
 
-								image {
-									width: 27rpx;
-									height: 27rpx;
-									background-repeat: no-repeat;
-									background-size: 100% 100%;
+							.vip {
+								flex-shrink: 0;
+								margin-left: 0;
+								width: 56rpx;
+								height: 56rpx;
+
+								.vip-img {
+									width: 56rpx;
+									height: 56rpx;
+									display: block;
 								}
 							}
 						}

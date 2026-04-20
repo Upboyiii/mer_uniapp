@@ -42,6 +42,9 @@ import util from '../../utils/util';
 import {
 	globalConfigApi, loginConfigApi
 } from "../../api/public";
+import {
+	H5_FRONT_URL
+} from '../../config/app';
 import store from "../index";
 import Routine from "../../libs/routine";
 const state = {
@@ -224,7 +227,7 @@ const mutations = {
 		state.globalData.userIsPaidMember = data.userIsPaidMember;
 		state.globalData.changeColorConfig = data.changeColorConfig;
 		state.globalData.copyrightCompanyImage = data.copyrightCompanyImage;
-		state.globalData.frontDomain = data.frontDomain;
+		state.globalData.frontDomain = H5_FRONT_URL || data.frontDomain;
 		state.globalData.imageDomain = data.imageDomain;
 		state.globalData.authorizeAddress = data.authorizeAddress;
 		state.globalData.authorizeFilingNum = data.authorizeFilingNum;
@@ -237,6 +240,13 @@ const mutations = {
 	Change_Spread(state, spread) {
 		state.globalData.spread = spread;
 		Cache.set(GLOBAL_DATA, state.globalData);
+		// 登录接口使用 Cache「spread」，与 vuex 保持一致
+		const n = spread === undefined || spread === null || spread === '' ? 0 : Number(spread);
+		if (!isNaN(n) && n > 0) {
+			Cache.set('spread', spread);
+		} else {
+			Cache.clear('spread');
+		}
 	},
 	//修改globalData的值
 	Change_GLOBAL_DATA_loginConfig(state, data) {

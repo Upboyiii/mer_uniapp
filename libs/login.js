@@ -35,8 +35,12 @@ export function _toLogin(push, pathLogin) {
 	let path = prePage();
 	let login_back_url = Cache.get(BACK_URL);
 	// #ifdef H5
-	path = location.href;
-	path = location.pathname + location.search;
+	// hash 模式下 ?sd= 在 location.hash 里，pathname+search 会丢参；history 模式仍走 pathname+search
+	if (location.hash && location.hash.length > 1) {
+		path = location.hash.slice(1);
+	} else {
+		path = (location.pathname || '/') + (location.search || '');
+	}
 	// #endif
 	if(!pathLogin){
 		pathLogin = '/page/users/login/index'

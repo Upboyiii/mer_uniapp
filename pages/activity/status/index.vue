@@ -569,7 +569,7 @@
 			// 生成二维码；
 			make() {
 				let href =
-					`${this.globalData.frontDomain}/pages/activity/status/index?gt=${this.allData.recordForShare.groupActivityId}&pt=${this.allData.recordForShare.productId}&rd=${this.allData.recordForShare.groupRecordId}&sd=${this.uid}`
+					`${this.globalData.frontDomain}/#/pages/activity/status/index?gt=${this.allData.recordForShare.groupActivityId}&pt=${this.allData.recordForShare.productId}&rd=${this.allData.recordForShare.groupRecordId}&sd=${this.uid}`
 				uQRCode.make({
 					canvasId: 'qrcode',
 					text: href,
@@ -720,7 +720,7 @@
 			ShareInfo() {
 				let data = this.allData.productDetailResponse.productInfo;
 				let href =
-					`${this.globalData.frontDomain}/pages/activity/status/index?gt=${this.allData.recordForShare.groupActivityId}&pt=${this.allData.recordForShare.productId}&rd=${this.allData.recordForShare.groupRecordId}&sd=${this.uid}`;
+					`${this.globalData.frontDomain}/#/pages/activity/status/index?gt=${this.allData.recordForShare.groupActivityId}&pt=${this.allData.recordForShare.productId}&rd=${this.allData.recordForShare.groupRecordId}&sd=${this.uid}`;
 				if (this.$wechat.isWeixin() && this.publicLoginType == 1) {
 					let configAppMessage = {
 						// desc: data.storeInfo,

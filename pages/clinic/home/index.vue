@@ -1,746 +1,442 @@
 <template>
-  <view class="clinic-home" :data-theme="theme">
-    <!-- 浮动客服按钮：默认半藏，点击展开（先注释） -->
-    <!--
-    <view
-      class="service-drawer"
-      :class="{ 'is-open': serviceOpen }"
-      :style="{ top: serviceTop + 'rpx' }"
-      @click="onServiceTap"
-    >
-      <view class="drawer-inner">
-        <view class="drawer-icon">
-          <text class="iconfont icon-ic_customerservice"></text>
-        </view>
-        <text class="drawer-label">平台客服</text>
+  <view class="clinic-tab-root" :data-theme="theme">
+    <!-- 附近门店 / 好物推荐 分段（暂隐藏）
+    <view class="sub-tab-bar">
+      <view
+        class="sub-tab-item"
+        :class="{ active: subTab === 0 }"
+        @click="setSubTab(0)"
+      >
+        <text>附近门店</text>
+      </view>
+      <view
+        class="sub-tab-item"
+        :class="{ active: subTab === 1 }"
+        @click="setSubTab(1)"
+      >
+        <text>好物推荐</text>
       </view>
     </view>
     -->
 
-    <!-- 顶部背景图 -->
-    <view class="header-bg">
-      <image
-        v-if="clinicInfo.backImage"
-        :src="clinicInfo.backImage"
-        mode="aspectFill"
-        class="bg-image"
-      ></image>
-      <view v-else class="bg-placeholder"></view>
-    </view>
-
-    <!-- 诊所信息卡片 -->
-    <view class="clinic-card">
-      <!-- 诊所名称 + 切换 -->
-      <view class="clinic-name-row">
-        <view class="clinic-name line1">{{ clinicInfo.name || '' }}</view>
-        <view class="switch-btn" @click="goStoreSwitch">
-          <text class="iconfont icon-ic_sort" style="font-size: 26rpx; margin-right: 6rpx;"></text>
-          <text>切换</text>
-        </view>
+    <view v-show="subTab === 0" class="panel panel-stores">
+      <view class="intro-card">
+        <text class="intro-title">门店</text>
+        <text class="intro-desc">理疗产品 · 药食同源，请选择门店进入店铺与预约服务</text>
       </view>
 
-      <!-- 营业时间 -->
-      <view class="clinic-time">
-        <text class="iconfont icon-ic_clock"></text>
-        <text>营业时间  {{ clinicInfo.openTime || '08:30 - 21:00' }}</text>
+      <view class="section-label">
+        <text class="section-title">门店列表</text>
+        <text class="section-hint">按平台展示顺序</text>
       </view>
 
-      <!-- 地址信息 -->
-      <view class="clinic-address-row">
-        <view class="address-left">
-          <text class="iconfont icon-ic_location51 loc-icon"></text>
-          <text class="address-text">{{ clinicInfo.addressDetail || clinicInfo.address || '' }}</text>
-        </view>
-        <view class="address-actions">
-          <view class="action-item" @click="handleNavigation">
-            <text class="iconfont icon-ic_location5"></text>
-            <text>导航</text>
+      <view v-if="storeList.length > 0" class="store-list">
+        <view
+          class="store-row"
+          v-for="(item, index) in storeList"
+          :key="item.id != null ? item.id : index"
+          @click="goStoreHome(item)"
+        >
+          <view class="store-avatar">
+            <image :src="item.avatar || item.image || defaultStoreImg" mode="aspectFill"></image>
           </view>
-          <view class="action-item" @click="handleCall">
-            <text class="iconfont icon-ic_phone"></text>
-            <text>电话</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 快捷操作区 -->
-    <view class="quick-actions" :class="{ 'quick-actions--fixed': isActionsSticky }">
-      <view class="action-card" @click="goClinicMall">
-        <view class="action-icon icon-mall">
-          <text class="iconfont icon-ic_mall"></text>
-        </view>
-        <text class="action-label">诊所商城</text>
-      </view>
-      <view class="action-card" @click="goAppointmentService">
-        <view class="action-icon icon-reserve">
-          <text class="iconfont icon-ic_clock"></text>
-        </view>
-        <text class="action-label">预约服务</text>
-      </view>
-      <view class="action-card" @click="goMyAppointment">
-        <view class="action-icon icon-mybook">
-          <text class="iconfont icon-a-ic_Picturearrangement"></text>
-        </view>
-        <text class="action-label">我的预约</text>
-      </view>
-      <view class="action-card" @click="goMyWallet">
-        <view class="action-icon icon-wallet">
-          <text class="iconfont icon-ic_coupon"></text>
-        </view>
-        <text class="action-label">我的钱包</text>
-      </view>
-      <view class="action-card" @click="goDoctorList">
-        <view class="action-icon icon-doctor">
-          <text class="iconfont icon-ic_crown"></text>
-        </view>
-        <text class="action-label">名医列表</text>
-      </view>
-      <view class="action-card" @click="goTherapistList">
-        <view class="action-icon icon-therapist">
-          <text class="iconfont icon-ic_leaf"></text>
-        </view>
-        <text class="action-label">理疗师列表</text>
-      </view>
-    </view>
-
-    <!-- 精选商品 -->
-    <view class="featured-section">
-      <view class="section-header">
-        <text class="section-title">精选商品</text>
-        <view class="section-more" @click="goClinicMall">
-          <text>更多</text>
-          <text class="iconfont icon-ic_rightarrow" style="font-size: 24rpx; margin-left: 4rpx;"></text>
-        </view>
-      </view>
-
-      <view class="product-grid" v-if="displayProducts.length > 0">
-        <view class="product-card" v-for="(item, index) in displayProducts" :key="index" @click="goProductDetail(item)">
-          <view class="product-img">
-            <image :src="item.image" mode="aspectFill"></image>
-          </view>
-          <view class="product-info">
-            <view class="product-name line2">{{ item.name }}</view>
-            <view class="product-price-row">
-              <text class="price-symbol">¥</text>
-              <text class="price-num">{{ item.price }}</text>
+          <view class="store-main">
+            <text class="store-name line1">{{ item.name }}</text>
+            <view class="store-meta">
+              <text v-if="item.distance" class="store-distance">{{ item.distance }}</text>
+              <text class="store-address line1">{{ item.addressDetail || item.address || '' }}</text>
             </view>
-            <view class="product-tag">
-              <text>用户自提</text>
+          </view>
+          <text class="iconfont icon-ic_rightarrow store-arrow"></text>
+        </view>
+      </view>
+
+      <view v-else-if="!storeLoading" class="empty-wrap">
+        <empty-page title="暂无门店~" mTop="80" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></empty-page>
+      </view>
+
+      <view v-if="storeLoading && storeList.length === 0" class="loading-tip">
+        <text>加载中...</text>
+      </view>
+      <view v-if="storeList.length > 0" class="loading-more">
+        <text v-if="storeLoading">加载中...</text>
+        <text v-else-if="storeLoadend">没有更多了</text>
+      </view>
+    </view>
+
+    <view v-show="subTab === 1" class="panel panel-mall">
+      <view class="intro-card intro-card--mall">
+        <text class="intro-title">推荐好物</text>
+        <text class="intro-desc">平台精选商品，来自各推荐商家</text>
+      </view>
+
+      <view class="mall-cate-bar" v-if="categoryList.length > 0">
+        <scroll-view scroll-x class="mall-cate-scroll" show-scrollbar="false">
+          <view class="mall-cate-list">
+            <view
+              class="mall-cate-item"
+              :class="{ active: currentCateId === 0 }"
+              @click="switchMallCate(0)"
+            >
+              <text>全部</text>
+            </view>
+            <view
+              class="mall-cate-item"
+              :class="{ active: currentCateId === item.id }"
+              v-for="item in categoryList"
+              :key="item.id"
+              @click="switchMallCate(item.id)"
+            >
+              <text>{{ item.name }}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="mall-body">
+        <view v-if="mallProductList.length > 0" class="mall-product-grid">
+          <view
+            class="mall-product-card"
+            v-for="(item, index) in mallProductList"
+            :key="index"
+            @click="goHotProductDetail(item)"
+          >
+            <view class="mall-product-img">
+              <image :src="item.image || defaultGoodsImg" mode="aspectFill"></image>
+            </view>
+            <view class="mall-product-info">
+              <view class="mall-product-name line2">{{ item.name }}</view>
+              <view class="mall-product-price">
+                <text class="price-sym">¥</text>
+                <text class="price-val">{{ item.price }}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
 
-      <view class="empty-products" v-else-if="!loading">
-        <empty-page title="暂无商品~" mTop="0" :imgSrc="urlDomain+'crmebimage/presets/noJilu.png'"></empty-page>
+        <view v-else-if="!mallLoading" class="empty-wrap empty-wrap--mall">
+          <empty-page title="暂无商品~" mTop="40" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></empty-page>
+        </view>
+
+        <view v-if="mallLoading && mallProductList.length === 0" class="loading-tip">
+          <text>加载中...</text>
+        </view>
+        <view v-if="mallProductList.length > 0" class="loading-more">
+          <text v-if="mallLoading">加载中...</text>
+          <text v-else-if="mallLoadend">没有更多了</text>
+        </view>
       </view>
     </view>
-
-    <!-- 底部安全区 -->
-    <view class="safe-bottom"></view>
-    <view v-if="bottomNavigationIsCustom" class="footerBottom"></view>
-    <pageFooter></pageFooter>
   </view>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import { getMerIndexInfoApi, getMerProListApi, getMerStreetApi } from '@/api/merchant.js';
-import { chatConfig } from '@/utils/consumerType.js';
+import { getMerStreetApi } from '@/api/merchant.js';
+import { getCategoryFirst } from '@/api/api.js';
+import { getProductHot } from '@/api/product.js';
 import emptyPage from '@/components/emptyPage.vue';
-import pageFooter from '@/components/pageFooter/index.vue';
-import { setMchTherapistListNav } from '@/utils/mchTherapistListNav.js';
 
 let app = getApp();
 
 export default {
-  components: {
-    emptyPage,
-    pageFooter
-  },
-  computed: {
-    ...mapGetters(['isLogin', 'uid', 'globalData', 'bottomNavigationIsCustom']),
-    displayProducts() {
-      return this.productList;
-    }
-  },
+  components: { emptyPage },
   data() {
     return {
-      urlDomain: this.$Cache.get("imgHost"),
+      urlDomain: this.$Cache.get('imgHost'),
       theme: app.globalData.theme,
-      merId: 0,
-      serviceOpen: false,
-      serviceTop: 280,
-      serviceTimer: null,
-      clinicInfo: {},
-      productList: [],
-      loading: true,
-      page: 1,
-      limit: 10,
-      loadend: false,
-      isActionsSticky: false
+      subTab: 0,
+      defaultStoreImg: '',
+      storeList: [],
+      storeLoading: false,
+      storeLoadend: false,
+      storePage: 1,
+      storeLimit: 20,
+      latitude: 28.228,
+      longitude: 112.939,
+      categoryList: [],
+      currentCateId: 0,
+      mallProductList: [],
+      mallLoading: false,
+      mallLoadend: false,
+      mallPage: 1,
+      mallLimit: 20
+    };
+  },
+  computed: {
+    defaultGoodsImg() {
+      const raw = this.urlDomain || '';
+      if (!raw) return '';
+      const host = raw.replace(/\/?$/, '/');
+      return `${host}crmebimage/presets/noShopper.png`;
     }
   },
-  onLoad(options) {
-    if (options.merId) {
-      this.merId = parseInt(options.merId, 10);
-      this.getClinicInfo();
-      this.getProductList();
-    } else {
-      this.bootstrapDefaultStore();
-    }
+  onLoad() {
+    this.defaultStoreImg = (this.urlDomain || '') + 'crmebimage/presets/morenT.png';
+    this.syncNavTitle();
+    this.bootstrapStores();
   },
   onShow() {
     try {
       const raw = uni.getStorageSync('CLINIC_HOME_MER_ID');
-      if (!raw) return;
-      uni.removeStorageSync('CLINIC_HOME_MER_ID');
-      const n = parseInt(raw, 10);
-      if (!n || isNaN(n)) return;
-      if (n !== this.merId) this.merId = n;
-      this.page = 1;
-      this.loadend = false;
-      this.productList = [];
-      this.getClinicInfo();
-      if (this.merId) this.getProductList();
+      if (raw) {
+        uni.removeStorageSync('CLINIC_HOME_MER_ID');
+        const n = parseInt(raw, 10);
+        if (n && !isNaN(n)) {
+          this.$util.navigateTo(`/pages/clinic/health_mall/index?merId=${n}`);
+        }
+      }
     } catch (e) {}
+
+    this.syncNavTitle();
   },
   onPullDownRefresh() {
-    this.page = 1;
-    this.loadend = false;
-    this.productList = [];
-    if (this.merId) {
-      this.getClinicInfo();
-      this.getProductList();
+    if (this.subTab === 0) {
+      this.resetStoreList();
+      this.fetchStores();
     } else {
-      this.bootstrapDefaultStore();
+      this.getCategoryList();
+      this.resetMallProducts();
+      this.fetchMallProducts();
     }
   },
-  onPageScroll(e) {
-    this.isActionsSticky = e.scrollTop > 350;
-  },
   onReachBottom() {
-    this.getProductList();
+    if (this.subTab === 0) this.fetchStores();
+    else this.fetchMallProducts();
   },
   methods: {
-    /** 未带 merId 进入时：店铺街接口取第一个门店作为当前门店（与门店切换页同一套 merchant/street） */
-    bootstrapDefaultStore() {
-      this.loading = true;
+    setSubTab(i) {
+      if (this.subTab === i) return;
+      this.subTab = i;
+      this.syncNavTitle();
+      if (i === 1) this.ensureMallTabLoaded();
+    },
+    syncNavTitle() {
+      try {
+        uni.setNavigationBarTitle({
+          title: this.subTab === 1 ? '健康商城' : '门店'
+        });
+      } catch (e) {}
+    },
+    ensureMallTabLoaded() {
+      if (!this.categoryList.length) this.getCategoryList();
+      if (!this.mallProductList.length && !this.mallLoading) {
+        this.resetMallProducts();
+        this.fetchMallProducts();
+      }
+    },
+    bootstrapStores() {
       uni.getLocation({
         type: 'gcj02',
         success: (res) => {
-          this.fetchFirstMerchantAsDefault(res.latitude, res.longitude);
+          this.latitude = res.latitude;
+          this.longitude = res.longitude;
+          this.resetStoreList();
+          this.fetchStores();
         },
         fail: () => {
-          this.fetchFirstMerchantAsDefault(28.228, 112.939);
+          this.resetStoreList();
+          this.fetchStores();
         }
       });
     },
-
-    fetchFirstMerchantAsDefault(latitude, longitude) {
+    resetStoreList() {
+      this.storePage = 1;
+      this.storeLoadend = false;
+      this.storeList = [];
+    },
+    fetchStores() {
+      if (this.storeLoadend || this.storeLoading) return;
+      this.storeLoading = true;
       getMerStreetApi({
-        page: 1,
-        limit: 20,
-        latitude,
-        longitude
+        page: this.storePage,
+        limit: this.storeLimit,
+        latitude: this.latitude,
+        longitude: this.longitude
       })
-        .then(res => {
+        .then((res) => {
           let list = (res.data && res.data.list) || res.data || [];
           if (!Array.isArray(list)) list = [];
-          const first = list[0];
-          if (first && first.id != null) {
-            this.merId = first.id;
-          }
-          this.getClinicInfo();
-          this.page = 1;
-          this.loadend = false;
-          this.productList = [];
-          this.getProductList();
+          if (list.length < this.storeLimit) this.storeLoadend = true;
+          this.storeList = this.storeList.concat(list);
+          this.storePage++;
+          this.storeLoading = false;
+          uni.stopPullDownRefresh();
         })
         .catch(() => {
-          this.getClinicInfo();
-          this.page = 1;
-          this.loadend = false;
-          this.productList = [];
-          this.getProductList();
+          this.storeLoading = false;
+          uni.stopPullDownRefresh();
         });
     },
-
-    getClinicInfo() {
-      if (!this.merId) {
-        this.clinicInfo = {};
-        uni.setNavigationBarTitle({ title: '诊所' });
-        return;
-      }
-      getMerIndexInfoApi(this.merId).then(res => {
-        this.clinicInfo = res.data;
-        uni.setNavigationBarTitle({ title: res.data.name || '诊所' });
-      }).catch(() => {
-        this.clinicInfo = {};
-        uni.setNavigationBarTitle({ title: '诊所' });
-      });
+    goStoreHome(item) {
+      if (!item || item.id == null) return;
+      this.$util.navigateTo(`/pages/clinic/health_mall/index?merId=${item.id}`);
     },
-
-    getProductList() {
-      if (this.loadend) return;
-      if (!this.merId) {
-        this.loading = false;
-        uni.stopPullDownRefresh();
-        return;
-      }
-      this.loading = true;
-      getMerProListApi({
-        page: this.page,
-        limit: this.limit,
-        merId: this.merId
-      }).then(res => {
-        let list = res.data.list || res.data || [];
-        if (list.length < this.limit) this.loadend = true;
-        this.productList = this.productList.concat(list);
-        this.page++;
-        this.loading = false;
-        uni.stopPullDownRefresh();
-      }).catch(() => {
-        this.loading = false;
-        uni.stopPullDownRefresh();
-      });
+    getCategoryList() {
+      getCategoryFirst()
+        .then((res) => {
+          this.categoryList = res.data || [];
+        })
+        .catch(() => {});
     },
-
-    onServiceTap() {
-      if (this.serviceOpen) {
-        this.handleCustomer();
-        this.serviceOpen = false;
-      } else {
-        this.serviceOpen = true;
-        clearTimeout(this.serviceTimer);
-        this.serviceTimer = setTimeout(() => {
-          this.serviceOpen = false;
-        }, 4000);
-      }
+    switchMallCate(id) {
+      if (this.currentCateId === id) return;
+      this.currentCateId = id;
+      this.resetMallProducts();
+      this.fetchMallProducts();
     },
-
-    handleNavigation() {
-      let info = this.clinicInfo;
-      if (!info.latitude || !info.longitude) {
-        return this.$util.Tips({ title: '暂无位置信息' });
-      }
-      let lat = parseFloat(info.latitude);
-      let lng = parseFloat(info.longitude);
-      let name = encodeURIComponent(info.name || '目的地');
-      let addr = encodeURIComponent(info.addressDetail || '');
-
-      // #ifdef APP-PLUS
-      let mapItems = ['高德地图', '百度地图', '腾讯地图'];
-      if (uni.getSystemInfoSync().platform === 'ios') {
-        mapItems.push('Apple 地图');
-      }
-      uni.showActionSheet({
-        itemList: mapItems,
-        success: (res) => {
-          let urls = {
-            0: `amapuri://route/plan/?dlat=${lat}&dlon=${lng}&dname=${name}&dev=0&t=0`,
-            1: `baidumap://map/direction?destination=latlng:${lat},${lng}|name:${name}&coord_type=gcj02&mode=driving`,
-            2: `qqmap://map/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=clinic`,
-            3: `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
-          };
-          let url = urls[res.tapIndex];
-          plus.runtime.openURL(url, (err) => {
-            let fallbacks = {
-              0: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car`,
-              1: `https://api.map.baidu.com/direction?destination=latlng:${lat},${lng}|name:${name}&coord_type=gcj02&mode=driving&output=html`,
-              2: `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=clinic`,
-              3: `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car`
-            };
-            plus.runtime.openURL(fallbacks[res.tapIndex], () => {
-              this.$util.Tips({ title: '未安装该地图应用' });
-            });
-          });
-        }
-      });
-      // #endif
-
-      // #ifdef H5
-      uni.showActionSheet({
-        itemList: ['高德地图', '百度地图', '腾讯地图'],
-        success: (res) => {
-          let webUrls = [
-            `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car`,
-            `https://api.map.baidu.com/direction?destination=latlng:${lat},${lng}|name:${name}&coord_type=gcj02&mode=driving&output=html`,
-            `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=clinic`
-          ];
-          window.open(webUrls[res.tapIndex]);
-        }
-      });
-      // #endif
-
-      // #ifdef MP
-      uni.openLocation({
-        latitude: lat,
-        longitude: lng,
-        scale: 16,
-        name: info.name,
-        address: info.addressDetail || ''
-      });
-      // #endif
+    resetMallProducts() {
+      this.mallPage = 1;
+      this.mallLoadend = false;
+      this.mallProductList = [];
     },
-
-    handleCall() {
-      let phone = this.clinicInfo.phone || this.clinicInfo.servicePhone;
-      if (!phone) {
-        return this.$util.Tips({ title: '暂无联系电话' });
-      }
-      uni.makePhoneCall({ phoneNumber: phone });
+    fetchMallProducts() {
+      if (this.mallLoadend || this.mallLoading) return;
+      this.mallLoading = true;
+      const params = {
+        cid: String(this.currentCateId || 0),
+        page: this.mallPage,
+        limit: this.mallLimit
+      };
+      getProductHot(params)
+        .then((res) => {
+          const data = res.data || {};
+          let list = data.list || [];
+          if (!Array.isArray(list)) list = [];
+          const rawTotal = data.totalPage;
+          const totalPage =
+            rawTotal != null && rawTotal !== ''
+              ? Math.max(1, parseInt(rawTotal, 10) || 1)
+              : null;
+          this.mallProductList = this.mallProductList.concat(list);
+          this.mallPage++;
+          if (list.length === 0) {
+            this.mallLoadend = true;
+          } else if (totalPage != null) {
+            this.mallLoadend = this.mallPage > totalPage;
+          } else {
+            this.mallLoadend = list.length < this.mallLimit;
+          }
+          this.mallLoading = false;
+          uni.stopPullDownRefresh();
+        })
+        .catch(() => {
+          this.mallLoading = false;
+          uni.stopPullDownRefresh();
+        });
     },
-
-    handleCustomer() {
-      if (this.clinicInfo) {
-        chatConfig(this.clinicInfo);
-      }
-    },
-
-    goStoreSwitch() {
-      this.$util.navigateTo(`/pages/clinic/store_switch/index?merId=${this.merId}`);
-    },
-
-    goClinicMall() {
-      this.$util.navigateTo(`/pages/clinic/mall/index?merId=${this.merId}`);
-    },
-
-    goAppointmentService() {
-      this.markTherapistEnterFromStore();
-      setMchTherapistListNav({ mchId: this.merId });
-      this.$util.navigateTo('/pages/clinic/therapist/mch_list');
-    },
-
-    goMyAppointment() {
-      this.$util.navigateTo(`/pages/clinic/appointment/index?merId=${this.merId}`);
-    },
-
-    goMyWallet() {
-      this.$util.navigateTo(`/pages/users/user_money/index`);
-    },
-
-    goProductDetail(item) {
-      if (item.id) {
+    goHotProductDetail(item) {
+      if (item && item.id) {
         this.$util.navigateTo(`/pages/goods/goods_details/index?id=${item.id}`);
       }
-    },
-
-    goDoctorList() {
-      this.$util.navigateTo(`/pages/clinic/doctor/index?mchId=${this.merId}`);
-    },
-
-    goTherapistList() {
-      this.markTherapistEnterFromStore();
-      setMchTherapistListNav({ mchId: this.merId });
-      this.$util.navigateTo('/pages/clinic/therapist/mch_list');
-    },
-
-    /** 从门店进理疗预约页：返回栈仅一层时 onBackPress 需回到门店 tab */
-    markTherapistEnterFromStore() {
-      try {
-        uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
-        uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(this.merId));
-      } catch (e) {}
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
-.clinic-home {
+.clinic-tab-root {
   min-height: 100vh;
-  background-color: #fff;
+  background: #f5f5f5;
+  box-sizing: border-box;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 顶部背景图 */
-.header-bg {
-  position: relative;
-  width: 100%;
-  height: 360rpx;
-  overflow: hidden;
-}
-
-.bg-image {
-  width: 100%;
-  height: 100%;
-}
-
-.bg-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #c8d8b0 0%, #a8c68f 30%, #8ab573 60%, #6ea35a 100%);
-}
-
-/* 抽屉式浮动客服按钮 */
-.service-drawer {
-  position: fixed;
-  right: 0;
-  z-index: 999;
+.sub-tab-bar {
   display: flex;
   align-items: center;
-  transform: translateX(60%);
-  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-
-  &.is-open {
-    transform: translateX(0);
-  }
-}
-
-.drawer-inner {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #f5a623, #f0932b);
-  padding: 14rpx 24rpx 14rpx 18rpx;
-  border-radius: 40rpx 0 0 40rpx;
-  box-shadow: -4rpx 4rpx 16rpx rgba(245, 166, 35, 0.35);
-}
-
-.drawer-icon {
-  width: 56rpx;
-  height: 56rpx;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10rpx;
-  flex-shrink: 0;
-
-  .iconfont {
-    font-size: 32rpx;
-    color: #fff;
-  }
-}
-
-.drawer-label {
-  font-size: 24rpx;
-  color: #fff;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* 诊所信息卡片 */
-.clinic-card {
-  position: relative;
-  margin-top: -60rpx;
-  margin-left: 24rpx;
-  margin-right: 24rpx;
   background: #fff;
-  border-radius: 24rpx;
-  padding: 28rpx 28rpx 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
-  z-index: 5;
-}
-
-.clinic-name-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
-}
-
-.clinic-name {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #282828;
-  flex: 1;
-  margin-right: 20rpx;
-}
-
-.switch-btn {
-  display: flex;
-  align-items: center;
-  padding: 10rpx 24rpx;
-  border: 1px solid #ddd;
-  border-radius: 30rpx;
-  font-size: 26rpx;
-  color: #333;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.clinic-time {
-  display: flex;
-  align-items: center;
-  font-size: 26rpx;
-  color: #666;
-  margin-bottom: 16rpx;
-
-  .iconfont {
-    font-size: 28rpx;
-    color: #999;
-    margin-right: 10rpx;
-  }
-}
-
-.clinic-address-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.address-left {
-  display: flex;
-  align-items: flex-start;
-  flex: 1;
-  margin-right: 24rpx;
-
-  .loc-icon {
-    font-size: 28rpx;
-    color: var(--view-theme);
-    margin-right: 10rpx;
-    margin-top: 4rpx;
-    flex-shrink: 0;
-  }
-}
-
-.address-text {
-  font-size: 26rpx;
-  color: #666;
-  line-height: 1.6;
-}
-
-.address-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-left: 36rpx;
-  font-size: 22rpx;
-  color: #333;
-
-  .iconfont {
-    font-size: 40rpx;
-    color: #333;
-    margin-bottom: 6rpx;
-  }
-}
-
-/* 快捷操作区 */
-.quick-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  background: #fff;
-  padding: 36rpx 20rpx 28rpx;
-  margin-top: 20rpx;
+  padding: 16rpx 24rpx 20rpx;
+  gap: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
   position: sticky;
   top: 0;
-  z-index: 10;
-  border-bottom: 1rpx solid transparent;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  gap: 20rpx 0;
-}
-.quick-actions--fixed {
-  border-bottom-color: #f0f0f0;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+  z-index: 20;
 }
 
-.action-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+.sub-tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 12rpx;
+  background: #f5f5f5;
 
-.action-icon {
-  width: 96rpx;
-  height: 96rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24rpx;
-  margin-bottom: 14rpx;
-
-  .iconfont {
-    font-size: 48rpx;
-  }
-
-  &.icon-mall {
-    background: #eef6e8;
-    .iconfont { color: #6ea35a; }
-  }
-  &.icon-reserve {
-    background: #fef4e5;
-    .iconfont { color: #f0932b; }
-  }
-  &.icon-mybook {
-    background: #e8f0fe;
-    .iconfont { color: #4a90d9; }
-  }
-  &.icon-wallet {
-    background: #fde8e8;
-    .iconfont { color: #e74c3c; }
-  }
-  &.icon-doctor {
-    background: #e8f4fd;
-    .iconfont { color: #2980b9; }
-  }
-  &.icon-therapist {
-    background: #f0e8fd;
-    .iconfont { color: #8e44ad; }
+  &.active {
+    color: #fff;
+    background: var(--view-theme, #1890ff);
+    font-weight: 600;
   }
 }
 
-.action-label {
-  font-size: 24rpx;
-  color: #333;
-  font-weight: 500;
+.panel {
+  padding-bottom: 24rpx;
 }
 
-/* 精选商品 */
-.featured-section {
+.intro-card {
+  margin: 24rpx;
+  padding: 28rpx 32rpx;
   background: #fff;
-  margin-top: 20rpx;
-  padding: 24rpx 24rpx;
-  min-height: 400rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 }
 
-.section-header {
+.intro-card--mall {
+  margin-bottom: 16rpx;
+}
+
+.intro-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #282828;
+  margin-bottom: 12rpx;
+}
+
+.intro-desc {
+  font-size: 26rpx;
+  color: #888;
+  line-height: 1.5;
+}
+
+.section-label {
+  padding: 8rpx 32rpx 16rpx;
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 700;
+  font-size: 28rpx;
+  font-weight: 600;
   color: #282828;
 }
 
-.section-more {
+.section-hint {
+  font-size: 22rpx;
+  color: #aaa;
+}
+
+.store-list {
+  padding: 0 24rpx 32rpx;
+}
+
+.store-row {
   display: flex;
   align-items: center;
-  font-size: 26rpx;
-  color: #999;
-}
-
-.product-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
-.product-card {
-  width: calc(50% - 8rpx);
   background: #fff;
   border-radius: 16rpx;
-  overflow: hidden;
-  border: 1px solid #f0f0f0;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
 }
 
-.product-img {
-  width: 100%;
-  height: 340rpx;
+.store-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 12rpx;
   overflow: hidden;
-  background: #f5f5f5;
+  background: #eee;
+  flex-shrink: 0;
 
   image {
     width: 100%;
@@ -748,11 +444,118 @@ export default {
   }
 }
 
-.product-info {
+.store-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 20rpx;
+}
+
+.store-name {
+  font-size: 30rpx;
+  color: #282828;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+
+.store-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.store-distance {
+  color: var(--view-theme, #1890ff);
+  flex-shrink: 0;
+}
+
+.store-address {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-arrow {
+  font-size: 28rpx;
+  color: #ccc;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.line1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mall-cate-bar {
+  margin: 0 24rpx 16rpx;
+}
+
+.mall-cate-scroll {
+  white-space: nowrap;
+}
+
+.mall-cate-list {
+  display: inline-flex;
+  gap: 12rpx;
+}
+
+.mall-cate-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 28rpx;
+  border-radius: 28rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
+  flex-shrink: 0;
+  border: 1rpx solid #f0f0f0;
+
+  &.active {
+    background: var(--view-theme, #1890ff);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 600;
+  }
+}
+
+.mall-body {
+  padding: 0 24rpx 32rpx;
+}
+
+.mall-product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.mall-product-card {
+  width: calc(50% - 8rpx);
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.mall-product-img {
+  width: 100%;
+  height: 320rpx;
+  overflow: hidden;
+  background: #eee;
+
+  image {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.mall-product-info {
   padding: 16rpx 20rpx 20rpx;
 }
 
-.product-name {
+.mall-product-name {
   font-size: 26rpx;
   color: #282828;
   line-height: 1.4;
@@ -760,46 +563,44 @@ export default {
   min-height: 72rpx;
 }
 
-.product-price-row {
+.mall-product-price {
   display: flex;
   align-items: baseline;
-  margin-bottom: 10rpx;
 }
 
-.price-symbol {
+.price-sym {
   font-size: 24rpx;
   font-weight: 600;
   color: var(--view-priceColor);
 }
 
-.price-num {
+.price-val {
   font-size: 36rpx;
   font-weight: 600;
   color: var(--view-priceColor);
 }
 
-.product-tag {
-  display: inline-block;
-  padding: 4rpx 14rpx;
-  border: 1px solid #e0e0e0;
-  border-radius: 6rpx;
-  font-size: 20rpx;
+.line2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.loading-tip,
+.loading-more {
+  text-align: center;
+  padding: 32rpx;
+  font-size: 24rpx;
   color: #999;
 }
 
-.empty-products {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 320rpx;
-  padding: 24rpx 0 80rpx;
-  box-sizing: border-box;
+.empty-wrap {
+  padding-top: 80rpx;
 }
 
-.safe-bottom {
-  height: calc(20rpx + constant(safe-area-inset-bottom));
-  height: calc(20rpx + env(safe-area-inset-bottom));
-  background: #fff;
+.empty-wrap--mall {
+  padding-top: 40rpx;
 }
 </style>

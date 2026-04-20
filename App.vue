@@ -180,7 +180,7 @@
 					// 存储静默授权code
 					uni.setStorageSync('snsapiCode', code);
 					let spread = that.globalData.spread ? that.globalData.spread : 0;
-					Auth.auth(code, Cache.get('spread'))
+					Auth.auth(code, spread || Cache.get('spread'))
 						.then(res => {
 							uni.setStorageSync('snRouter', decodeURIComponent(decodeURIComponent(option.query
 								.back_url)));
