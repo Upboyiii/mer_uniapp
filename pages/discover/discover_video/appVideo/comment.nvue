@@ -80,15 +80,15 @@
 							<text class="iconfont icon-jiazai loading"></text>
 						</view>
 						<view v-if="list.length == 0 && !loading" class="empty-box">
-							<image :src="urlDomain+'crmebimage/presets/noEvaluate.png'"></image>
-							<text class="txt">暂无评论，快去抢沙发吧~</text>
+							<image class="empty-box-img" :src="urlDomain+'crmebimage/presets/noEvaluate.png'"></image>
+							<text class="empty-box-txt">暂无评论，快去抢沙发吧~</text>
 						</view>
 					</view>
 				</scroll-view>
 			</view>
 
 			<!-- 评论框 -->
-			<view @click="parentPinglun" class="release_bar">
+			<view @click="parentPinglun" class="release_bar" :style="releaseBarInsetStyle">
 				<image class="image" :src="userInfo.avatar || urlDomain+'crmebimage/presets/morenT.png'"></image>
 				<text class="lang">{{placeholder}}</text>
 			</view>
@@ -132,7 +132,20 @@
 	} from '@/utils/validate.js'
 	let app = getApp();
 	export default {
-		computed: mapGetters(['isLogin', 'userInfo', 'uid']),
+		computed: {
+			...mapGetters(['isLogin', 'userInfo', 'uid']),
+			releaseBarInsetStyle() {
+				try {
+					const sys = uni.getSystemInfoSync();
+					const safe = sys.safeAreaInsets && sys.safeAreaInsets.bottom ? sys.safeAreaInsets.bottom : 0;
+					return {
+						paddingBottom: (uni.upx2px(15) + safe) + 'px'
+					};
+				} catch (e) {
+					return {};
+				}
+			}
+		},
 		watch: {
 			noteId: {
 				handler: function(newV, oldV) {
@@ -481,7 +494,6 @@
 			font-size: 24rpx;
 			color: #4A8AC9;
 			margin-top: 15rpx;
-			display: inline-block;
 		}
 	}
 
@@ -507,17 +519,16 @@
 		justify-content: center;
 		align-items: center;
 		padding-bottom: 60rpx;
+	}
 
-		image {
-			width: 414rpx;
-			height: 305rpx;
-		}
+	.empty-box-img {
+		width: 414rpx;
+		height: 305rpx;
+	}
 
-		.txt,
-		text {
-			font-size: 26rpx;
-			color: #999;
-		}
+	.empty-box-txt {
+		font-size: 26rpx;
+		color: #999999;
 	}
 
 	.lang {
@@ -735,8 +746,6 @@
 	}
 
 	.release_bar {
-		bottom: constant(safe-area-inset-bottom); ///兼容 IOS<11.2/
-		bottom: env(safe-area-inset-bottom); ///兼容 IOS>11.2/
 		bottom: 0;
 		position: fixed;
 		width: 750rpx;

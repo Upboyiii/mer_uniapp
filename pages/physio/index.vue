@@ -23,17 +23,50 @@
 				>×</text>
 			</view>
 
+			<!-- 项目分类：横滑；选中为左直右斜梯形（不用 skew，左侧始终竖直对齐）；右侧更多 -->
+			<view class="project-cat-row">
+				<scroll-view
+					scroll-x
+					class="project-cat-scroll"
+					:show-scrollbar="false"
+					:enable-flex="true"
+				>
+					<view class="project-cat-inner">
+						<view
+							v-for="(cat, ci) in projectCategories"
+							:key="cat.key"
+							class="project-cat-item"
+							:class="{
+								active: activeProjectKey === cat.key,
+								'project-cat-item--lead': ci === 0
+							}"
+							hover-class="none"
+							@click="selectProjectCat(cat.key)"
+						>
+							<view class="project-cat-pill">
+								<text class="project-cat-text">{{ cat.label }}</text>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+				<view class="project-cat-more" hover-class="none" @click="openProjectCatMore">
+					<view class="project-cat-more-inner">
+						<text class="iconfont icon-ic_sort2 project-cat-more-ico"></text>
+					</view>
+				</view>
+			</view>
+
 			<!-- 筛选条：样式还原，排序可本地生效；时段/全部筛选为占位 -->
 			<view class="filter-bar">
-				<view class="filter-item" @click="openSortSheet">
+				<view class="filter-item" hover-class="none" @click="openSortSheet">
 					<text class="filter-item-txt">{{ sortLabel }}</text>
 					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
-				<view class="filter-item filter-item-muted" @click="onFilterPlaceholder('time')">
+				<view class="filter-item filter-item-muted" hover-class="none" @click="onFilterPlaceholder('time')">
 					<text class="filter-item-txt">服务时段</text>
 					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
-				<view class="filter-item filter-item-muted" @click="onFilterPlaceholder('more')">
+				<view class="filter-item filter-item-muted" hover-class="none" @click="onFilterPlaceholder('more')">
 					<text class="filter-item-txt">全部筛选</text>
 					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
@@ -47,6 +80,7 @@
 						:key="tag.key"
 						class="tag-chip"
 						:class="{ active: activeQuickTag === tag.key, highlight: tag.highlight }"
+						hover-class="none"
 						@click="toggleQuickTag(tag.key)"
 					>
 						<text>{{ tag.label }}</text>
@@ -67,7 +101,7 @@
 			v-else-if="therapistList.length > 0 && sortedDisplayList.length === 0 && !loading"
 			class="search-empty"
 		>
-			<text>未找到相关理疗师，可换个关键词试试</text>
+			<text>{{ listEmptyHint }}</text>
 		</view>
 
 		<view v-if="therapistList.length === 0 && !loading">
@@ -113,6 +147,17 @@ export default {
 			therapistSearchKey: '',
 			sortMode: 'default',
 			activeQuickTag: '',
+			/** 项目分类（本地筛选：擅长/简介等字段关键词） */
+			activeProjectKey: 'all',
+			projectCategories: [
+				{ key: 'all', label: '精选' },
+				{ key: 'tcm', label: '中医推拿' },
+				{ key: 'foot', label: '足道SPA' },
+				{ key: 'beauty', label: '美容美肤' },
+				{ key: 'pediatric', label: '小儿推拿' },
+				{ key: 'physio', label: '康复理疗' },
+				{ key: 'massage', label: '精油开背' }
+			],
 			quickTags: [
 				{ key: 'skill', label: '手法优先', highlight: false },
 				{ key: 'new', label: '新人', highlight: false },
@@ -130,9 +175,19 @@ export default {
 			const f = SORT_ITEMS.find(s => s.key === this.sortMode);
 			return f ? f.label : '智能排序';
 		},
+		listEmptyHint() {
+			const kw = (this.therapistSearchKey || '').trim();
+			if (kw) return '未找到相关理疗师，可换个关键词试试';
+			if (this.activeProjectKey && this.activeProjectKey !== 'all') {
+				return '该分类下暂无匹配技师，可试试「精选」或其它分类';
+			}
+			if (this.activeQuickTag) return '当前条件下暂无理疗师，可调整筛选试试';
+			return '未找到相关理疗师，可换个关键词试试';
+		},
 		displayTherapistList() {
 			const kw = (this.therapistSearchKey || '').trim().toLowerCase();
 			let list = this.therapistList || [];
+			list = this.filterByProjectCategory(list);
 			if (this.activeQuickTag === 'new') {
 				list = list.filter(t => {
 					const n = Number(t.treatNum);
@@ -209,6 +264,70 @@ export default {
 		},
 		toggleQuickTag(key) {
 			this.activeQuickTag = this.activeQuickTag === key ? '' : key;
+		},
+
+		selectProjectCat(key) {
+			this.activeProjectKey = key;
+		},
+
+		openProjectCatMore() {
+			const cats = this.projectCategories || [];
+			const labels = cats.map(c => c.label);
+			uni.showActionSheet({
+				itemList: labels,
+				success: res => {
+					const idx = res.tapIndex;
+					if (idx >= 0 && idx < cats.length) {
+						this.activeProjectKey = cats[idx].key;
+					}
+				}
+			});
+		},
+
+		/** 按项目分类在擅长/简介中做关键词匹配（无接口字段时的折中） */
+		filterByProjectCategory(list) {
+			const key = this.activeProjectKey;
+			if (!key || key === 'all') return list;
+			const pick = t => {
+				const text = (
+					(t.hospitalDomain || '') +
+					(t.specialization || '') +
+					(t.selfInfo || '')
+				).toLowerCase();
+				switch (key) {
+					case 'tcm':
+						return (
+							text.includes('推拿') ||
+							text.includes('中医') ||
+							text.includes('针灸') ||
+							text.includes('艾灸') ||
+							text.includes('拔罐')
+						);
+					case 'foot':
+						return text.includes('足') || text.includes('足道') || text.includes('spa');
+					case 'beauty':
+						return text.includes('美容') || text.includes('美肤') || text.includes('皮肤');
+					case 'pediatric':
+						return text.includes('小儿') || text.includes('儿童') || text.includes('儿科');
+					case 'physio':
+						return (
+							text.includes('理疗') ||
+							text.includes('康复') ||
+							text.includes('运动') ||
+							text.includes('产后')
+						);
+					case 'massage':
+						return (
+							text.includes('精油') ||
+							text.includes('开背') ||
+							text.includes('经络') ||
+							text.includes('舒压')
+						);
+					default:
+						return true;
+				}
+			};
+			return (list || []).filter(pick);
 		},
 
 		getList() {
@@ -324,6 +443,133 @@ export default {
 	line-height: 1;
 	padding: 0 8rpx;
 	flex-shrink: 0;
+}
+
+/* 项目分类：禁用系统点击高亮；避免 transform 过渡产生「抖动感」 */
+.project-cat-row {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	background: #fff;
+	border-bottom: 1rpx solid #f0f0f0;
+	overflow: hidden;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.project-cat-row .project-cat-item,
+.project-cat-row .project-cat-more {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.project-cat-scroll {
+	flex: 1;
+	min-width: 0;
+	height: 92rpx;
+}
+
+.project-cat-inner {
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 92rpx;
+	padding: 0 10rpx 0 0;
+	box-sizing: border-box;
+	/* 与屏左对齐，首项左缘即屏幕左缘 */
+	padding-left: 0;
+}
+
+.project-cat-item {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin-right: 7rpx;
+	box-sizing: border-box;
+}
+
+.project-cat-pill {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 64rpx;
+	padding: 0 24rpx;
+	box-sizing: border-box;
+	border-radius: 0;
+	/* 不对 transform 做过渡，切换选中时斜切瞬间到位，避免「震动」感 */
+	transition: background-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* 首项「精选」：固定最小宽度，文案在块内水平居中（不靠左） */
+.project-cat-item--lead .project-cat-pill {
+	min-width: 140rpx;
+	padding-left: 26rpx;
+	padding-right: 26rpx;
+}
+
+.project-cat-text {
+	font-size: 27rpx;
+	color: #666;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-align: center;
+}
+
+/*
+ * 选中态：左侧竖直、与列表左缘对齐，仅右侧斜边（梯形）。
+ * 不用 skew，避免整块旋转导致左边也「斜」出去。
+ */
+.project-cat-item.active .project-cat-pill {
+	background: var(--view-theme, #3a9d8f);
+	transform: none;
+	clip-path: polygon(0 0, 100% 0, 89% 100%, 0 100%);
+	border-radius: 0;
+	box-shadow: 0 4rpx 14rpx rgba(58, 157, 143, 0.2);
+	padding-left: 30rpx;
+	padding-right: 38rpx;
+}
+
+.project-cat-item--lead.active .project-cat-pill {
+	min-width: 152rpx;
+	padding-left: 32rpx;
+	padding-right: 38rpx;
+}
+
+.project-cat-item.active .project-cat-text {
+	transform: none;
+	color: #fff;
+	font-weight: 600;
+	letter-spacing: 0;
+}
+
+/* 右侧「更多」：与分类条同高 */
+.project-cat-more {
+	flex-shrink: 0;
+	width: 78rpx;
+	min-height: 92rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-left: 1rpx solid #f0f0f0;
+	background: #fafafa;
+}
+
+.project-cat-more-inner {
+	width: 48rpx;
+	height: 48rpx;
+	border-radius: 13rpx;
+	background: #fff;
+	border: 1rpx solid #eaeaea;
+	box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.project-cat-more-ico {
+	font-size: 24rpx;
+	color: #999;
+	line-height: 1;
 }
 
 .filter-bar {

@@ -76,13 +76,16 @@
 								<text class="banner-mall-sep">·</text>
 								<text class="banner-subtitle">药食同源</text>
 							</view>
+							<view class="banner-mall-icon-wrap">
+								<text class="iconfont icon-ic_commodity banner-mall-deco"></text>
+							</view>
 						</view>
 					</view>
 				</view>
 
 				<!-- 特色门诊 -->
 				<view class="clinic-section">
-					<view class="section-title">特色门诊</view>
+					<view class="section-title">特色服务</view>
 					<view class="clinic-grid">
 						<view class="clinic-card" v-for="(item, idx) in clinicList" :key="idx" @click="goClinicDetail(item)">
 							<view class="clinic-card-text">
@@ -146,68 +149,79 @@
 								:key="doc.id || index"
 								@click="goDoctorDetail(doc)"
 							>
-								<view class="doc-avatar-wrap">
-									<view class="doc-avatar-circle">
-										<view class="doc-avatar-inner">
-											<easy-loadimage
-												class="doc-avatar-easy"
-												:image-src="doctorAvatarSrc(doc)"
-												mode="aspectFill"
-												width="110rpx"
-												height="110rpx"
-												radius="50%"
-											/>
+								<!-- 上：头像 + 姓名/职称/医院（与头像等高区域对齐，避免左侧头像下空白） -->
+								<view class="doc-top-row">
+									<view class="doc-avatar-wrap">
+										<view class="doc-avatar-circle">
+											<view class="doc-avatar-outer-ring">
+												<view class="doc-avatar-white-ring">
+													<view class="doc-avatar-inner">
+														<easy-loadimage
+															class="doc-avatar-easy"
+															:image-src="doctorAvatarSrc(doc)"
+															mode="aspectFill"
+															width="134rpx"
+															height="134rpx"
+															radius="50%"
+														/>
+													</view>
+												</view>
+											</view>
+											<view v-if="doc.onlineStatus === 1" class="online-badge-below">
+												<text>· 接诊中</text>
+											</view>
 										</view>
 									</view>
-									<view v-if="doc.onlineStatus === 1" class="online-badge-below">
-										<text>接诊中</text>
+									<view class="doc-head-info">
+										<view class="doc-name-row">
+											<text class="doc-name">{{ doc.name }}</text>
+											<view v-if="hasStat(doc.score)" class="doctor-score-tag">
+												<text class="iconfont icon-ic_love_2"></text>
+												<text>评分 {{ formatScore(doc.score) }}</text>
+											</view>
+										</view>
+										<view class="doc-title-dept" v-if="doc.hospitalTitle || doc.hospitalSub">
+											<text v-if="doc.hospitalTitle">{{ doc.hospitalTitle }}</text>
+											<text v-if="doc.hospitalTitle && doc.hospitalSub"> | </text>
+											<text v-if="doc.hospitalSub">{{ doc.hospitalSub }}</text>
+										</view>
+										<view class="doc-hospital-line" v-if="doc.hospitalName || doc.hospitalLevel">
+											<text v-if="doc.hospitalLevel" class="level-tag">{{ doc.hospitalLevel }}</text>
+											<text class="hosp-name line1">{{ doc.hospitalName }}</text>
+										</view>
 									</view>
 								</view>
-								<view class="doc-info">
-									<view class="doc-name-row">
-										<text class="doc-name">{{ doc.name }}</text>
-										<view v-if="hasStat(doc.score)" class="doctor-score-tag">
-											<text class="iconfont icon-ic_love_2"></text>
-											<text>评分 {{ formatScore(doc.score) }}</text>
-										</view>
+								<!-- 下：擅长 / 统计 / 按钮 通栏左对齐，与示意图一致 -->
+								<view class="doc-domain">
+									<text class="doc-domain-line2">
+										<text class="domain-label">擅长：</text>
+										<text class="domain-body">{{ doc.hospitalDomain || doc.specialization || '—' }}</text>
+									</text>
+								</view>
+								<view class="doc-stats-line">
+									<text class="stat-num">{{ doc.treatNum != null ? doc.treatNum : 0 }}</text>
+									<text class="stat-txt"> 接诊数</text>
+									<text class="stat-split"> · </text>
+									<text class="stat-txt">{{ doctorResponseLine(doc) }}</text>
+								</view>
+								<view class="doc-actions">
+									<view
+										class="action-pill"
+										v-if="doctorImageFee(doc) != null"
+										@click.stop="goConsult(doc, 'text')"
+									>
+										<text class="iconfont icon-ic_edit"></text>
+										<text>图文</text>
+										<text class="pill-price">¥{{ formatDoctorPrice(doctorImageFee(doc)) }}</text>
 									</view>
-									<view class="doc-title-dept" v-if="doc.hospitalTitle || doc.hospitalSub">
-										<text v-if="doc.hospitalTitle">{{ doc.hospitalTitle }}</text>
-										<text v-if="doc.hospitalTitle && doc.hospitalSub"> | </text>
-										<text v-if="doc.hospitalSub">{{ doc.hospitalSub }}</text>
-									</view>
-									<view class="doc-hospital-line" v-if="doc.hospitalName || doc.hospitalLevel">
-										<text v-if="doc.hospitalLevel" class="level-tag">{{ doc.hospitalLevel }}</text>
-										<text class="hosp-name line1">{{ doc.hospitalName }}</text>
-									</view>
-									<view class="doc-domain line2">
-										擅长：{{ doc.hospitalDomain || doc.specialization || '—' }}
-									</view>
-									<view class="doc-stats-line">
-										<text class="stat-num">{{ doc.treatNum != null ? doc.treatNum : 0 }}</text>
-										<text class="stat-txt"> 接诊数</text>
-										<text class="stat-split"> · </text>
-										<text class="stat-txt">{{ doctorResponseLine(doc) }}</text>
-									</view>
-									<view class="doc-actions">
-										<view
-											class="action-pill"
-											v-if="doctorImageFee(doc) != null"
-											@click.stop="goConsult(doc, 'text')"
-										>
-											<text class="iconfont icon-ic_edit"></text>
-											<text>图文</text>
-											<text class="pill-price">¥{{ formatDoctorPrice(doctorImageFee(doc)) }}</text>
-										</view>
-										<view
-											class="action-pill action-pill-video"
-											v-if="doctorVideoFee(doc) != null"
-											@click.stop="goConsult(doc, 'video')"
-										>
-											<text class="iconfont icon-ic_video"></text>
-											<text>视频</text>
-											<text class="pill-price">¥{{ formatDoctorPrice(doctorVideoFee(doc)) }}</text>
-										</view>
+									<view
+										class="action-pill action-pill-video"
+										v-if="doctorVideoFee(doc) != null"
+										@click.stop="goConsult(doc, 'video')"
+									>
+										<text class="iconfont icon-ic_video1"></text>
+										<text>视频</text>
+										<text class="pill-price">¥{{ formatDoctorPrice(doctorVideoFee(doc)) }}</text>
 									</view>
 								</view>
 							</view>
@@ -401,12 +415,12 @@ export default {
 			showIndexDiy: false,
 			isTabSticky: false,
 
-			// 特色门诊：首项「快捷门诊」进首页第一位名医详情；其余可配 link 或敬请期待
+			// 特色服务：理疗技师→理疗 Tab（理疗师列表）；其余可配 tabPath / link / quickDoctor / 敬请期待
 			clinicList: [
-				{ name: '快捷门诊', desc: '快速接诊', icon: 'icon-ic_clock', link: '', quickDoctor: true },
-				{ name: '调养专病门诊', desc: '中医治根本', icon: 'icon-ic_leaf', link: '' },
-				{ name: '肥胖专病门诊', desc: '轻松享瘦', icon: 'icon-ic_crown', link: '' },
-				{ name: 'AI特色门诊', desc: '快速高效', icon: 'icon-ic_xuni', link: '', showTitleIcon: true, titleIcon: 'icon-ic_xuni' }
+				{ name: '理疗技师', desc: '快遽接单', icon: 'icon-ic_clock', tabPath: '/pages/physio/index' },
+				{ name: '中医推拿', desc: '排寒祛湿', icon: 'icon-ic_leaf', link: '' },
+				{ name: '精油足道', desc: '头疗 SAP', icon: 'icon-ic_crown', link: '' },
+				{ name: '美容美肤', desc: '女性健康', icon: 'icon-ic_xuni', link: '', showTitleIcon: true, titleIcon: 'icon-ic_xuni' }
 			],
 
 			// Tab（恢复平台商城：tabList 增加「平台商城」，并取消下方模板与 loadTabData 等注释）
@@ -718,6 +732,10 @@ export default {
 		},
 
 		goClinicDetail(item) {
+			if (item.tabPath) {
+				uni.switchTab({ url: item.tabPath });
+				return;
+			}
 			if (item.link) {
 				this.$util.navigateTo(item.link);
 				return;
@@ -1112,7 +1130,7 @@ page {
 }
 
 .banner-inline-icon {
-	font-size: 36rpx;
+	font-size: 40rpx;
 	color: var(--view-theme);
 }
 
@@ -1136,7 +1154,7 @@ page {
 }
 
 .banner-title-bold {
-	font-size: 32rpx;
+	font-size: 36rpx;
 	font-weight: 700;
 	color: #282828;
 }
@@ -1148,7 +1166,7 @@ page {
 
 .banner-subtitle {
 	display: block;
-	font-size: 22rpx;
+	font-size: 26rpx;
 	color: #666;
 	margin-top: 8rpx;
 }
@@ -1167,8 +1185,18 @@ page {
 }
 
 .banner-mall-sep {
-	font-size: 22rpx;
+	font-size: 26rpx;
 	color: #999;
+}
+
+.banner-mall-icon-wrap {
+	margin-top: 12rpx;
+}
+
+.banner-mall-deco {
+	font-size: 56rpx;
+	color: var(--view-second-theme);
+	opacity: 0.85;
 }
 
 .banner-info-row {
@@ -1227,7 +1255,7 @@ page {
 }
 
 .section-title {
-	font-size: 34rpx;
+	font-size: 38rpx;
 	font-weight: 700;
 	color: #333;
 	margin-bottom: 20rpx;
@@ -1256,7 +1284,7 @@ page {
 
 .clinic-card-name {
 	display: block;
-	font-size: 28rpx;
+	font-size: 30rpx;
 	font-weight: 600;
 	color: #333;
 	margin-bottom: 8rpx;
@@ -1264,7 +1292,7 @@ page {
 
 .clinic-card-desc {
 	display: block;
-	font-size: 22rpx;
+	font-size: 24rpx;
 	color: #999;
 }
 
@@ -1276,7 +1304,7 @@ page {
 }
 
 .clinic-title-icon {
-	font-size: 30rpx;
+	font-size: 32rpx;
 	color: var(--view-theme);
 }
 
@@ -1322,7 +1350,7 @@ page {
 	position: relative;
 	padding: 24rpx 0;
 	margin-right: 48rpx;
-	font-size: 30rpx;
+	font-size: 34rpx;
 	color: #999;
 	font-weight: 500;
 	transition: color 0.2s;
@@ -1330,7 +1358,7 @@ page {
 	&.active {
 		color: #333;
 		font-weight: 700;
-		font-size: 32rpx;
+		font-size: 36rpx;
 	}
 }
 
@@ -1339,7 +1367,7 @@ page {
 	bottom: 0;
 	left: 50%;
 	transform: translateX(-50%);
-	width: 40rpx;
+	width: 48rpx;
 	height: 6rpx;
 	border-radius: 3rpx;
 	background: var(--view-theme);
@@ -1354,6 +1382,7 @@ page {
 	padding: 0;
 	margin: 0;
 	border-radius: 0;
+	box-sizing: border-box;
 }
 
 .doctor-quick-filters {
@@ -1420,21 +1449,21 @@ page {
 }
 
 .filter-card-title {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	font-weight: 600;
 	color: #282828;
 	line-height: 1.2;
 }
 
 .filter-card-desc {
-	font-size: 22rpx;
+	font-size: 24rpx;
 	color: #999;
 	line-height: 1.2;
 }
 
 .filter-card-go {
 	flex-shrink: 0;
-	font-size: 22rpx;
+	font-size: 24rpx;
 	color: #ccc;
 	margin-left: 4rpx;
 }
@@ -1446,12 +1475,22 @@ page {
 
 .doctor-card {
 	display: flex;
-	align-items: flex-start;
+	flex-direction: column;
+	align-items: stretch;
 	background: #fff;
 	border-radius: 20rpx;
-	padding: 28rpx 24rpx;
+	padding: 24rpx 24rpx 20rpx;
 	margin-bottom: 16rpx;
 	box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 仅头像+基础信息横排；下方擅长等为通栏，避免头像左侧大块留白 */
+.doc-top-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .tab-content-doctor .doctor-card {
@@ -1467,10 +1506,11 @@ page {
 	position: absolute;
 	left: 50%;
 	bottom: 0;
+	-webkit-transform: translateX(-50%);
 	transform: translateX(-50%);
-	width: 90%;
-	height: 0.5px;
-	background: #eee;
+	width: 95%;
+	height: 1rpx;
+	background: #d8d8d8;
 }
 
 .tab-content-doctor .doctor-list {
@@ -1480,51 +1520,84 @@ page {
 .doc-avatar-wrap {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	align-items: flex-start;
 	flex-shrink: 0;
 	margin-right: 20rpx;
-	min-width: 110rpx;
+	width: 144rpx;
 }
 
 .doc-avatar-circle {
-	width: 110rpx;
-	height: 110rpx;
+	position: relative;
+	width: 144rpx;
+	height: 144rpx;
 	flex-shrink: 0;
+	overflow: visible;
+}
+
+/* 外橙 + 内白双圈，与示意图一致 */
+.doc-avatar-outer-ring {
+	width: 144rpx;
+	height: 144rpx;
+	box-sizing: border-box;
+	padding: 3rpx;
+	border-radius: 50%;
+	background: linear-gradient(145deg, #ffb04d, #ff9a3d 40%, #ff7a00);
+	box-shadow: 0 4rpx 14rpx rgba(255, 140, 60, 0.28);
+}
+
+.doc-avatar-white-ring {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 2rpx;
+	border-radius: 50%;
+	background: #fff;
 }
 
 .doc-avatar-inner {
-	width: 110rpx;
-	height: 110rpx;
+	width: 100%;
+	height: 100%;
 	border-radius: 50%;
 	overflow: hidden;
 	background: #f0f0f0;
 }
 
 .doc-avatar-easy {
-	width: 110rpx;
-	height: 110rpx;
+	width: 100%;
+	height: 100%;
 	border-radius: 50%;
 	overflow: hidden;
 }
 
-/* 接诊中：头像正下方（接口 onlineStatus 1=接诊中） */
+/* 接诊中：与橙色外圈同色，半压在圆底居中，与头像连成一体（接口 onlineStatus 1=接诊中） */
 .online-badge-below {
-	margin-top: 8rpx;
-	align-self: center;
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	z-index: 3;
+	transform: translate(-50%, 42%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	background: linear-gradient(90deg, #ff9a3d, #ff7a00);
 	color: #fff;
-	font-size: 18rpx;
-	padding: 4rpx 12rpx;
-	border-radius: 8rpx;
+	font-size: 22rpx;
+	padding: 4rpx 10rpx;
+	width: 116rpx;
+	border-radius: 20rpx;
 	white-space: nowrap;
 	line-height: 1.2;
-	text-align: center;
+	box-shadow: 0 2rpx 8rpx rgba(255, 122, 0, 0.25);
 }
 
-.doc-info {
+.doc-head-info {
 	flex: 1;
-	overflow: hidden;
 	min-width: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
 }
 
 .doc-name-row {
@@ -1536,10 +1609,14 @@ page {
 }
 
 .doc-name {
-	font-size: 32rpx;
+	font-size: 34rpx;
 	font-weight: 700;
 	color: #282828;
-	flex-shrink: 0;
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* 接口 score：≤5 按十分制展示一位小数，否则原样 */
@@ -1547,23 +1624,27 @@ page {
 	display: inline-flex;
 	align-items: center;
 	gap: 4rpx;
-	font-size: 20rpx;
+	flex-shrink: 0;
+	font-size: 24rpx;
 	color: #c45c12;
-	background: rgba(255, 154, 61, 0.15);
-	padding: 4rpx 12rpx;
-	border-radius: 20rpx;
+	background: rgba(255, 154, 61, 0.18);
+	padding: 6rpx 14rpx;
+	border-radius: 22rpx;
 	line-height: 1.2;
+	font-weight: 500;
 
 	.iconfont {
-		font-size: 22rpx;
+		font-size: 26rpx;
 	}
 }
 
 .doc-title-dept {
-	font-size: 24rpx;
+	font-size: 26rpx;
 	color: #666;
-	margin-bottom: 8rpx;
+	margin-bottom: 6rpx;
 	line-height: 1.4;
+	width: 100%;
+	text-align: left;
 }
 
 .doc-hospital-line {
@@ -1571,51 +1652,80 @@ page {
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 8rpx;
-	margin-bottom: 10rpx;
+	margin-bottom: 0;
+	width: 100%;
 }
 
+/* 三甲等医院等级角标（模板 class 为 level-tag） */
+.level-tag,
 .hospital-level {
 	display: inline-block;
-	background: #fff3cd;
+	background: #fff3e0;
 	color: #b8860b;
-	font-size: 20rpx;
+	font-size: 22rpx;
 	padding: 2rpx 10rpx;
 	border-radius: 6rpx;
 	flex-shrink: 0;
+	font-weight: 500;
 }
 
 .hosp-name {
-	font-size: 24rpx;
+	font-size: 26rpx;
 	color: #333;
 	flex: 1;
 	min-width: 0;
 }
 
+/* 仅包住「擅长」文案，不描整张卡 */
 .doc-domain {
-	font-size: 24rpx;
-	color: #999;
-	line-height: 1.45;
-	margin-bottom: 12rpx;
+	width: 100%;
+	margin-top: 22rpx;
+	margin-bottom: 8rpx;
+	text-align: left;
+	box-sizing: border-box;
+	// border: 1rpx solid #e8e8e8;
+	// border-radius: 12rpx;
+	// padding: 16rpx 18rpx;
+	// background: #fff;
+}
+
+.doc-domain-line2 {
 	display: -webkit-box;
-	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	overflow: hidden;
+	font-size: 26rpx;
+	padding-right: 10rpx;
+	line-height: 1.45;
+}
+
+.domain-label {
+	font-weight: 600;
+	color: #333;
+}
+
+.domain-body {
+	color: #888;
 }
 
 .doc-stats-line {
-	font-size: 22rpx;
-	color: #999;
-	margin-bottom: 16rpx;
-	line-height: 1.5;
+	width: 100%;
+	font-size: 24rpx;
+	color: #a67c52;
+	margin-bottom: 12rpx;
+	line-height: 1.45;
+	text-align: left;
+	box-sizing: border-box;
 }
 
 .doc-stats-line .stat-num {
-	color: #c45c12;
-	font-weight: 600;
+	color: #b87333;
+	font-weight: 700;
 }
 
 .doc-stats-line .stat-txt {
-	color: #999;
+	color: #a67c52;
 }
 
 .doc-stats-line .stat-split {
@@ -1624,40 +1734,49 @@ page {
 
 .doc-actions {
 	display: flex;
+	flex-direction: row;
 	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-start;
 	gap: 16rpx;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .action-pill {
 	display: inline-flex;
 	align-items: center;
-	gap: 8rpx;
-	padding: 12rpx 22rpx;
-	border-radius: 32rpx;
-	font-size: 24rpx;
-	background: #fff8f0;
-	color: #8b5a2b;
-	border: 1rpx solid rgba(196, 92, 18, 0.35);
+	justify-content: center;
+	gap: 10rpx;
+	min-width: 240rpx;
+	padding: 16rpx 40rpx;
+	border-radius: 50rpx;
+	font-size: 26rpx;
+	background: #fff;
+	color: #333;
+	border: 1rpx solid #e5e5e5;
+	box-sizing: border-box;
 
 	.iconfont {
-		font-size: 26rpx;
-		color: #c45c12;
+		font-size: 28rpx;
+		color: #666;
 	}
 }
 
 .action-pill-video {
-	background: #f5f9ff;
-	color: #2b6cb0;
-	border-color: rgba(43, 108, 176, 0.35);
+	background: #fff;
+	color: #333;
+	border-color: #e5e5e5;
 
 	.iconfont {
-		color: #2b6cb0;
+		color: #666;
 	}
 }
 
 .pill-price {
 	font-weight: 600;
 	margin-left: 4rpx;
+	color: #e65c1a;
 }
 
 /* ==================== 理疗专区（列表组件样式在 physioTherapistCardList） ==================== */

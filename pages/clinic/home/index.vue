@@ -127,19 +127,24 @@
         </view>
       </view>
     </view>
+
+    <view v-if="bottomNavigationIsCustom" class="footerBottom"></view>
+    <pageFooter></pageFooter>
   </view>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import { getMerStreetApi } from '@/api/merchant.js';
 import { getCategoryFirst } from '@/api/api.js';
 import { getProductHot } from '@/api/product.js';
 import emptyPage from '@/components/emptyPage.vue';
+import pageFooter from '@/components/pageFooter/index.vue';
 
 let app = getApp();
 
 export default {
-  components: { emptyPage },
+  components: { emptyPage, pageFooter },
   data() {
     return {
       urlDomain: this.$Cache.get('imgHost'),
@@ -163,6 +168,7 @@ export default {
     };
   },
   computed: {
+    ...mapGetters(['bottomNavigationIsCustom']),
     defaultGoodsImg() {
       const raw = this.urlDomain || '';
       if (!raw) return '';

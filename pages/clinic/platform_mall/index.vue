@@ -236,14 +236,15 @@ export default {
   padding: 0 24rpx 32rpx;
 }
 
+/* 与首页 clinic-grid / 推荐好物一致：Grid 双列在各端比 flex+50% 更稳定 */
 .mall-product-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16rpx;
 }
 
 .mall-product-card {
-  width: calc(50% - 8rpx);
+  min-width: 0;
   background: #fff;
   border-radius: 16rpx;
   overflow: hidden;
@@ -257,6 +258,7 @@ export default {
   background: #eee;
 
   image {
+    display: block;
     width: 100%;
     height: 100%;
   }

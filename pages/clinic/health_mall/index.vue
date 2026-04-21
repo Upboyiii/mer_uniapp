@@ -1,5 +1,14 @@
 <template>
   <view class="clinic-home" :data-theme="theme">
+    <!-- 左上角悬浮返回（从门店列表进入时返回列表；单独打开则回门店 Tab） -->
+    <view
+      class="clinic-float-back"
+      :style="{ top: floatBackTopPx + 'px' }"
+      @click="goBackFromStoreHome"
+    >
+      <text class="iconfont icon-ic_leftarrow"></text>
+    </view>
+
     <!-- 浮动客服按钮：默认半藏，点击展开（先注释） -->
     <!--
     <view
@@ -163,12 +172,17 @@ export default {
     ...mapGetters(['isLogin', 'uid', 'globalData', 'bottomNavigationIsCustom']),
     displayProducts() {
       return this.productList;
+    },
+    floatBackTopPx() {
+      const base = typeof this.statusBarHeight === 'number' ? this.statusBarHeight : 0;
+      return base + 8;
     }
   },
   data() {
     return {
       urlDomain: this.$Cache.get("imgHost"),
       theme: app.globalData.theme,
+      statusBarHeight: 0,
       merId: 0,
       serviceOpen: false,
       serviceTop: 280,
@@ -183,6 +197,12 @@ export default {
     }
   },
   onLoad(options) {
+    try {
+      const sys = uni.getSystemInfoSync();
+      this.statusBarHeight = sys.statusBarHeight || 0;
+    } catch (e) {
+      this.statusBarHeight = 0;
+    }
     if (options.merId) {
       this.merId = parseInt(options.merId, 10);
       this.getClinicInfo();
@@ -224,6 +244,20 @@ export default {
     this.getProductList();
   },
   methods: {
+    goBackFromStoreHome() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        uni.navigateBack({ delta: 1 });
+      } else {
+        uni.switchTab({
+          url: '/pages/clinic/home/index',
+          fail() {
+            uni.reLaunch({ url: '/pages/clinic/home/index' });
+          }
+        });
+      }
+    },
+
     /** 未带 merId 进入时：店铺街接口取第一个门店作为当前门店（与门店切换页同一套 merchant/street） */
     bootstrapDefaultStore() {
       this.loading = true;
@@ -452,6 +486,29 @@ export default {
 .clinic-home {
   min-height: 100vh;
   background-color: #fff;
+}
+
+/* 左上角半透明悬浮返回 */
+.clinic-float-back {
+  position: fixed;
+  left: 24rpx;
+  z-index: 200;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  /* #ifdef H5 */
+  backdrop-filter: blur(6px);
+  /* #endif */
+
+  .iconfont {
+    font-size: 36rpx;
+    color: #fff;
+  }
 }
 
 /* 顶部背景图 */

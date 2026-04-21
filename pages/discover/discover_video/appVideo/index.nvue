@@ -134,7 +134,7 @@
 								</view>
 								<view v-if="k==i && list.productList.length>0" class="product mb20">
 									<scroll-view class="scroll-view" scroll-x="true"
-										style="white-space: nowrap; display: flex;" scroll-with-animation>
+										style="display: flex; flex-direction: row;" scroll-with-animation>
 										<view class="product-item" v-for="(goods,idx) in list.productList" :key="idx">
 											<view class="item-count acea-row" @click="goDetail(goods)">
 												<view class="picture">
@@ -1013,8 +1013,7 @@
 	.line1 {
 		overflow: hidden;
 		text-overflow: ellipsis;
-		white-space: nowrap;
-		//display: inline-block;
+		lines: 1;
 	}
 
 	.names {
@@ -1380,7 +1379,10 @@
 						background: #5D5747;
 						border-radius: 3px 3px 3px 3px;
 						font-size: 16rpx;
-						display: inline-block;
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						justify-content: center;
 					}
 
 					.product-price {

@@ -92,21 +92,37 @@
 <style lang="scss" scoped>
 	.isPay {
 		padding: 3rpx 5rpx;
-    /* #ifndef APP-PLUS */
-    @include main_color(theme);
-    @include coupons_border_color(theme);
-    /* #endif */
 		font-size: 20rpx;
 		border-radius: 3px 3px 3px 3px;
 		margin-top: 12rpx;
+		/* #ifdef APP-PLUS-NVUE */
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		color: #e93323;
+		border-width: 1px;
+		border-style: solid;
+		border-color: #e93323;
+		/* #endif */
+		/* #ifndef APP-PLUS-NVUE */
+		/* #ifndef APP-PLUS */
+		@include main_color(theme);
+		@include coupons_border_color(theme);
+		/* #endif */
 		display: inline-block;
+		/* #endif */
 	}
 
 	.container {
 		background-color: #ffffff;
 		border-radius: 40rpx 40rpx 0 0;
-		padding-bottom: constant(safe-area-inset-bottom); ///兼容 IOS<11.2/
-		padding-bottom: env(safe-area-inset-bottom); ///兼容 IOS>11.2/
+		/* #ifndef APP-PLUS-NVUE */
+		padding-bottom: constant(safe-area-inset-bottom);
+		padding-bottom: env(safe-area-inset-bottom);
+		/* #endif */
+		/* #ifdef APP-PLUS-NVUE */
+		padding-bottom: 24rpx;
+		/* #endif */
 
 		.header {
 			position: relative;
@@ -134,7 +150,9 @@
 		.main_count {
 			padding: 0 24rpx 0 0;
 			//max-height: 1100rpx;
+			/* #ifndef APP-PLUS-NVUE */
 			overflow-y: scroll;
+			/* #endif */
 
 			.list {
 				width: 578rpx;
@@ -165,10 +183,16 @@
 					position: relative;
 
 					.name {
-            display: inline-block;
 						width: 390rpx;
 						lines: 1;
 						text-overflow: ellipsis;
+						/* #ifdef APP-PLUS-NVUE */
+						display: flex;
+						flex-direction: row;
+						/* #endif */
+						/* #ifndef APP-PLUS-NVUE */
+						display: inline-block;
+						/* #endif */
 					}
 
 					.bottom {
@@ -187,14 +211,24 @@
 
 						.sm {
 							font-weight: bold;
-							color: var(--view-theme);
 							font-size: 26rpx;
+							/* #ifdef APP-PLUS-NVUE */
+							color: #e93323;
+							/* #endif */
+							/* #ifndef APP-PLUS-NVUE */
+							color: var(--view-theme);
+							/* #endif */
 						}
 
 						.text {
 							font-weight: bold;
-							color: var(--view-theme);
 							font-size: 34rpx;
+							/* #ifdef APP-PLUS-NVUE */
+							color: #e93323;
+							/* #endif */
+							/* #ifndef APP-PLUS-NVUE */
+							color: var(--view-theme);
+							/* #endif */
 						}
 					}
 
@@ -206,7 +240,12 @@
 						justify-content: center;
 						font-size: 24rpx;
 						color: #fff;
+						/* #ifdef APP-PLUS-NVUE */
+						background-color: #e93323;
+						/* #endif */
+						/* #ifndef APP-PLUS-NVUE */
 						background: var(--view-theme);
+						/* #endif */
 					}
 				}
 			}

@@ -104,6 +104,10 @@
 			let routes = getCurrentPages(); //获取当前打开过的页面路由数组
 			let curRoute = routes[routes.length - 1].route //获取当前页面路由
 			this.activeRouter = '/' + curRoute;
+			/* 门店子页与门店 Tab 同一入口，底部导航高亮「门店」 */
+			if (this.activeRouter === '/pages/clinic/health_mall/index') {
+				this.activeRouter = '/pages/clinic/home/index';
+			}
 			if (this.isSmallPage && !this.fromTo) {
         let data = this.dataConfig.menuList.list;
 				this.bottomNavigationList = (data || []).map(item => ({
