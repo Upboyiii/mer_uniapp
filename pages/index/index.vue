@@ -118,29 +118,32 @@
 						</view>
 					</view>
 
-					<!-- 名医专家 -->
+					<!-- 名医专家：按科室/按疾病 — 样式对齐理疗页 project-cat（精选）横条 -->
 					<view v-if="currentTab === 0" class="tab-content tab-content-doctor">
-						<view class="doctor-quick-filters">
-							<view class="filter-card filter-card-dept" @click="goDoctorListByDept">
-								<view class="filter-card-icon">
-									<text class="iconfont icon-ic_store3"></text>
+						<view class="doc-cat-row">
+							<scroll-view
+								scroll-x
+								class="doc-cat-scroll"
+								:show-scrollbar="false"
+								:enable-flex="true"
+							>
+								<view class="doc-cat-inner">
+									<view
+										class="doc-cat-item doc-cat-item--lead"
+										hover-class="none"
+										@click="goDoctorListByDept"
+									>
+										<view class="doc-cat-pill">
+											<text class="doc-cat-text">按科室找</text>
+										</view>
+									</view>
+									<view class="doc-cat-item" hover-class="none" @click="goDoctorListByDisease">
+										<view class="doc-cat-pill">
+											<text class="doc-cat-text">按疾病找</text>
+										</view>
+									</view>
 								</view>
-								<view class="filter-card-main">
-									<text class="filter-card-title">按科室找</text>
-									<text class="filter-card-desc">内科、外科等</text>
-								</view>
-								<text class="iconfont icon-ic_rightarrow filter-card-go"></text>
-							</view>
-							<view class="filter-card filter-card-disease" @click="goDoctorListByDisease">
-								<view class="filter-card-icon">
-									<text class="iconfont icon-ic_notes"></text>
-								</view>
-								<view class="filter-card-main">
-									<text class="filter-card-title">按疾病找</text>
-									<text class="filter-card-desc">对症找名医</text>
-								</view>
-								<text class="iconfont icon-ic_rightarrow filter-card-go"></text>
-							</view>
+							</scroll-view>
 						</view>
 						<view v-if="doctorList.length > 0" class="doctor-list">
 							<view
@@ -1385,87 +1388,93 @@ page {
 	box-sizing: border-box;
 }
 
-.doctor-quick-filters {
+/* 名医专家入口：与 pages/physio/index 项目分类（精选）横条一致 */
+.doc-cat-row {
 	display: flex;
-	gap: 20rpx;
-	padding: 20rpx 24rpx 20rpx;
-	background: linear-gradient(180deg, #f8faf8 0%, #ffffff 45%);
-	border-bottom: 1rpx solid #eee;
+	flex-direction: row;
+	align-items: stretch;
+	background: #fff;
+	border-bottom: 1rpx solid #f0f0f0;
+	overflow: hidden;
+	-webkit-tap-highlight-color: transparent;
 }
 
-.filter-card {
+.doc-cat-row .doc-cat-item {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.doc-cat-scroll {
 	flex: 1;
 	min-width: 0;
-	display: flex;
+	height: 92rpx;
+}
+
+.doc-cat-inner {
+	display: inline-flex;
+	flex-direction: row;
 	align-items: center;
-	padding: 20rpx 14rpx 20rpx 18rpx;
-	background: #fff;
-	border-radius: 20rpx;
-	box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
-	border: 1rpx solid rgba(0, 0, 0, 0.04);
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	min-height: 92rpx;
+	padding: 0 10rpx 0 0;
+	box-sizing: border-box;
+	padding-left: 0;
 }
 
-.filter-card:active {
-	transform: scale(0.98);
-	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.filter-card-icon {
+.doc-cat-item {
 	flex-shrink: 0;
-	width: 76rpx;
-	height: 76rpx;
-	border-radius: 20rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-right: 14rpx;
+	padding: 0;
+	margin-right: 7rpx;
+	box-sizing: border-box;
 }
 
-.filter-card-dept .filter-card-icon {
-	background: linear-gradient(145deg, rgba(110, 163, 90, 0.22), rgba(110, 163, 90, 0.08));
-}
-
-.filter-card-dept .filter-card-icon .iconfont {
-	font-size: 40rpx;
-	color: var(--view-theme);
-}
-
-.filter-card-disease .filter-card-icon {
-	background: linear-gradient(145deg, rgba(230, 152, 80, 0.28), rgba(230, 152, 80, 0.1));
-}
-
-.filter-card-disease .filter-card-icon .iconfont {
-	font-size: 38rpx;
-	color: #c87b2e;
-}
-
-.filter-card-main {
-	flex: 1;
-	min-width: 0;
+.doc-cat-pill {
 	display: flex;
-	flex-direction: column;
-	gap: 6rpx;
+	align-items: center;
+	justify-content: center;
+	min-height: 64rpx;
+	padding: 0 24rpx;
+	box-sizing: border-box;
+	border-radius: 0;
+	transition: background-color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.filter-card-title {
-	font-size: 30rpx;
+.doc-cat-item--lead .doc-cat-pill {
+	min-width: 140rpx;
+	padding-left: 26rpx;
+	padding-right: 26rpx;
+}
+
+.doc-cat-text {
+	font-size: 27rpx;
+	color: #666;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* 首页为双入口：点击时短暂高亮为理疗页「选中」梯形样式（非互斥 tab，仅反馈） */
+.doc-cat-item:active .doc-cat-pill {
+	background: var(--view-theme, #3a9d8f);
+	transform: none;
+	clip-path: polygon(0 0, 100% 0, 89% 100%, 0 100%);
+	border-radius: 0;
+	box-shadow: 0 4rpx 14rpx rgba(58, 157, 143, 0.2);
+	padding-left: 30rpx;
+	padding-right: 38rpx;
+}
+
+.doc-cat-item--lead:active .doc-cat-pill {
+	min-width: 152rpx;
+	padding-left: 32rpx;
+	padding-right: 38rpx;
+}
+
+.doc-cat-item:active .doc-cat-text {
+	color: #fff;
 	font-weight: 600;
-	color: #282828;
-	line-height: 1.2;
-}
-
-.filter-card-desc {
-	font-size: 24rpx;
-	color: #999;
-	line-height: 1.2;
-}
-
-.filter-card-go {
-	flex-shrink: 0;
-	font-size: 24rpx;
-	color: #ccc;
-	margin-left: 4rpx;
+	letter-spacing: 0;
 }
 
 /* ==================== 名医专家 ==================== */

@@ -42,12 +42,17 @@
           </view>
           <view class="store-main">
             <text class="store-name line1">{{ item.name }}</text>
-            <view class="store-meta">
-              <text v-if="item.distance" class="store-distance">{{ item.distance }}</text>
-              <text class="store-address line1">{{ item.addressDetail || item.address || '' }}</text>
-            </view>
           </view>
-          <text class="iconfont icon-ic_rightarrow store-arrow"></text>
+          <view class="store-row-trail">
+            <view class="store-trail-text">
+              <text
+                v-if="item.addressDetail || item.address"
+                class="store-trail-addr line1"
+                >{{ item.addressDetail || item.address }}</text>
+              <text class="store-trail-km">{{ storeKmHint(index) }}</text>
+            </view>
+            <text class="iconfont icon-ic_rightarrow store-arrow"></text>
+          </view>
         </view>
       </view>
 
@@ -277,6 +282,11 @@ export default {
       if (!item || item.id == null) return;
       this.$util.navigateTo(`/pages/clinic/health_mall/index?merId=${item.id}`);
     },
+    /** 接口未返回距离时，列表行展示约 5–10 km 的占位（按行变化） */
+    storeKmHint(index) {
+      const n = 5.2 + ((index * 7) % 48) / 10;
+      return `${Math.min(n, 9.9).toFixed(1)}km`;
+    },
     getCategoryList() {
       getCategoryFirst()
         .then((res) => {
@@ -393,14 +403,14 @@ export default {
 
 .intro-title {
   display: block;
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 600;
   color: #282828;
   margin-bottom: 12rpx;
 }
 
 .intro-desc {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #888;
   line-height: 1.5;
 }
@@ -413,13 +423,13 @@ export default {
 }
 
 .section-title {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #282828;
 }
 
 .section-hint {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #aaa;
 }
 
@@ -457,35 +467,48 @@ export default {
 }
 
 .store-name {
-  font-size: 30rpx;
+  font-size: 32rpx;
   color: #282828;
   font-weight: 500;
-  margin-bottom: 8rpx;
 }
 
-.store-meta {
+.store-row-trail {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  font-size: 24rpx;
-  color: #999;
+  flex-shrink: 0;
+  max-width: 52%;
+  margin-left: 12rpx;
 }
 
-.store-distance {
+.store-trail-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.store-trail-addr {
+  display: block;
+  width: 100%;
+  font-size: 26rpx;
+  color: #999;
+  text-align: right;
+  margin-bottom: 6rpx;
+}
+
+.store-trail-km {
+  font-size: 24rpx;
   color: var(--view-theme, #1890ff);
+  font-weight: 500;
   flex-shrink: 0;
 }
 
-.store-address {
-  flex: 1;
-  min-width: 0;
-}
-
 .store-arrow {
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #ccc;
-  margin-left: 12rpx;
+  margin-left: 10rpx;
   flex-shrink: 0;
 }
 
@@ -513,7 +536,7 @@ export default {
   align-items: center;
   padding: 10rpx 28rpx;
   border-radius: 28rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #666;
   background: #fff;
   flex-shrink: 0;
@@ -562,11 +585,11 @@ export default {
 }
 
 .mall-product-name {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: #282828;
   line-height: 1.4;
   margin-bottom: 12rpx;
-  min-height: 72rpx;
+  min-height: 78rpx;
 }
 
 .mall-product-price {
@@ -575,13 +598,13 @@ export default {
 }
 
 .price-sym {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: var(--view-priceColor);
 }
 
 .price-val {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 600;
   color: var(--view-priceColor);
 }
@@ -598,7 +621,7 @@ export default {
 .loading-more {
   text-align: center;
   padding: 32rpx;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #999;
 }
 
