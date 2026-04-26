@@ -71,6 +71,16 @@
 					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
 				</view>
 			</view>
+			<view class="region-bar">
+				<view class="region-item" hover-class="none" @click="openCitySheet">
+					<text class="region-item-txt">{{ cityFilterLabel }}</text>
+					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
+				</view>
+				<view class="region-item" hover-class="none" @click="openDistrictSheet">
+					<text class="region-item-txt">{{ districtFilterLabel }}</text>
+					<text class="iconfont icon-ic_downarrow filter-arrow"></text>
+				</view>
+			</view>
 
 			<!-- 快捷标签 -->
 			<scroll-view scroll-x class="tag-scroll" show-scrollbar="false">
@@ -95,6 +105,7 @@
 			:theme="theme"
 			@detail="goTherapistDetail"
 			@book="goBookTherapist"
+			@store="goStoreByAddress"
 		/>
 
 		<view
@@ -149,6 +160,9 @@ export default {
 			activeQuickTag: '',
 			/** 项目分类（本地筛选：擅长/简介等字段关键词） */
 			activeProjectKey: 'all',
+			/** 城市/区域切换：空字符串代表全部 */
+			selectedCity: '',
+			selectedDistrict: '',
 			projectCategories: [
 				{ key: 'all', label: '精选' },
 				{ key: 'tcm', label: '中医推拿' },
@@ -178,15 +192,44 @@ export default {
 		listEmptyHint() {
 			const kw = (this.therapistSearchKey || '').trim();
 			if (kw) return '未找到相关理疗师，可换个关键词试试';
+			if (this.selectedCity || this.selectedDistrict) {
+				return '当前城市/区域暂无理疗师，可切换其他区域试试';
+			}
 			if (this.activeProjectKey && this.activeProjectKey !== 'all') {
 				return '该分类下暂无匹配技师，可试试「精选」或其它分类';
 			}
 			if (this.activeQuickTag) return '当前条件下暂无理疗师，可调整筛选试试';
 			return '未找到相关理疗师，可换个关键词试试';
 		},
+		cityFilterLabel() {
+			return this.selectedCity || '全部城市';
+		},
+		districtFilterLabel() {
+			return this.selectedDistrict || '全部区域';
+		},
+		cityOptions() {
+			const set = new Set();
+			(this.therapistList || []).forEach(t => {
+				const city = (t && t.city ? String(t.city) : '').trim();
+				if (city) set.add(city);
+			});
+			return Array.from(set);
+		},
+		districtOptions() {
+			const set = new Set();
+			(this.therapistList || []).forEach(t => {
+				const city = (t && t.city ? String(t.city) : '').trim();
+				const district = (t && t.district ? String(t.district) : '').trim();
+				if (!district) return;
+				if (this.selectedCity && city !== this.selectedCity) return;
+				set.add(district);
+			});
+			return Array.from(set);
+		},
 		displayTherapistList() {
 			const kw = (this.therapistSearchKey || '').trim().toLowerCase();
 			let list = this.therapistList || [];
+			list = this.filterByRegion(list);
 			list = this.filterByProjectCategory(list);
 			if (this.activeQuickTag === 'new') {
 				list = list.filter(t => {
@@ -262,6 +305,43 @@ export default {
 		onFilterPlaceholder(which) {
 			this.$util.Tips({ title: which === 'time' ? '服务时段筛选敬请期待' : '更多筛选敬请期待' });
 		},
+		openCitySheet() {
+			const cityOpts = this.cityOptions || [];
+			if (!cityOpts.length) {
+				return this.$util.Tips({ title: '暂无可切换城市' });
+			}
+			const itemList = ['全部城市'].concat(cityOpts);
+			uni.showActionSheet({
+				itemList,
+				success: res => {
+					const idx = res.tapIndex;
+					if (idx === 0) {
+						this.selectedCity = '';
+						this.selectedDistrict = '';
+						return;
+					}
+					this.selectedCity = cityOpts[idx - 1] || '';
+					if (this.selectedDistrict) {
+						const districtOk = this.districtOptions.includes(this.selectedDistrict);
+						if (!districtOk) this.selectedDistrict = '';
+					}
+				}
+			});
+		},
+		openDistrictSheet() {
+			const districtOpts = this.districtOptions || [];
+			if (!districtOpts.length) {
+				return this.$util.Tips({ title: '当前城市暂无可选区域' });
+			}
+			const itemList = ['全部区域'].concat(districtOpts);
+			uni.showActionSheet({
+				itemList,
+				success: res => {
+					const idx = res.tapIndex;
+					this.selectedDistrict = idx === 0 ? '' : districtOpts[idx - 1] || '';
+				}
+			});
+		},
 		toggleQuickTag(key) {
 			this.activeQuickTag = this.activeQuickTag === key ? '' : key;
 		},
@@ -329,6 +409,16 @@ export default {
 			};
 			return (list || []).filter(pick);
 		},
+		filterByRegion(list) {
+			if (!this.selectedCity && !this.selectedDistrict) return list;
+			return (list || []).filter(t => {
+				const city = (t && t.city ? String(t.city) : '').trim();
+				const district = (t && t.district ? String(t.district) : '').trim();
+				if (this.selectedCity && city !== this.selectedCity) return false;
+				if (this.selectedDistrict && district !== this.selectedDistrict) return false;
+				return true;
+			});
+		},
 
 		getList() {
 			if (this.loadend || this.loading) return;
@@ -385,6 +475,18 @@ export default {
 				picture: item.picture || ''
 			});
 			this.$util.navigateTo('/pages/clinic/physio_book/index');
+		},
+		goStoreByAddress(item) {
+			const mchId = Number(item && item.mchId) || 0;
+			if (!mchId) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			try {
+				uni.setStorageSync('CLINIC_HOME_MER_ID', String(mchId));
+				uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
+				uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(mchId));
+			} catch (e) {}
+			uni.switchTab({ url: '/pages/clinic/home/index' });
 		}
 	}
 };
@@ -603,6 +705,33 @@ export default {
 .filter-arrow {
 	font-size: 20rpx;
 	color: #bbb;
+}
+
+.region-bar {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 0 24rpx 10rpx;
+}
+
+.region-item {
+	flex: 1;
+	height: 64rpx;
+	border-radius: 32rpx;
+	background: #f5f6f8;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+}
+
+.region-item-txt {
+	max-width: 210rpx;
+	font-size: 24rpx;
+	color: #555;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tag-scroll {

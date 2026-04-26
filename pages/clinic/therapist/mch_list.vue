@@ -13,6 +13,7 @@
 			:theme="theme"
 			@detail="goTherapistDetail"
 			@book="goBookTherapist"
+			@store="goStoreByAddress"
 		/>
 
 		<view v-else-if="!loading && mchId && list.length === 0" class="empty-wrap">
@@ -194,6 +195,21 @@ export default {
 				picture: item.picture || ''
 			});
 			this.$util.navigateTo('/pages/clinic/physio_book/index');
+		},
+		goStoreByAddress(item) {
+			const mid = Number((item && item.mchId) || this.mchId) || 0;
+			if (!mid) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			if (Number(this.mchId) === mid) {
+				return this.$util.Tips({ title: '当前已在该门店' });
+			}
+			try {
+				uni.setStorageSync('CLINIC_HOME_MER_ID', String(mid));
+				uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
+				uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(mid));
+			} catch (e) {}
+			uni.switchTab({ url: '/pages/clinic/home/index' });
 		}
 	}
 };

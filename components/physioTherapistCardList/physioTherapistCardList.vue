@@ -9,7 +9,7 @@
 				class="therapist-card"
 				v-for="(item, index) in list"
 				:key="'physio-t-' + index + '-' + (item.id != null ? item.id : '')"
-				@click="onCardClick(item)"
+				@tap="onCardClick(item)"
 			>
 				<view class="card-upper">
 					<view class="col-avatar">
@@ -56,11 +56,18 @@
 							</text>
 						</view>
 
-						<view class="loc-row">
+						<view
+							class="loc-row loc-row-click"
+							@touchstart.stop="markLocationTouch"
+							@touchend.stop="markLocationTouch"
+							@click.stop="onLocationClick(item)"
+							@tap.stop="onLocationClick(item)"
+						>
 							<text class="loc-txt line1">{{ areaLine(item) || '服务范围内可预约' }}</text>
 							<view class="dist-pill">
 								<text class="iconfont icon-ic_location5 dist-ico"></text>
 								<text>{{ distanceLine(item) }}</text>
+								<text class="iconfont icon-ic_rightarrow loc-row-arrow"></text>
 							</view>
 						</view>
 
@@ -90,6 +97,7 @@
 						class="btn-book-list bg-color"
 						hover-class="book-main-hover"
 						@click.stop="onBookClick(item)"
+						@tap.stop="onBookClick(item)"
 					>
 						{{ bookButtonText }}
 					</button>
@@ -107,6 +115,12 @@ export default {
 	name: 'PhysioTherapistCardList',
 	components: { easyLoadimage },
 	mixins: [physioTherapistCardDisplay],
+	data() {
+		return {
+			/** 规避移动端点击冒泡/合成 click 导致误进详情 */
+			blockCardDetailUntil: 0
+		};
+	},
 	props: {
 		list: {
 			type: Array,
@@ -131,11 +145,19 @@ export default {
 		}
 	},
 	methods: {
+		markLocationTouch() {
+			this.blockCardDetailUntil = Date.now() + 700;
+		},
 		onCardClick(item) {
+			if (Date.now() < this.blockCardDetailUntil) return;
 			this.$emit('detail', item);
 		},
 		onBookClick(item) {
 			this.$emit('book', item);
+		},
+		onLocationClick(item) {
+			this.blockCardDetailUntil = Date.now() + 700;
+			this.$emit('store', item);
 		}
 	}
 };
@@ -302,6 +324,12 @@ export default {
 	justify-content: space-between;
 	gap: 12rpx;
 	margin-bottom: 12rpx;
+	position: relative;
+	z-index: 30;
+}
+
+.loc-row-click {
+	cursor: pointer;
 }
 
 .loc-txt {
@@ -323,6 +351,12 @@ export default {
 	font-size: 26rpx;
 	margin-right: 4rpx;
 	color: #ccc;
+}
+
+.loc-row-arrow {
+	font-size: 20rpx;
+	margin-left: 6rpx;
+	color: #c6c6c6;
 }
 
 .tag-block {

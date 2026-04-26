@@ -32,6 +32,22 @@
 				<!-- 占位高度：状态栏 + 导航内容区（约 80～90px 整体更紧凑） -->
 				<view :style="{ height: (statusBarHeight + navBarContentPx) + 'px' }"></view>
 
+				<!-- 顶部十宫格服务（先展示 10 项；后 6 项暂不可点击） -->
+				<!-- <view class="top-service-wrap">
+					<view class="top-service-grid">
+						<view
+							v-for="(item, idx) in topServiceList"
+							:key="'top-s-' + idx"
+							class="top-service-item"
+							:class="{ disabled: !item.enabled }"
+							@click="onTopServiceClick(item)"
+						>
+							<image class="top-service-img" :src="item.imgUrl" mode="aspectFit"></image>
+							<text class="top-service-name">{{ item.name }}</text>
+						</view>
+					</view>
+				</view> -->
+
 				<!-- Banner区域：左舌诊 / 右健康商城→平台商品页 platform_mall；肾经已注释 -->
 				<view class="banner-section">
 					<!--
@@ -83,7 +99,7 @@
 					</view>
 				</view>
 
-				<!-- 特色门诊 -->
+				 <!-- 旧版 4 宫格特色服务（先注释保留） -->
 				<view class="clinic-section">
 					<view class="section-title">特色服务</view>
 					<view class="clinic-grid">
@@ -118,28 +134,29 @@
 						</view>
 					</view>
 
-					<!-- 名医专家：按科室/按疾病 — 样式对齐理疗页 project-cat（精选）横条 -->
+					<!-- 名医专家：按科室/按疾病，使用理疗页「精选」同款分类条样式 -->
 					<view v-if="currentTab === 0" class="tab-content tab-content-doctor">
-						<view class="doc-cat-row">
+						<view class="home-cat-row home-cat-row-doctor">
 							<scroll-view
 								scroll-x
-								class="doc-cat-scroll"
+								class="home-cat-scroll"
 								:show-scrollbar="false"
 								:enable-flex="true"
 							>
-								<view class="doc-cat-inner">
+								<view class="home-cat-inner">
 									<view
-										class="doc-cat-item doc-cat-item--lead"
+										v-for="(cat, idx) in doctorQuickTabs"
+										:key="cat.key"
+										class="home-cat-item"
+										:class="{
+											active: activeDoctorQuickTab === cat.key,
+											'home-cat-item--lead': idx === 0
+										}"
 										hover-class="none"
-										@click="goDoctorListByDept"
+										@click="onDoctorQuickTabClick(cat.key)"
 									>
-										<view class="doc-cat-pill">
-											<text class="doc-cat-text">按科室找</text>
-										</view>
-									</view>
-									<view class="doc-cat-item" hover-class="none" @click="goDoctorListByDisease">
-										<view class="doc-cat-pill">
-											<text class="doc-cat-text">按疾病找</text>
+										<view class="home-cat-pill">
+											<text class="home-cat-text">{{ cat.label }}</text>
 										</view>
 									</view>
 								</view>
@@ -235,17 +252,50 @@
 						<view v-if="doctorLoading" class="loading-tip"><text>加载中...</text></view>
 					</view>
 
-					<!-- 理疗专区（列表样式与 pages/physio/index 一致，不含搜索筛选） -->
+					<!-- 理疗专区：补充与 pages/physio/index 一致的精选分类条 -->
 					<view v-if="currentTab === 1" class="tab-content tab-content-physio">
+						<view class="home-cat-row">
+							<scroll-view
+								scroll-x
+								class="home-cat-scroll"
+								:show-scrollbar="false"
+								:enable-flex="true"
+							>
+								<view class="home-cat-inner">
+									<view
+										v-for="(cat, idx) in homePhysioCategories"
+										:key="cat.key"
+										class="home-cat-item"
+										:class="{
+											active: activeHomePhysioCat === cat.key,
+											'home-cat-item--lead': idx === 0
+										}"
+										hover-class="none"
+										@click="selectHomePhysioCat(cat.key)"
+									>
+										<view class="home-cat-pill">
+											<text class="home-cat-text">{{ cat.label }}</text>
+										</view>
+									</view>
+								</view>
+							</scroll-view>
+						</view>
 						<physio-therapist-card-list
-							v-if="therapistList.length > 0"
-							:list="therapistList"
+							v-if="filteredHomeTherapistList.length > 0"
+							:list="filteredHomeTherapistList"
 							:theme="theme"
 							embedded
 							@detail="goTherapistDetail"
 							@book="goBookTherapist"
+							@store="goTherapistStore"
 						/>
-						<view v-if="therapistList.length === 0 && !therapistLoading" class="empty-state">
+						<view
+							v-else-if="therapistList.length > 0 && filteredHomeTherapistList.length === 0 && !therapistLoading"
+							class="loading-tip"
+						>
+							<text>该分类下暂无理疗师，可切换到「精选」试试</text>
+						</view>
+						<view v-else-if="therapistList.length === 0 && !therapistLoading" class="empty-state">
 							<emptyPage title="暂无理疗师~" mTop="0" :imgSrc="urlDomain + 'crmebimage/presets/noJilu.png'"></emptyPage>
 						</view>
 						<view v-if="therapistLoading" class="loading-tip"><text>加载中...</text></view>
@@ -393,6 +443,9 @@ export default {
 			const host = raw.replace(/\/?$/, '/');
 			return `${host}crmebimage/presets/noShopper.png`;
 		},
+		filteredHomeTherapistList() {
+			return this.filterByHomePhysioCategory(this.therapistList || []);
+		}
 	},
 	components: {
 		tuiSkeleton,
@@ -425,10 +478,40 @@ export default {
 				{ name: '精油足道', desc: '头疗 SAP', icon: 'icon-ic_crown', link: '' },
 				{ name: '美容美肤', desc: '女性健康', icon: 'icon-ic_xuni', link: '', showTitleIcon: true, titleIcon: 'icon-ic_xuni' }
 			],
+			/** 顶部十宫格：前 4 项可点，后 6 项先占位不可点 */
+			topServiceList: [
+				{ name: '中医推拿', imgUrl: '/static/images/icon-massage.png', enabled: true, tabPath: '/pages/physio/index' },
+				{ name: '精油足道', imgUrl: '/static/images/icon-footbath.png', enabled: true, tabPath: '/pages/physio/index' },
+				{ name: '儿童推拿', imgUrl: '/static/images/icon-pediatric.png', enabled: true, tabPath: '/pages/physio/index' },
+				{ name: '美容护肤', imgUrl: '/static/images/icon-beauty.png', enabled: true, tabPath: '/pages/physio/index' },
+				{ name: '女性养护', imgUrl: '/static/images/icon-women.png', enabled: false },
+				{ name: '特惠充值', imgUrl: '/static/images/icon-recharge.png', enabled: false },
+				{ name: '极速上门', imgUrl: '/static/images/icon-scooter.png', enabled: false },
+				{ name: '折扣秒杀', imgUrl: '/static/images/icon-flashsale.png', enabled: false },
+				{ name: '企业服务', imgUrl: '/static/images/icon-enterprise.png', enabled: false },
+				{ name: '养生次卡', imgUrl: '/static/images/icon-yogacard.png', enabled: false }
+			],
 
 			// Tab（恢复平台商城：tabList 增加「平台商城」，并取消下方模板与 loadTabData 等注释）
 			tabList: ['名医专家', '理疗专区'],
 			currentTab: 0,
+			/** 首页名医专家快捷入口（沿用理疗分类条样式） */
+			doctorQuickTabs: [
+				{ key: 'dept', label: '按科室找' },
+				{ key: 'disease', label: '按疾病找' }
+			],
+			activeDoctorQuickTab: 'dept',
+			/** 首页理疗专区分类（与 pages/physio/index 的精选分类保持一致） */
+			activeHomePhysioCat: 'all',
+			homePhysioCategories: [
+				{ key: 'all', label: '精选' },
+				{ key: 'tcm', label: '中医推拿' },
+				{ key: 'foot', label: '足道SPA' },
+				{ key: 'beauty', label: '美容美肤' },
+				{ key: 'pediatric', label: '小儿推拿' },
+				{ key: 'physio', label: '康复理疗' },
+				{ key: 'massage', label: '精油开背' }
+			],
 
 			// 名医专家
 			doctorList: [],
@@ -579,6 +662,14 @@ export default {
 		goDoctorListByDisease() {
 			this.$util.navigateTo('/pages/clinic/doctor/index?mode=disease');
 		},
+		onDoctorQuickTabClick(key) {
+			this.activeDoctorQuickTab = key;
+			if (key === 'disease') {
+				this.goDoctorListByDisease();
+			} else {
+				this.goDoctorListByDept();
+			}
+		},
 
 		goConsult(doc, type) {
 			if (!this.isLogin) {
@@ -612,6 +703,53 @@ export default {
 				.catch(() => {
 					this.therapistLoading = false;
 				});
+		},
+		selectHomePhysioCat(key) {
+			this.activeHomePhysioCat = key;
+		},
+		filterByHomePhysioCategory(list) {
+			const key = this.activeHomePhysioCat;
+			if (!key || key === 'all') return list;
+			const pick = t => {
+				const text = (
+					(t.hospitalDomain || '') +
+					(t.specialization || '') +
+					(t.selfInfo || '')
+				).toLowerCase();
+				switch (key) {
+					case 'tcm':
+						return (
+							text.includes('推拿') ||
+							text.includes('中医') ||
+							text.includes('针灸') ||
+							text.includes('艾灸') ||
+							text.includes('拔罐')
+						);
+					case 'foot':
+						return text.includes('足') || text.includes('足道') || text.includes('spa');
+					case 'beauty':
+						return text.includes('美容') || text.includes('美肤') || text.includes('皮肤');
+					case 'pediatric':
+						return text.includes('小儿') || text.includes('儿童') || text.includes('儿科');
+					case 'physio':
+						return (
+							text.includes('理疗') ||
+							text.includes('康复') ||
+							text.includes('运动') ||
+							text.includes('产后')
+						);
+					case 'massage':
+						return (
+							text.includes('精油') ||
+							text.includes('开背') ||
+							text.includes('经络') ||
+							text.includes('舒压')
+						);
+					default:
+						return true;
+				}
+			};
+			return (list || []).filter(pick);
 		},
 
 		goTherapistDetail(item) {
@@ -651,6 +789,18 @@ export default {
 				picture: item.picture || ''
 			});
 			this.$util.navigateTo('/pages/clinic/physio_book/index');
+		},
+		goTherapistStore(item) {
+			const mchId = Number(item && item.mchId) || 0;
+			if (!mchId) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			try {
+				uni.setStorageSync('CLINIC_HOME_MER_ID', String(mchId));
+				uni.setStorageSync('CLINIC_THERAPIST_REF', 'store');
+				uni.setStorageSync('CLINIC_THERAPIST_BACK_MER', String(mchId));
+			} catch (e) {}
+			uni.switchTab({ url: '/pages/clinic/home/index' });
 		},
 
 		// ==================== 平台商城 ====================
@@ -746,6 +896,16 @@ export default {
 			if (item.quickDoctor) {
 				this.goFirstDoctorDetail();
 				return;
+			}
+			this.$util.Tips({ title: '敬请期待' });
+		},
+		onTopServiceClick(item) {
+			if (!item || !item.enabled) return;
+			if (item.tabPath) {
+				return uni.switchTab({ url: item.tabPath });
+			}
+			if (item.link) {
+				return this.$util.navigateTo(item.link);
 			}
 			this.$util.Tips({ title: '敬请期待' });
 		},
@@ -1252,6 +1412,50 @@ page {
 	opacity: 0.7;
 }
 
+/* ==================== 顶部十宫格服务 ==================== */
+.top-service-wrap {
+	padding: 24rpx 14rpx 16rpx;
+	// background-color: #ffffff;
+	// border-radius: 0 0 30rpx 30rpx;
+	margin-bottom: 20rpx;
+}
+
+.top-service-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	row-gap: 4rpx;
+	column-gap: 0;
+}
+
+.top-service-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0 0 6rpx;
+}
+
+.top-service-item.disabled {
+	opacity: 0.72;
+}
+
+.top-service-img {
+	width: 124rpx;
+	height: 124rpx;
+	margin-bottom: 0;
+	border-radius: 0;
+}
+
+.top-service-name {
+	font-size: 22rpx;
+	font-weight: 400;
+	color: #333333;
+	line-height: 1.15;
+	max-width: 120rpx;
+	text-align: center;
+	white-space: nowrap;
+}
+
 /* ==================== 特色门诊 ==================== */
 .clinic-section {
 	padding: 20rpx 24rpx 0;
@@ -1330,7 +1534,7 @@ page {
 
 /* ==================== Tab 区域 ==================== */
 .tab-section {
-	margin-top: 30rpx;
+	margin-top: 15rpx;
 }
 
 .tab-bar {
@@ -1388,8 +1592,8 @@ page {
 	box-sizing: border-box;
 }
 
-/* 名医专家入口：与 pages/physio/index 项目分类（精选）横条一致 */
-.doc-cat-row {
+/* 首页分类条：与 pages/physio/index 项目分类（精选）横条一致 */
+.home-cat-row {
 	display: flex;
 	flex-direction: row;
 	align-items: stretch;
@@ -1399,17 +1603,17 @@ page {
 	-webkit-tap-highlight-color: transparent;
 }
 
-.doc-cat-row .doc-cat-item {
+.home-cat-row .home-cat-item {
 	-webkit-tap-highlight-color: transparent;
 }
 
-.doc-cat-scroll {
+.home-cat-scroll {
 	flex: 1;
 	min-width: 0;
 	height: 92rpx;
 }
 
-.doc-cat-inner {
+.home-cat-inner {
 	display: inline-flex;
 	flex-direction: row;
 	align-items: center;
@@ -1419,7 +1623,7 @@ page {
 	padding-left: 0;
 }
 
-.doc-cat-item {
+.home-cat-item {
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
@@ -1429,7 +1633,7 @@ page {
 	box-sizing: border-box;
 }
 
-.doc-cat-pill {
+.home-cat-pill {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1440,13 +1644,13 @@ page {
 	transition: background-color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.doc-cat-item--lead .doc-cat-pill {
+.home-cat-item--lead .home-cat-pill {
 	min-width: 140rpx;
 	padding-left: 26rpx;
 	padding-right: 26rpx;
 }
 
-.doc-cat-text {
+.home-cat-text {
 	font-size: 27rpx;
 	color: #666;
 	line-height: 1.2;
@@ -1454,8 +1658,8 @@ page {
 	text-align: center;
 }
 
-/* 首页为双入口：点击时短暂高亮为理疗页「选中」梯形样式（非互斥 tab，仅反馈） */
-.doc-cat-item:active .doc-cat-pill {
+/* 选中态：左直右斜梯形 */
+.home-cat-item.active .home-cat-pill {
 	background: var(--view-theme, #3a9d8f);
 	transform: none;
 	clip-path: polygon(0 0, 100% 0, 89% 100%, 0 100%);
@@ -1465,13 +1669,13 @@ page {
 	padding-right: 38rpx;
 }
 
-.doc-cat-item--lead:active .doc-cat-pill {
+.home-cat-item--lead.active .home-cat-pill {
 	min-width: 152rpx;
 	padding-left: 32rpx;
 	padding-right: 38rpx;
 }
 
-.doc-cat-item:active .doc-cat-text {
+.home-cat-item.active .home-cat-text {
 	color: #fff;
 	font-weight: 600;
 	letter-spacing: 0;

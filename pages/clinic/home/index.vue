@@ -187,6 +187,12 @@ export default {
     this.bootstrapStores();
   },
   onShow() {
+    // 每次回到「门店」tab都刷新列表，确保会触发门店接口请求
+    if (this.subTab === 0) {
+      this.resetStoreList();
+      this.fetchStores();
+    }
+
     try {
       const raw = uni.getStorageSync('CLINIC_HOME_MER_ID');
       if (raw) {

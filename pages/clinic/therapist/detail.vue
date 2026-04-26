@@ -25,6 +25,19 @@
 						<text v-if="ageLabel" class="pill-age">{{ ageLabel }}</text>
 						<text v-if="sexLabel" class="pill-sex">{{ sexLabel }}</text>
 					</view>
+					<view
+						v-if="storeName || hasMchForCate"
+						class="name-store-row"
+						hover-class="none"
+						@click="goStoreMall"
+					>
+						<text class="iconfont icon-ic_location5 name-store-ico"></text>
+						<view class="name-store-main">
+							<!-- <text class="name-store-name line1">{{ storeName || '门店' }}</text> -->
+							<text class="name-store-sub line1">{{ storeAddrShort || '点击进入门店商城' }}</text>
+						</view>
+						<text class="iconfont icon-ic_rightarrow name-store-arrow"></text>
+					</view>
 					<view class="sheet-sub">
 						<text>{{ statLine }}</text>
 						<text class="sub-split">|</text>
@@ -214,7 +227,6 @@
 					<view class="block-h"><text class="block-title">服务地址</text></view>
 					<text class="block-body">{{ addrLine }}</text>
 				</view>
-
 				<view class="tip-box">
 					<text class="tip-t">到店理疗需提前预约，提交后按提示完成支付（如有费用）。</text>
 				</view>
@@ -297,6 +309,21 @@ export default {
 			const d = (this.therapist.addressDetail || '').trim();
 			const line = [p, d].filter(Boolean).join(' ');
 			return line || '';
+		},
+		storeName() {
+			if (!this.therapist) return '';
+			return (
+				(this.therapist.hospitalDomain || '').trim() ||
+				(this.therapist.mchName || '').trim() ||
+				(this.therapist.merchantName || '').trim() ||
+				''
+			);
+		},
+		storeAddrShort() {
+			if (!this.therapist) return '';
+			const p = [this.therapist.city, this.therapist.district].filter(Boolean).join('');
+			const d = (this.therapist.addressDetail || '').trim();
+			return [p, d].filter(Boolean).join(' ');
 		},
 		statLine() {
 			const t = this.therapist;
@@ -652,6 +679,13 @@ export default {
 		},
 		bookCategory(cat) {
 			this.goPhysioBook(cat);
+		},
+		goStoreMall() {
+			const mid = (this.therapist && this.therapist.mchId) || this.mchId;
+			if (!mid) {
+				return this.$util.Tips({ title: '该理疗师暂未关联门店' });
+			}
+			this.$util.navigateTo(`/pages/clinic/health_mall/index?merId=${mid}`);
 		},
 		goPhysioBook(prefCat) {
 			if (!this.isLogin) {
@@ -1328,6 +1362,54 @@ export default {
 	font-size: 28rpx;
 	color: #555;
 	line-height: 1.55;
+}
+
+.name-store-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16rpx;
+	margin-bottom: 12rpx;
+	padding: 14rpx 16rpx;
+	border-radius: 12rpx;
+	background: #f8f9fb;
+}
+
+.name-store-ico {
+	flex-shrink: 0;
+	font-size: 26rpx;
+	color: #b0b8c2;
+}
+
+.name-store-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.name-store-name {
+	display: block;
+	font-size: 26rpx;
+	color: #333;
+	font-weight: 500;
+}
+
+.name-store-sub {
+	display: block;
+	margin-top: 6rpx;
+	font-size: 22rpx;
+	color: #999;
+}
+
+.name-store-arrow {
+	flex-shrink: 0;
+	font-size: 24rpx;
+	color: #c6c6c6;
+}
+
+.line1 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tip-box {
