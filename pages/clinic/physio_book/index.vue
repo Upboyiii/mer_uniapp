@@ -278,6 +278,10 @@
 				<text class="pay-sheet-cancel" @click="dismissPaySheet(true)">暂不支付，稍后处理</text>
 			</view>
 		</view>
+
+		<!-- #ifdef H5 -->
+		<view v-if="formContent" class="alipaysubmit" v-html="formContent"></view>
+		<!-- #endif -->
 	</view>
 </template>
 
@@ -1132,7 +1136,13 @@ export default {
 		},
 		doPay(appointmentId, payPrice, saveOrderNo, payMethod) {
 			const { payChannel, payType } = this.resolvePayChannel(payMethod);
-			const payPayload = { id: appointmentId, payChannel, payType, from: '' };
+			const payPayload = {
+				id: appointmentId,
+				payChannel,
+				payType,
+				// 给后端/回跳页一个明确来源标识
+				from: this.categoryListSource === 'tcm' ? 'clinic_appointment_tcm' : 'clinic_appointment_physio'
+			};
 			const payReq =
 				this.categoryListSource === 'tcm'
 					? tcmAppointmentPayApi(payPayload)
@@ -1166,13 +1176,20 @@ export default {
 					if (d.alipayRequest) {
 						this.submitting = false;
 						uni.hideLoading();
+						// 支付回跳页需要区分 tcm/physio，避免默认把中医当理疗
+						try {
+							uni.setStorageSync('clinicAppointmentPayCategory', cat);
+							uni.setStorageSync('clinicAppointmentPayAppointmentId', String(appointmentId));
+						} catch (e) {}
 						this.handleOrderPay(
 							payRes,
 							String(d.payOrderNo != null ? d.payOrderNo : saveOrderNo || appointmentId),
 							'normal',
-							'',
+							cat === 'tcm' ? 'clinic_appointment_tcm' : 'clinic_appointment_physio',
 							'alipay',
-							payPrice
+							payPrice,
+							undefined,
+							{ appointmentId, category: cat }
 						);
 						return;
 					}

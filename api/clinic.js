@@ -217,6 +217,51 @@ export function tcmAppointmentSaveApi(data) {
 }
 
 /**
+ * 在「我的」中医/理疗预约列表前几页中按 payOrderNo、orderNo、outTradeNo 匹配，
+ * 用于支付回跳拿不到 URL/本地缓存时的兜底（需已登录）。
+ * @param {string} orderKey 支付宝 out_trade_no 或支付单号、业务订单号
+ * @returns {Promise<{ category: 'tcm'|'physio', id: string } | null>}
+ */
+export function findClinicAppointmentMetaByPayKey(orderKey) {
+  const key = String(orderKey || '').trim();
+  if (!key) return Promise.resolve(null);
+  const matchRow = (row) => {
+    if (!row || typeof row !== 'object') return false;
+    return [row.payOrderNo, row.orderNo, row.outTradeNo].some(
+      (v) => v != null && String(v).trim() === key
+    );
+  };
+  const scanOnce = (page) =>
+    Promise.all([
+      getTcmAppointmentListApi({ page, limit: 40 }),
+      getPhysiotherapyAppointmentListApi({ page, limit: 40 }),
+    ]).then(([tcmRes, physRes]) => {
+      const tcmList = (tcmRes.data && tcmRes.data.list) || [];
+      for (let i = 0; i < tcmList.length; i++) {
+        if (matchRow(tcmList[i])) {
+          return { category: 'tcm', id: String(tcmList[i].id) };
+        }
+      }
+      const physList = (physRes.data && physRes.data.list) || [];
+      for (let i = 0; i < physList.length; i++) {
+        if (matchRow(physList[i])) {
+          return { category: 'physio', id: String(physList[i].id) };
+        }
+      }
+      const tcmTp = (tcmRes.data && tcmRes.data.totalPage) || 1;
+      const physTp = (physRes.data && physRes.data.totalPage) || 1;
+      return { maxPage: Math.max(tcmTp, physTp, 1) };
+    });
+  const tryPages = (page) =>
+    scanOnce(page).then((r) => {
+      if (r.category) return r;
+      if (page >= Math.min(r.maxPage, 5)) return null;
+      return tryPages(page + 1);
+    });
+  return tryPages(1);
+}
+
+/**
  * GET /api/front/doctor/tcm-appointment-reply/doctor-list
  * 中医师评价列表（公开）
  */
@@ -285,6 +330,36 @@ export function getDoctorConsultationInfoApi(id) {
 /** GET /api/front/doctor/consultation/list 问诊分页列表 */
 export function getDoctorConsultationListApi(data) {
   return request.get('doctor/consultation/list', data);
+}
+
+/**
+ * 在「我的」问诊列表前几页中按 payOrderNo、orderNo 匹配 id，用于支付回跳拿不到缓存时的兜底（需登录）。
+ */
+export function findConsultationMetaByPayKey(orderKey) {
+  const key = String(orderKey || '').trim();
+  if (!key) return Promise.resolve(null);
+  const matchRow = (row) => {
+    if (!row || typeof row !== 'object') return false;
+    return [row.payOrderNo, row.orderNo].some(
+      (v) => v != null && String(v).trim() === key
+    );
+  };
+  const scanOnce = (page) =>
+    getDoctorConsultationListApi({ page, limit: 40 }).then((res) => {
+      const list = (res.data && res.data.list) || [];
+      for (let i = 0; i < list.length; i++) {
+        if (matchRow(list[i])) return { id: String(list[i].id) };
+      }
+      const tp = (res.data && res.data.totalPage) || 1;
+      return { maxPage: Math.max(tp, 1) };
+    });
+  const tryPages = (page) =>
+    scanOnce(page).then((r) => {
+      if (r.id) return r;
+      if (page >= Math.min(r.maxPage, 5)) return null;
+      return tryPages(page + 1);
+    });
+  return tryPages(1);
 }
 
 /** POST /api/front/doctor/consultation/pay 问诊支付 */

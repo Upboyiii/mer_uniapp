@@ -4284,3 +4284,227 @@
 	"message": ""
 }
 ```
+
+
+
+## 中医预约详情
+
+
+**接口地址**:`/api/front/doctor/tcm-appointment/info`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|id|id|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«TcmAppointment对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||TcmAppointment对象|TcmAppointment对象|
+|&emsp;&emsp;amount|预约费用|number||
+|&emsp;&emsp;appointTime|预约时间|string||
+|&emsp;&emsp;cancelReason|取消原因|string||
+|&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;doctorId|中医师ID|integer||
+|&emsp;&emsp;endTime|预约结束时间|string||
+|&emsp;&emsp;homeService|是否提供上门服务|boolean||
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;orderNo|订单号|string||
+|&emsp;&emsp;outTradeNo|外部订单号|string||
+|&emsp;&emsp;payChannel|支付渠道：public-公众号,mini-小程序，h5-网页支付,yue-余额，wechatIos-微信Ios，wechatAndroid-微信Android,alipay-支付宝，alipayApp-支付宝App|string||
+|&emsp;&emsp;payOrderNo|支付单号|string||
+|&emsp;&emsp;payStatus|支付状态 0未支付 1已支付 2已退款|integer||
+|&emsp;&emsp;payTime|支付时间|string||
+|&emsp;&emsp;payType|支付方式:weixin,alipay,yue,shoppingCredits|string||
+|&emsp;&emsp;realName|收货人姓名|string||
+|&emsp;&emsp;refundNo|退款单号|string||
+|&emsp;&emsp;remark|备注说明|string||
+|&emsp;&emsp;status|预约状态 0待确认 1已确认 2已完成 3已取消|integer||
+|&emsp;&emsp;tcmCategory|中医项目/类型|integer||
+|&emsp;&emsp;updateTime|更新时间|string||
+|&emsp;&emsp;userAddress|收货详细地址|string||
+|&emsp;&emsp;userId|用户ID|integer||
+|&emsp;&emsp;userPhone|收货人电话|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"amount": 0,
+		"appointTime": "",
+		"cancelReason": "",
+		"createTime": "",
+		"doctorId": 0,
+		"endTime": "",
+		"homeService": true,
+		"id": 0,
+		"mchId": 0,
+		"orderNo": "",
+		"outTradeNo": "",
+		"payChannel": "",
+		"payOrderNo": "",
+		"payStatus": 0,
+		"payTime": "",
+		"payType": "",
+		"realName": "",
+		"refundNo": "",
+		"remark": "",
+		"status": 0,
+		"tcmCategory": 0,
+		"updateTime": "",
+		"userAddress": "",
+		"userId": 0,
+		"userPhone": ""
+	},
+	"message": ""
+}
+```
+
+
+
+## 详情
+
+
+**接口地址**:`/api/front/therapist/physiotherapy-appointment/info`
+
+
+**请求方式**:`GET`
+
+
+**请求数据类型**:`application/x-www-form-urlencoded`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称 | 参数说明 | 请求类型    | 是否必须 | 数据类型 | schema |
+| -------- | -------- | ----- | -------- | -------- | ------ |
+|id|id|query|true|integer(int32)||
+
+
+**响应状态**:
+
+
+| 状态码 | 说明 | schema |
+| -------- | -------- | ----- | 
+|200|OK|CommonResult«PhysiotherapyAppointment对象»|
+|401|Unauthorized||
+|403|Forbidden||
+|404|Not Found||
+
+
+**响应参数**:
+
+
+| 参数名称 | 参数说明 | 类型 | schema |
+| -------- | -------- | ----- |----- | 
+|code||integer(int64)|integer(int64)|
+|data||PhysiotherapyAppointment对象|PhysiotherapyAppointment对象|
+|&emsp;&emsp;amount|预约费用|number||
+|&emsp;&emsp;appointTime|预约时间|string||
+|&emsp;&emsp;cancelReason|取消原因|string||
+|&emsp;&emsp;createTime|创建时间|string||
+|&emsp;&emsp;endTime|预约结束时间|string||
+|&emsp;&emsp;homeService|是否提供上门读服务|boolean||
+|&emsp;&emsp;id|主键自增|integer||
+|&emsp;&emsp;mchId|门店ID|integer||
+|&emsp;&emsp;orderNo|订单号|string||
+|&emsp;&emsp;outTradeNo|外部订单号|string||
+|&emsp;&emsp;payChannel|支付渠道：public-公众号,mini-小程序，h5-网页支付,yue-余额，wechatIos-微信Ios，wechatAndroid-微信Android,alipay-支付宝，alipayApp-支付宝App|string||
+|&emsp;&emsp;payOrderNo|支付单号|string||
+|&emsp;&emsp;payStatus|支付状态 0未支付 1已支付 2已退款|integer||
+|&emsp;&emsp;payTime|支付时间|string||
+|&emsp;&emsp;payType|支付方式:weixin,alipay,yue,shoppingCredits|string||
+|&emsp;&emsp;physiotherapyCategory|理疗项目/类型|integer||
+|&emsp;&emsp;realName|收货人姓名|string||
+|&emsp;&emsp;refundNo|退款单号|string||
+|&emsp;&emsp;remark|备注说明|string||
+|&emsp;&emsp;status|预约状态 0待确认 1已确认 2已完成 3已取消|integer||
+|&emsp;&emsp;therapistId|理疗师ID|integer||
+|&emsp;&emsp;updateTime|更新时间|string||
+|&emsp;&emsp;userAddress|收货详细地址|string||
+|&emsp;&emsp;userId|用户ID|integer||
+|&emsp;&emsp;userPhone|收货人电话|string||
+|message||string||
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"data": {
+		"amount": 0,
+		"appointTime": "",
+		"cancelReason": "",
+		"createTime": "",
+		"endTime": "",
+		"homeService": true,
+		"id": 0,
+		"mchId": 0,
+		"orderNo": "",
+		"outTradeNo": "",
+		"payChannel": "",
+		"payOrderNo": "",
+		"payStatus": 0,
+		"payTime": "",
+		"payType": "",
+		"physiotherapyCategory": 0,
+		"realName": "",
+		"refundNo": "",
+		"remark": "",
+		"status": 0,
+		"therapistId": 0,
+		"updateTime": "",
+		"userAddress": "",
+		"userId": 0,
+		"userPhone": ""
+	},
+	"message": ""
+}
+```

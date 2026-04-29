@@ -581,7 +581,8 @@ export default {
 				id: this.detail.id,
 				payChannel,
 				payType,
-				from: ''
+				// 给后端/回跳页一个明确来源标识
+				from: this.isTcm ? 'clinic_appointment_tcm' : 'clinic_appointment_physio'
 			};
 			const payReq = this.isTcm
 				? tcmAppointmentPayApi(payPayload)
@@ -611,13 +612,21 @@ export default {
 					if (d.alipayRequest) {
 						uni.hideLoading();
 						this.paying = false;
+						const cat = this.isTcm ? 'tcm' : 'physio';
+						// 支付回跳页需要区分 tcm/physio，避免默认把中医当理疗
+						try {
+							uni.setStorageSync('clinicAppointmentPayCategory', cat);
+							uni.setStorageSync('clinicAppointmentPayAppointmentId', String(this.detail.id));
+						} catch (e) {}
 						this.handleOrderPay(
 							payRes,
 							String(d.payOrderNo != null ? d.payOrderNo : this.detail.id),
 							'normal',
-							'',
+							cat === 'tcm' ? 'clinic_appointment_tcm' : 'clinic_appointment_physio',
 							'alipay',
-							this.detailFeeDisplay
+							this.detailFeeDisplay,
+							undefined,
+							{ appointmentId: this.detail.id, category: cat }
 						);
 						return;
 					}

@@ -387,3 +387,11 @@ export function getWorkOrderInfoApi(workOrderNo) {
 export function cancelReservationApi(orderNo, body) {
 	return request.post(`order/cancel/reservation/${orderNo}`, body || {});
 }
+
+/**
+ * 中医预约详情
+ * @param {string} appointmentId
+ */
+export function getAppointmentInfoApi(appointmentId) {
+	return request.get(`doctor/tcm-appointment/info/${appointmentId}`);
+}

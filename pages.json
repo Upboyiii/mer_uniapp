@@ -1902,6 +1902,16 @@
 				}
 			},
 			{
+				"path": "consult_alipay_return/index",
+				"style": {
+					"navigationBarTitleText": "",
+					"enablePullDownRefresh": false,
+					"app-plus": {
+						"titleNView": false
+					}
+				}
+			},
+			{
 				"path": "consultation_pay_success/index",
 				"style": {
 					"navigationBarTitleText": "支付成功",
@@ -1932,6 +1942,16 @@
 						"titleNView": {
 							"type": "default"
 						}
+					}
+				}
+			},
+			{
+				"path": "appointment_alipay_return/index",
+				"style": {
+					"navigationBarTitleText": "",
+					"enablePullDownRefresh": false,
+					"app-plus": {
+						"titleNView": false
 					}
 				}
 			},

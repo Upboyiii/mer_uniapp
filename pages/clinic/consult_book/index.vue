@@ -185,6 +185,8 @@ import {
 } from '@/api/clinic.js';
 
 const PREFILL_KEY = 'consult_book_prefill';
+const PREFILL_SNAPSHOT_KEY = 'consult_book_prefill_snapshot';
+const PREFILL_SNAPSHOT_TTL = 6 * 60 * 60 * 1000;
 
 let app = getApp();
 
@@ -301,25 +303,63 @@ export default {
 			if (!base) return p;
 			return p.startsWith('/') ? base + p : `${base}/${p}`;
 		},
+		applyPrefillData(o) {
+			if (!o || typeof o !== 'object') return;
+			this.doctorId = o.doctorId || 0;
+			this.consultType = o.consultType === 2 ? 2 : 1;
+			this.consultFee = o.consultFee != null ? Number(o.consultFee) : 0;
+			this.diseaseType = o.diseaseType || '';
+			this.durationLabel = o.durationLabel || (this.consultType === 2 ? '60分钟' : '48小时');
+			this.doctorName = o.doctorName || '';
+			this.doctorPicture = o.doctorPicture || '';
+			this.hospitalTitle = o.hospitalTitle || '';
+			this.hospitalSub = o.hospitalSub || '';
+			this.hospitalName = o.hospitalName || '';
+			this.hospitalLevel = o.hospitalLevel || '';
+		},
+		parsePrefillValue(raw) {
+			if (!raw) return null;
+			if (typeof raw === 'string') {
+				try {
+					return JSON.parse(raw);
+				} catch (e) {
+					return null;
+				}
+			}
+			return typeof raw === 'object' ? raw : null;
+		},
 		readPrefill() {
+			let prefill = null;
 			try {
-				const raw = uni.getStorageSync(PREFILL_KEY);
-				if (raw) {
-					const o = JSON.parse(raw);
-					this.doctorId = o.doctorId || 0;
-					this.consultType = o.consultType === 2 ? 2 : 1;
-					this.consultFee = o.consultFee != null ? Number(o.consultFee) : 0;
-					this.diseaseType = o.diseaseType || '';
-					this.durationLabel = o.durationLabel || (this.consultType === 2 ? '60分钟' : '48小时');
-					this.doctorName = o.doctorName || '';
-					this.doctorPicture = o.doctorPicture || '';
-					this.hospitalTitle = o.hospitalTitle || '';
-					this.hospitalSub = o.hospitalSub || '';
-					this.hospitalName = o.hospitalName || '';
-					this.hospitalLevel = o.hospitalLevel || '';
+				const firstRaw = uni.getStorageSync(PREFILL_KEY);
+				const firstObj = this.parsePrefillValue(firstRaw);
+				if (firstObj && typeof firstObj === 'object') {
+					prefill = firstObj;
+					uni.setStorageSync(
+						PREFILL_SNAPSHOT_KEY,
+						JSON.stringify({
+							ts: Date.now(),
+							data: firstObj
+						})
+					);
+				} else {
+					const snapRaw = uni.getStorageSync(PREFILL_SNAPSHOT_KEY);
+					const snapObj = this.parsePrefillValue(snapRaw);
+					if (snapObj && typeof snapObj === 'object') {
+						if (snapObj.data && typeof snapObj.data === 'object') {
+							const ts = Number(snapObj.ts || 0);
+							if (!ts || Date.now() - ts <= PREFILL_SNAPSHOT_TTL) {
+								prefill = snapObj.data;
+							}
+						} else if (snapObj.doctorId) {
+							// 兼容旧结构（未包一层 data/ts）
+							prefill = snapObj;
+						}
+					}
 				}
 				uni.removeStorageSync(PREFILL_KEY);
 			} catch (e) {}
+			if (prefill) this.applyPrefillData(prefill);
 			if (!this.doctorId) {
 				this.$util.Tips({ title: '缺少医生信息' });
 			}
@@ -562,9 +602,11 @@ export default {
 							payRes,
 							String(d.payOrderNo != null ? d.payOrderNo : consultationId),
 							'normal',
-							'',
+							'clinic_consult',
 							'alipay',
-							payPrice
+							payPrice,
+							undefined,
+							{ consultationId }
 						);
 						return;
 					}

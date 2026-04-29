@@ -38,13 +38,30 @@ export default {
 		 * @param {Object} payType 支付方式
 		 * @param {Object} payPrice  支付金额
 		 */
-		handleOrderPay(res,orderNo,productType,fromType,payType,payPrice,merId){
+		handleOrderPay(res,orderNo,productType,fromType,payType,payPrice,merId,clinicPayContext){
+			merId = merId || ''
 			let jsConfig = res.data.jsConfig;
+			const clinicQs =
+				clinicPayContext &&
+				clinicPayContext.appointmentId != null &&
+				clinicPayContext.category &&
+				(clinicPayContext.category === 'tcm' || clinicPayContext.category === 'physio')
+					? '&clinicAppointmentId=' +
+						encodeURIComponent(String(clinicPayContext.appointmentId)) +
+						'&clinicPayCategory=' +
+						encodeURIComponent(clinicPayContext.category)
+					: '';
+			const consultQs =
+				clinicPayContext && clinicPayContext.consultationId != null
+					? '&clinicConsultationId=' +
+						encodeURIComponent(String(clinicPayContext.consultationId))
+					: '';
+			const returnExtraQs = clinicQs + consultQs;
 			let goPages = ''
 			if(fromType){
-				goPages = `/pages/goods/order_pay_status/index?order_id=${orderNo}&payType=${payType}&payPrice=${payPrice}&fromType=${fromType}&merId=${merId}`;
+				goPages = `/pages/goods/order_pay_status/index?order_id=${orderNo}&payType=${payType}&payPrice=${payPrice}&fromType=${fromType}&merId=${merId}${returnExtraQs}`;
 			}else{
-				goPages = '/pages/goods/order_pay_status/index?order_id=' + orderNo;
+				goPages = '/pages/goods/order_pay_status/index?order_id=' + orderNo + returnExtraQs;
 			}
 			switch (payType) {
 				case 'weixin':
@@ -80,17 +97,33 @@ export default {
 					this.$nextTick(() => {
 						document.forms['punchout_form'].submit();
 					})
-					uni.setStorage({
-						key: 'orderNo',
-						data: orderNo
-					});
-					uni.setStorage({
-						key: 'payResultfromType',
-						data: fromType
-					});
+					try {
+						uni.setStorageSync('orderNo', orderNo);
+						uni.setStorageSync('payResultfromType', fromType || '');
+						if (clinicQs && clinicPayContext) {
+							uni.setStorageSync(
+								'clinicAppointmentPayAppointmentId',
+								String(clinicPayContext.appointmentId)
+							);
+							uni.setStorageSync('clinicAppointmentPayCategory', clinicPayContext.category);
+						}
+						if (consultQs && clinicPayContext && clinicPayContext.consultationId != null) {
+							uni.setStorageSync(
+								'clinicConsultPayConsultationId',
+								String(clinicPayContext.consultationId)
+							);
+						}
+					} catch (e) {}
 					//#endif
 					// #ifdef APP-PLUS
 					let alipayRequest = res.data.alipayRequest;
+					const appReturnOk =
+						`/pages/goods/alipay_return/alipay_return?out_trade_no=${orderNo}&payChannel=appAlipay&payPrice=${payPrice}&fromType=${fromType}${returnExtraQs}`;
+					const appReturnFail =
+						'/pages/goods/alipay_return/alipay_return?out_trade_no=' +
+						orderNo +
+						'&payChannel=appAlipay' +
+						returnExtraQs;
 					uni.requestPayment({
 						provider: 'alipay',
 						orderInfo: alipayRequest,
@@ -98,7 +131,7 @@ export default {
 							setTimeout(res => {
 								uni.hideLoading();
 								uni.navigateTo({
-                                    url: `/pages/goods/alipay_return/alipay_return?out_trade_no=${orderNo}&payChannel=appAlipay&payPrice=${payPrice}&fromType=${fromType}`
+                                    url: appReturnOk
 								})
 							}, 500)
 						},
@@ -112,10 +145,7 @@ export default {
 									if (res.confirm) {
 										//点击确认的操作
 										uni.navigateTo({
-											url: '/pages/goods/alipay_return/alipay_return?out_trade_no=' +
-												orderNo +
-												'&payChannel=' +
-												'appAlipay'
+											url: appReturnFail
 										})
 									}
 								}

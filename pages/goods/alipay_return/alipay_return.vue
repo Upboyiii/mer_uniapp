@@ -31,7 +31,7 @@
 			</view>
 			<!--失败时： 重新购买 -->
 			<view @tap="goOrderDetails">
-				<button formType="submit" class='returnBnt bg-color' hover-class='none'>{{fromType !=='svip'?'查看订单':'查看会员'}}</button>
+				<button formType="submit" class='returnBnt bg-color' hover-class='none'>{{ primaryButtonText() }}</button>
 			</view>
 			<button @click="goIndex" class='returnBnt cart-color' formType="submit" hover-class='none'>返回首页</button>
 		</view>
@@ -52,6 +52,18 @@
 		getOrderDetail,
 		alipayQueryPayResult
 	} from '@/api/order.js';
+	import {
+		getTcmAppointmentInfoApi,
+		getPhysiotherapyAppointmentInfoApi,
+		findClinicAppointmentMetaByPayKey,
+		getDoctorConsultationInfoApi,
+		findConsultationMetaByPayKey
+	} from '@/api/clinic.js';
+
+	const CLINIC_APPOINT_STORAGE_ID = 'clinicAppointmentPayAppointmentId';
+	const CLINIC_APPOINT_STORAGE_CAT = 'clinicAppointmentPayCategory';
+	const CONSULT_PAY_STORAGE_ID = 'clinicConsultPayConsultationId';
+
 	let app = getApp();
 	export default {
 		data() {
@@ -69,17 +81,24 @@
 				payResult: '订单查询中...',
 				payTime: '',
 				theme: app.globalData.theme,
-				fromType: '' //会员支付 还是商品支付
+				fromType: '', //会员支付 还是商品支付
+				clinicQueryId: '',
+				clinicQueryCategory: '',
+				consultQueryId: ''
 			};
 		},
 		onLoad(options) {
 			// #ifdef H5
 			var url = window.location.search;
 			let that = this
+			try {
+				const ft = uni.getStorageSync('payResultfromType');
+				if (ft) that.fromType = ft;
+			} catch (e) {}
 			uni.getStorage({
 				key: 'payResultfromType',
 				success: function(res) {
-					that.fromType = res.data; 
+					if (res.data) that.fromType = res.data;
 				}
 			});
 			if (url) {
@@ -92,6 +111,9 @@
 					}
 				}
 				this.orderId = theRequest.out_trade_no; //返回的订单号
+				this.clinicQueryId = theRequest.clinicAppointmentId || '';
+				this.clinicQueryCategory = theRequest.clinicPayCategory || '';
+				this.consultQueryId = theRequest.clinicConsultationId || '';
 				this.getShowInfo(options)
 			} else {
 				uni.getStorage({
@@ -107,6 +129,9 @@
 			// #ifdef APP-PLUS
 			this.fromType = options.fromType
 			this.orderId = options.out_trade_no;
+			this.clinicQueryId = options.clinicAppointmentId || '';
+			this.clinicQueryCategory = options.clinicPayCategory || '';
+			this.consultQueryId = options.clinicConsultationId || '';
 			this.getShowInfo(options)
 			// #endif
 		},
@@ -121,16 +146,162 @@
 					this.order_pay_info.payPrice = options.payPrice
 				}
 			},
+			resolveClinicAppointmentCategory() {
+				const qc = this.clinicQueryCategory;
+				if (qc === 'tcm' || qc === 'physio') return qc;
+				if (this.fromType === 'clinic_appointment_tcm') return 'tcm';
+				if (this.fromType === 'clinic_appointment_physio') return 'physio';
+				if (this.fromType === 'clinic_appointment') {
+					const raw = uni.getStorageSync(CLINIC_APPOINT_STORAGE_CAT);
+					return raw === 'tcm' || raw === 'physio' ? raw : '';
+				}
+				const raw = uni.getStorageSync(CLINIC_APPOINT_STORAGE_CAT);
+				return raw === 'tcm' || raw === 'physio' ? raw : '';
+			},
+			resolveClinicAppointmentDetailId() {
+				const qid = this.clinicQueryId;
+				if (qid != null && String(qid).trim() !== '') {
+					return String(qid).trim();
+				}
+				const s = uni.getStorageSync(CLINIC_APPOINT_STORAGE_ID);
+				if (s != null && String(s).trim() !== '') {
+					return String(s).trim();
+				}
+				return this.orderId;
+			},
+			mapClinicAppointmentDetailToPayInfo(data) {
+				return {
+					paid: data.payStatus === 1 ? 1 : 2,
+					createTime: data.createTime,
+					payPrice: data.amount != null ? data.amount : data.payPrice,
+					payType: data.payType,
+					orderNo: data.orderNo
+				};
+			},
+			resolveConsultationDetailId() {
+				const qid = this.consultQueryId;
+				if (qid != null && String(qid).trim() !== '') {
+					return String(qid).trim();
+				}
+				const s = uni.getStorageSync(CONSULT_PAY_STORAGE_ID);
+				if (s != null && String(s).trim() !== '') {
+					return String(s).trim();
+				}
+				return this.orderId;
+			},
+			mapConsultationDetailToPayInfo(data) {
+				return {
+					paid: data.payStatus === 1 ? 1 : 2,
+					createTime: data.createTime,
+					payPrice: data.consultFee,
+					orderNo: data.payOrderNo
+				};
+			},
+			/** 诊所详情接口返回的 payStatus：0未支付 1已支付 2已退款（不请求 pay/query/ali） */
+			applyPayStatusFromClinicDetail(data, kind) {
+				const ps = data.payStatus;
+				if (ps === 1) {
+					this.payResult = '支付成功';
+					uni.setNavigationBarTitle({ title: '支付成功' });
+				} else if (ps === 2) {
+					this.payResult = '已退款';
+					this.msg = kind === 'consult' ? '问诊订单已退款' : '预约订单已退款';
+					uni.setNavigationBarTitle({ title: '支付结果' });
+				} else {
+					this.payResult = '支付未完成';
+					this.msg =
+						kind === 'consult'
+							? '问诊仍为未支付状态，请稍后刷新或重新支付'
+							: '预约仍为未支付状态，请稍后刷新或重新支付';
+					uni.setNavigationBarTitle({ title: '支付失败' });
+				}
+				uni.hideLoading();
+			},
+			applyPayStatusFromMallOrderDetail(d) {
+				const paid = d.paid === true || d.paid === 1;
+				if (paid) {
+					this.payResult = '支付成功';
+					this.order_pay_info.paid = 1;
+					uni.setNavigationBarTitle({ title: '支付成功' });
+				} else {
+					this.payResult = '支付失败';
+					this.order_pay_info.paid = 2;
+					this.msg = '支付未完成或已取消';
+					uni.setNavigationBarTitle({ title: '支付失败' });
+				}
+				uni.hideLoading();
+			},
 			getOrderPayInfo: function() {
 				let that = this;
 				uni.showLoading({
 					title: '正在加载中'
 				});
-				getOrderDetail(that.orderId).then(res => {
-					that.$set(that, 'order_pay_info', res.data);
-					that.alipayQueryPay();
-					uni.hideLoading();
-				}).catch(err => {
+				const applyConsult = (id) =>
+					getDoctorConsultationInfoApi(id).then((res) => {
+						const data = res.data || {};
+						that.$set(that, 'order_pay_info', that.mapConsultationDetailToPayInfo(data));
+						that.applyPayStatusFromClinicDetail(data, 'consult');
+					});
+				const applyAppointment = (cat, id) => {
+					const api =
+						cat === 'tcm'
+							? getTcmAppointmentInfoApi(id)
+							: getPhysiotherapyAppointmentInfoApi(id);
+					return api.then((res) => {
+						const data = res.data || {};
+						that.$set(that, 'order_pay_info', that.mapClinicAppointmentDetailToPayInfo(data));
+						that.applyPayStatusFromClinicDetail(data, 'appointment');
+					});
+				};
+				const fallbackMallOrder = () =>
+					getOrderDetail(that.orderId).then((res) => {
+						const d = res.data || {};
+						that.$set(that, 'order_pay_info', d);
+						that.applyPayStatusFromMallOrderDetail(d);
+					});
+
+				if (that.fromType === 'clinic_consult') {
+					const detailId = that.resolveConsultationDetailId();
+					const runConsult = () =>
+						applyConsult(detailId).catch(() =>
+							findConsultationMetaByPayKey(that.orderId).then((meta) => {
+								if (!meta) return fallbackMallOrder();
+								return applyConsult(meta.id);
+							})
+						);
+					runConsult().catch(() => {
+						uni.hideLoading();
+					});
+					return;
+				}
+
+				if (!that.isClinicFromType()) {
+					fallbackMallOrder()
+						.catch(() => {
+							uni.hideLoading();
+						});
+					return;
+				}
+
+				const category = that.resolveClinicAppointmentCategory();
+				const detailId = that.resolveClinicAppointmentDetailId();
+
+				const run = () => {
+					if (category === 'tcm' || category === 'physio') {
+						return applyAppointment(category, detailId).catch(() =>
+							findClinicAppointmentMetaByPayKey(that.orderId).then((meta) => {
+								if (!meta) return fallbackMallOrder();
+								return applyAppointment(meta.category, meta.id);
+							})
+						);
+					}
+					return findClinicAppointmentMetaByPayKey(that.orderId).then((meta) => {
+						if (!meta) return fallbackMallOrder();
+						return applyAppointment(meta.category, meta.id);
+					});
+				};
+
+				run().catch(() => {
 					uni.hideLoading();
 				});
 			},
@@ -160,7 +331,65 @@
 					});
 				})
 			},
+			isClinicFromType() {
+				return (
+					this.fromType === 'clinic_consult' ||
+					this.fromType === 'clinic_appointment' ||
+					this.fromType === 'clinic_appointment_tcm' ||
+					this.fromType === 'clinic_appointment_physio'
+				);
+			},
+			primaryButtonText() {
+				if (this.fromType === 'svip') return '查看会员';
+				if (!this.isClinicFromType()) return '查看订单';
+				return this.order_pay_info.paid === 1 ? '返回业务页' : '重新处理';
+			},
 			goOrderDetails() {
+				if (this.fromType === 'clinic_consult') {
+					try {
+						uni.removeStorageSync(CONSULT_PAY_STORAGE_ID);
+					} catch (e) {}
+					const target =
+						this.order_pay_info.paid === 1
+							? '/pages/clinic/my_consultation/index'
+							: '/pages/clinic/consult_book/index';
+					uni.redirectTo({ url: target });
+					return;
+				}
+				if (
+					this.fromType === 'clinic_appointment' ||
+					this.fromType === 'clinic_appointment_tcm' ||
+					this.fromType === 'clinic_appointment_physio'
+				) {
+					const categoryFromFromType =
+						this.fromType === 'clinic_appointment_tcm'
+							? 'tcm'
+							: this.fromType === 'clinic_appointment_physio'
+								? 'physio'
+								: '';
+
+					const categoryFromQuery =
+						this.clinicQueryCategory === 'tcm' || this.clinicQueryCategory === 'physio'
+							? this.clinicQueryCategory
+							: '';
+
+					const raw = uni.getStorageSync('clinicAppointmentPayCategory');
+					const categoryFromStorage = raw === 'tcm' || raw === 'physio' ? raw : '';
+
+					const category = categoryFromFromType || categoryFromQuery || categoryFromStorage;
+
+					try {
+						uni.removeStorageSync(CLINIC_APPOINT_STORAGE_CAT);
+						uni.removeStorageSync(CLINIC_APPOINT_STORAGE_ID);
+					} catch (e) {}
+
+					uni.redirectTo({
+						url: category
+							? `/pages/clinic/appointment/index?category=${encodeURIComponent(category)}`
+							: '/pages/clinic/appointment/index'
+					});
+					return;
+				}
 				uni.navigateTo({
 					url: this.fromType !=='svip'?'/pages/goods/order_list/index':'/pages/activity/vip_paid/index'
 				});
